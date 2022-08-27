@@ -1,3 +1,3 @@
 export type OFDLocals = {
-  userId?: string
+  userId: string
 }

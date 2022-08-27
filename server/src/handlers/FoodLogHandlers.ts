@@ -1,12 +1,13 @@
 import { Express, NextFunction, Request, Response } from 'express';
-import { CreateFoodLogEntry } from '../types/FoodLogEntry';
-import { OFDLocals } from '../types/Locals';
+import { Result } from 'neverthrow';
+import { isValidationError, StorageError } from '../storage';
+import { CreateFoodLogEntry, OFDLocals } from '../types';
 
 export function addHandlers(app: Express) {
   app.post('/logs', createFoodLogHandler)
 }
 
-type StoreFoodLogFunction = (userId: string, logEntry: CreateFoodLogEntry) => Promise<string> 
+type StoreFoodLogFunction = (userId: string, logEntry: CreateFoodLogEntry) => Promise<Result<string, StorageError>> 
 
 export function createFoodLogHandler(
   req: Request,
@@ -14,8 +15,8 @@ export function createFoodLogHandler(
   next: NextFunction,
   storeFoodLog: StoreFoodLogFunction = {} as any
 ) {
-  if (res.locals.userId) {
-    storeFoodLog(res.locals.userId, req.body)
-      .then(res.send)
-  }
+  storeFoodLog(res.locals.userId, req.body)
+    .then(result => result.map(res.send)
+      .mapErr(err => res.status(isValidationError(err) ? 400 : 500).send(err.message))
+    )
 }
