@@ -1,7 +1,7 @@
 {
-  "name": "opencalorie-server",
+  "name": "openfooddiary-server",
   "version": "1.0.0",
-  "description": "Serverside code for the opencalorie project",
+  "description": "Serverside code for the openfooddiary project",
   "scripts": {
     "start": "node dist/index.js",
     "start:dev": "ts-node src/index.ts",
