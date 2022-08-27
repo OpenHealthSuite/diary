@@ -4,6 +4,7 @@ const port = process.env.PORT || 3012;
 
 const app = express();
 
+app.use(express.json())
 app.use(express.static('./public'));
 
 app.get('/api', (req, res) => {
