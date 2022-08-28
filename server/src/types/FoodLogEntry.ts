@@ -10,7 +10,3 @@ export type FoodLogEntry = {
         [key: string]: number
     }
 }
-
-export type CreateFoodLogEntry = Pick<FoodLogEntry, "name" | "labels" | "time" | "metrics" >
-
-export type EditFoodLogEntry = Pick<FoodLogEntry, "id" | "name" | "labels" | "time" | "metrics" >

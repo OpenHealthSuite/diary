@@ -1,10 +1,10 @@
 import { addHandlers, createFoodLogHandler } from './FoodLogHandlers'
-import { Express, NextFunction, Request, Response} from 'express';
+import { Express, Request, Response} from 'express';
 import crypto from 'node:crypto';
-import { CreateFoodLogEntry } from '../types/FoodLogEntry';
 import { OFDLocals } from '../middlewares';
 import { ValidationError } from '../storage';
 import { err, ok } from 'neverthrow';
+import { CreateFoodLogEntry } from '../storage/types/FoodLog';
 
 describe("Handler Registration", () => {
   it("Registers all functions on routes", () => {

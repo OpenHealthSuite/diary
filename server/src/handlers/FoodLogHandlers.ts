@@ -1,14 +1,11 @@
 import { Express, NextFunction, Request, Response } from 'express';
-import { Result } from 'neverthrow';
-import { isValidationError, StorageError } from '../storage';
-import { CreateFoodLogEntry } from '../types';
+import { isValidationError } from '../storage';
 import { OFDLocals } from '../middlewares';
+import { StoreFoodLogFunction } from '../storage/types/FoodLog';
 
 export function addHandlers(app: Express) {
   app.post('/logs', createFoodLogHandler)
 }
-
-type StoreFoodLogFunction = (userId: string, logEntry: CreateFoodLogEntry) => Promise<Result<string, StorageError>> 
 
 export function createFoodLogHandler(
   req: Request,
