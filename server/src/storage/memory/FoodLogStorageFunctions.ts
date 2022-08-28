@@ -1,7 +1,17 @@
 import { err, ok, Result } from "neverthrow"
 import { FoodLogEntry } from "../../types";
 import crypto from 'node:crypto'
-import { CreateFoodLogEntry, NotFoundError, RetrieveFoodLogFunction, StorageError, StoreFoodLogFunction, ValidationError } from "../types"
+import { 
+    CreateFoodLogEntry,
+    DeleteFoodLogFunction,
+    EditFoodLogEntry,
+    EditFoodLogFunction,
+    NotFoundError,
+    RetrieveFoodLogFunction,
+    StorageError,
+    StoreFoodLogFunction,
+    ValidationError
+} from "../types"
 
 const MEMORY_STORAGE: { [key: string] : FoodLogEntry[] } = {};
 
@@ -28,9 +38,32 @@ export const storeFoodLog: StoreFoodLogFunction =
 
 export const retrieveFoodLog: RetrieveFoodLogFunction =
     (userId: string, logId: string) : Promise<Result<FoodLogEntry, StorageError>> => {
-        const log = MEMORY_STORAGE[userId]?.find(x => x.id === logId)
+        const log = MEMORY_STORAGE[userId]?.find(x => x && x.id === logId)
         if (log === undefined) {
             return Promise.resolve(err(new NotFoundError("No Log Found")));
         }
         return Promise.resolve(ok(log));
+    }
+
+export const editFoodLog: EditFoodLogFunction =
+    (userId: string, logEntry: EditFoodLogEntry) => {
+        const log = MEMORY_STORAGE[userId]?.findIndex(x => x && x.id === logEntry.id)
+        if (log === undefined || log === -1) {
+            return Promise.resolve(err(new NotFoundError("No Log Found")));
+        }
+        MEMORY_STORAGE[userId][log] = {
+            ...MEMORY_STORAGE[userId][log],
+            ...logEntry
+        }
+        return Promise.resolve(ok(MEMORY_STORAGE[userId][log]))
+    }
+
+export const deleteFoodLog: DeleteFoodLogFunction =
+    (userId: string, logId: string): Promise<Result<boolean, StorageError>>  => {
+        const log = MEMORY_STORAGE[userId]?.findIndex(x => x.id === logId)
+        if (log === undefined || log === -1) {
+            return Promise.resolve(ok(false));
+        }
+        MEMORY_STORAGE[userId].splice(log, 1);
+        return Promise.resolve(ok(true))
     }
