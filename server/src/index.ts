@@ -1,10 +1,15 @@
 import express from 'express';
-import { FoodStorageRouter } from './handlers/FoodLogHandlers';
+import qs from 'qs';
+import { FoodStorageRouter } from './handlers';
 import { userMiddleware } from './middlewares';
 
 const port = process.env.PORT || 3012;
 
 const app = express();
+
+app.settings('query parser', function (str: string) {
+  return qs.parse(str, { })
+})
 
 app.use(express.json())
 app.use(express.static('./public'));

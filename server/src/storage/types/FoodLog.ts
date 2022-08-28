@@ -8,6 +8,8 @@ export type EditFoodLogEntry = Partial<Pick<FoodLogEntry, "id" | "name" | "label
 
 export type StoreFoodLogFunction = (userId: string, logEntry: CreateFoodLogEntry) => Promise<Result<string, StorageError>>
 
+export type QueryFoodLogFunction = (userId: string, dateStart: Date, dateEnd: Date) => Promise<Result<FoodLogEntry[], StorageError>>
+
 export type RetrieveFoodLogFunction = (userId: string, logId: string) => Promise<Result<FoodLogEntry, StorageError>>
 
 export type EditFoodLogFunction = (userId: string, logEntry: EditFoodLogEntry) => Promise<Result<FoodLogEntry, StorageError>>

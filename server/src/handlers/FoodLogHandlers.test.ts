@@ -1,4 +1,4 @@
-import { createFoodLogHandler, getFoodLogHandler, updateFoodLogHandler, deleteFoodLogHandler, buildRouter } from './FoodLogHandlers'
+import { createFoodLogHandler, getFoodLogHandler, updateFoodLogHandler, deleteFoodLogHandler, buildRouter, queryFoodLogHandler } from './FoodLogHandlers'
 import { Express, Request, Response, Router } from 'express';
 import crypto from 'node:crypto';
 import { OFDLocals } from '../middlewares';
@@ -20,6 +20,7 @@ describe("Handler Registration", () => {
     buildRouter(fakeRouter);
 
     expect(fakeRouter.post).toBeCalledWith('/logs', createFoodLogHandler)
+    expect(fakeRouter.get).toBeCalledWith('/logs', queryFoodLogHandler)
     expect(fakeRouter.get).toBeCalledWith('/logs/:logId', getFoodLogHandler)
     expect(fakeRouter.put).toBeCalledWith('/logs/:logId', updateFoodLogHandler)
     expect(fakeRouter.delete).toBeCalledWith('/logs/:logId', deleteFoodLogHandler)
@@ -126,6 +127,85 @@ describe("Create Food Log Handler", () => {
     expect(mockStorage).toBeCalledWith(userId, input)
     expect(fakeRes.status).toBeCalledWith(500)
     expect(fakeRes.send).toBeCalledWith(errorMessage)
+  })
+})
+
+describe("Query Food Log Handler", () => {
+  test("Happy Path :: Passes to storage, success, returns logs", async () => {
+    const userId = crypto.randomUUID();
+    const startDate = new Date(1999, 10, 1);
+    const endDate = new Date(1999, 11, 1);
+    const foodLog: FoodLogEntry[] = [{
+      id: crypto.randomUUID(),
+      name: 'My Log',
+      labels: new Set<string>(),
+      time: {
+        start: new Date(),
+        end: new Date()
+      },
+      metrics: {}
+    }]
+
+    const mockStorage = jest.fn().mockResolvedValue(ok(foodLog));
+
+    const fakeReq: any = {
+      query: {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      }
+    }
+
+    const fakeRes = {
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      locals: {
+        userId: userId
+      }
+    }
+
+    await queryFoodLogHandler(fakeReq as Request, fakeRes as any as Response & { locals: OFDLocals }, jest.fn(), mockStorage)
+
+    expect(mockStorage).toBeCalledTimes(1)
+    expect(mockStorage).toBeCalledWith(userId, startDate, endDate)
+    expect(fakeRes.send).toBeCalledWith(foodLog)
+  })
+
+  const BadDateValues: (string | undefined)[][] = [
+    [undefined, undefined],
+    [new Date(1987, 10, 1).toISOString(), undefined],
+    [undefined, new Date(1987, 10, 1).toISOString()],
+    [new Date(1987, 10, 1).toISOString(), "not a date"],
+    ["not a date", new Date(1987, 10, 1).toISOString()],
+    ["not a date", "also not a date"],
+    // Start date after end date
+    [new Date(1997, 10, 1).toISOString(), new Date(1987, 10, 1).toISOString()],
+  ]
+
+  test.each(BadDateValues)("Validation :: not valid dates, rejects without trying storage", async (startDate, endDate) => {
+    const userId = crypto.randomUUID();
+
+    const fakeReq: any = {
+      query: {
+        startDate: startDate,
+        endDate: endDate
+      }
+    }
+
+    const mockStorage = jest.fn()
+
+    const fakeRes = {
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      locals: {
+        userId: userId
+      }
+    }
+
+    await queryFoodLogHandler(fakeReq as Request, fakeRes as any as Response & { locals: OFDLocals }, jest.fn(), mockStorage)
+
+    expect(mockStorage).not.toBeCalled()
+    expect(fakeRes.status).toBeCalledWith(400)
+    expect(fakeRes.send).toBeCalledWith("Invalid startDate or endDate")
   })
 })
 

@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response, Router } from 'express';
 import { isNotFoundError, isValidationError, StorageError } from '../storage';
 import { OFDLocals } from '../middlewares';
-import { DeleteFoodLogFunction, EditFoodLogFunction, RetrieveFoodLogFunction, StoreFoodLogFunction } from '../storage/types/FoodLog';
+import { DeleteFoodLogFunction, EditFoodLogFunction, QueryFoodLogFunction, RetrieveFoodLogFunction, StoreFoodLogFunction } from '../storage/types/FoodLog';
 
 import * as storage from '../storage'
 
@@ -9,6 +9,7 @@ const foodStorageProvider = storage.memory.foodLog;
 
 export function buildRouter(router: Router): Router {
   return router.post('/logs', createFoodLogHandler)
+    .get('/logs', queryFoodLogHandler)
     .get('/logs/:logId', getFoodLogHandler)
     .put('/logs/:logId', updateFoodLogHandler)
     .delete('/logs/:logId', deleteFoodLogHandler)
@@ -36,6 +37,26 @@ export function createFoodLogHandler(
     )
 }
 
+function validStartEndDateStrings(startDateString: string, endDateString: string): boolean {
+  const startDate = new Date(startDateString);
+  const endDate = new Date(endDateString);
+  return startDate.toString() !== "Invalid Date" && endDate.toString() !== "Invalid Date" && endDate.getTime() >= startDate.getTime()
+}
+
+export function queryFoodLogHandler(
+  req: Request,
+  res: Response & { locals: OFDLocals },
+  next: NextFunction,
+  queryFoodLog: QueryFoodLogFunction = {} as any
+) {
+  const { startDate, endDate } = req.query;
+  if (typeof startDate === "string" && typeof endDate === "string" && validStartEndDateStrings(startDate, endDate)) {
+    queryFoodLog(res.locals.userId, new Date(startDate), new Date(endDate))
+      .then(result => result.map(res.send)
+        .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message)))
+  }
+  res.status(400).send("Invalid startDate or endDate")
+}
 
 export function getFoodLogHandler(
   req: Request,
