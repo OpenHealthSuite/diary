@@ -1,7 +1,8 @@
 import { Express, NextFunction, Request, Response } from 'express';
 import { Result } from 'neverthrow';
 import { isValidationError, StorageError } from '../storage';
-import { CreateFoodLogEntry, OFDLocals } from '../types';
+import { CreateFoodLogEntry } from '../types';
+import { OFDLocals } from '../middlewares';
 
 export function addHandlers(app: Express) {
   app.post('/logs', createFoodLogHandler)

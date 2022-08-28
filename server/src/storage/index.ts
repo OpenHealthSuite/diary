@@ -1,1 +1,1 @@
-export * from './StorageErrors';
+export * from './types/StorageErrors';
