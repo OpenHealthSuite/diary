@@ -60,7 +60,7 @@ export const editFoodLog: EditFoodLogFunction =
 
 export const deleteFoodLog: DeleteFoodLogFunction =
     (userId: string, logId: string): Promise<Result<boolean, StorageError>>  => {
-        const log = MEMORY_STORAGE[userId]?.findIndex(x => x.id === logId)
+        const log = MEMORY_STORAGE[userId]?.findIndex(x => x && x.id === logId)
         if (log === undefined || log === -1) {
             return Promise.resolve(ok(false));
         }
