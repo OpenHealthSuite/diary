@@ -50,5 +50,6 @@ export function updateFoodLogHandler(
   editFoodLog: EditFoodLogFunction = {} as any
 ) {
   editFoodLog(res.locals.userId, { id: req.params.itemId, ...req.body })
-    .then(result => result.map(res.send))
+    .then(result => result.map(res.send)
+      .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message)))
 }

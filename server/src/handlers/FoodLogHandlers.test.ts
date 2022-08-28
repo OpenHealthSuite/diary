@@ -196,7 +196,7 @@ describe("Get Food Log Handler", () => {
 })
 
 
-describe("Create Food Log Handler", () => {
+describe("Update Food Log Handler", () => {
   test("Happy Path :: Passes to storage, success, returns id of log", async () => {
     const itemId = crypto.randomUUID();
     const userId = crypto.randomUUID();
@@ -210,7 +210,11 @@ describe("Create Food Log Handler", () => {
       metrics: {}
     }
 
-    const mockStorage = jest.fn().mockResolvedValue(ok({ id: itemId, ...input }));
+    const expectedStorageInput = { id: itemId, ...input }
+
+    const storageResponse = { whoami: "storageResponse" }
+
+    const mockStorage = jest.fn().mockResolvedValue(ok(storageResponse));
 
     const fakeReq: any = {
       params: {
@@ -230,7 +234,118 @@ describe("Create Food Log Handler", () => {
     await updateFoodLogHandler(fakeReq as Request, fakeRes as any as Response & { locals: OFDLocals }, jest.fn(), mockStorage)
 
     expect(mockStorage).toBeCalledTimes(1)
-    expect(mockStorage).toBeCalledWith(userId, { id: itemId, ...input })
-    expect(fakeRes.send).toBeCalledWith({ id: itemId, ...input })
+    expect(mockStorage).toBeCalledWith(userId, expectedStorageInput)
+    expect(fakeRes.send).toBeCalledWith(storageResponse)
+  })
+
+  test("Validation Error :: returns 400 with message", async () => {
+    const itemId = crypto.randomUUID();
+    const userId = crypto.randomUUID();
+    const input: EditFoodLogEntry = {
+      name: 'My Log',
+      labels: new Set<string>()
+    }
+
+    const expectedStorageInput = { id: itemId, ...input }
+
+    const storageResponse = new ValidationError("Error validating")
+
+    const mockStorage = jest.fn().mockResolvedValue(err(storageResponse));
+
+    const fakeReq: any = {
+      params: {
+        itemId
+      },
+      body: input,
+    }
+
+    const fakeRes = {
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      locals: {
+        userId: userId
+      }
+    }
+
+    await updateFoodLogHandler(fakeReq as Request, fakeRes as any as Response & { locals: OFDLocals }, jest.fn(), mockStorage)
+
+    expect(mockStorage).toBeCalledTimes(1)
+    expect(mockStorage).toBeCalledWith(userId, expectedStorageInput)
+    expect(fakeRes.status).toBeCalledWith(400)
+    expect(fakeRes.send).toBeCalledWith(storageResponse.message)
+  })
+
+  test("Not Found Error :: returns 404 with message", async () => {
+    const itemId = crypto.randomUUID();
+    const userId = crypto.randomUUID();
+    const input: EditFoodLogEntry = {
+      name: 'My Log',
+      labels: new Set<string>()
+    }
+
+    const expectedStorageInput = { id: itemId, ...input }
+
+    const storageResponse = new NotFoundError("Error finding")
+
+    const mockStorage = jest.fn().mockResolvedValue(err(storageResponse));
+
+    const fakeReq: any = {
+      params: {
+        itemId
+      },
+      body: input,
+    }
+
+    const fakeRes = {
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      locals: {
+        userId: userId
+      }
+    }
+
+    await updateFoodLogHandler(fakeReq as Request, fakeRes as any as Response & { locals: OFDLocals }, jest.fn(), mockStorage)
+
+    expect(mockStorage).toBeCalledTimes(1)
+    expect(mockStorage).toBeCalledWith(userId, expectedStorageInput)
+    expect(fakeRes.status).toBeCalledWith(404)
+    expect(fakeRes.send).toBeCalledWith(storageResponse.message)
+  })
+
+  test("Generic Error :: returns 500 with message", async () => {
+    const itemId = crypto.randomUUID();
+    const userId = crypto.randomUUID();
+    const input: EditFoodLogEntry = {
+      name: 'My Log',
+      labels: new Set<string>()
+    }
+
+    const expectedStorageInput = { id: itemId, ...input }
+
+    const storageResponse = new Error("Error something bad")
+
+    const mockStorage = jest.fn().mockResolvedValue(err(storageResponse));
+
+    const fakeReq: any = {
+      params: {
+        itemId
+      },
+      body: input,
+    }
+
+    const fakeRes = {
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      locals: {
+        userId: userId
+      }
+    }
+
+    await updateFoodLogHandler(fakeReq as Request, fakeRes as any as Response & { locals: OFDLocals }, jest.fn(), mockStorage)
+
+    expect(mockStorage).toBeCalledTimes(1)
+    expect(mockStorage).toBeCalledWith(userId, expectedStorageInput)
+    expect(fakeRes.status).toBeCalledWith(500)
+    expect(fakeRes.send).toBeCalledWith(storageResponse.message)
   })
 })
