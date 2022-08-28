@@ -1,4 +1,5 @@
 import express from 'express';
+import { userMiddleware } from './middlewares';
 
 const port = process.env.PORT || 3012;
 
@@ -6,6 +7,7 @@ const app = express();
 
 app.use(express.json())
 app.use(express.static('./public'));
+app.use(userMiddleware);
 
 app.get('/api', (req, res) => {
     res.send('Hello World!')
