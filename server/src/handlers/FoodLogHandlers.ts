@@ -1,12 +1,13 @@
 import { Express, NextFunction, Request, Response } from 'express';
 import { isNotFoundError, isValidationError, StorageError } from '../storage';
 import { OFDLocals } from '../middlewares';
-import { EditFoodLogFunction, RetrieveFoodLogFunction, StoreFoodLogFunction } from '../storage/types/FoodLog';
+import { DeleteFoodLogFunction, EditFoodLogFunction, RetrieveFoodLogFunction, StoreFoodLogFunction } from '../storage/types/FoodLog';
 
 export function addHandlers(app: Express) {
   app.post('/logs', createFoodLogHandler)
   app.get('/logs/:logId', getFoodLogHandler)
   app.put('/logs/:logId', updateFoodLogHandler)
+  app.delete('/logs/:logId', deleteFoodLogHandler)
 }
 
 function errorStatusCodeCalculator(err: StorageError): number {
@@ -51,5 +52,17 @@ export function updateFoodLogHandler(
 ) {
   editFoodLog(res.locals.userId, { id: req.params.itemId, ...req.body })
     .then(result => result.map(res.send)
+      .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message)))
+}
+
+
+export function deleteFoodLogHandler(
+  req: Request,
+  res: Response & { locals: OFDLocals },
+  next: NextFunction,
+  deleteFoodLog: DeleteFoodLogFunction = {} as any
+) {
+  deleteFoodLog(res.locals.userId, req.params.itemId)
+    .then(result => result.map(res.status(204).send)
       .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message)))
 }

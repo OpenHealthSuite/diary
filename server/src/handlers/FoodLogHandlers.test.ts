@@ -1,4 +1,4 @@
-import { addHandlers, createFoodLogHandler, getFoodLogHandler, updateFoodLogHandler } from './FoodLogHandlers'
+import { addHandlers, createFoodLogHandler, getFoodLogHandler, updateFoodLogHandler, deleteFoodLogHandler } from './FoodLogHandlers'
 import { Express, Request, Response} from 'express';
 import crypto from 'node:crypto';
 import { OFDLocals } from '../middlewares';
@@ -13,12 +13,14 @@ describe("Handler Registration", () => {
       post: jest.fn(),
       get: jest.fn(),
       put: jest.fn(),
+      delete: jest.fn()
     } as unknown as Express;
     addHandlers(fakeApp);
 
     expect(fakeApp.post).toBeCalledWith('/logs', createFoodLogHandler)
     expect(fakeApp.get).toBeCalledWith('/logs/:logId', getFoodLogHandler)
     expect(fakeApp.put).toBeCalledWith('/logs/:logId', updateFoodLogHandler)
+    expect(fakeApp.delete).toBeCalledWith('/logs/:logId', deleteFoodLogHandler)
   })
 })
 
@@ -347,5 +349,36 @@ describe("Update Food Log Handler", () => {
     expect(mockStorage).toBeCalledWith(userId, expectedStorageInput)
     expect(fakeRes.status).toBeCalledWith(500)
     expect(fakeRes.send).toBeCalledWith(storageResponse.message)
+  })
+})
+
+
+describe("Get Food Log Handler", () => {
+  test("Happy Path :: Passes to storage, 204 success", async () => {
+    const userId = crypto.randomUUID();
+    const itemId = crypto.randomUUID();
+
+    const mockStorage = jest.fn().mockResolvedValue(ok(true));
+
+    const fakeReq: any = {
+      params: {
+        itemId: itemId
+      }
+    }
+
+    const fakeRes = {
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      locals: {
+        userId: userId
+      }
+    }
+
+    await deleteFoodLogHandler(fakeReq as Request, fakeRes as any as Response & { locals: OFDLocals }, jest.fn(), mockStorage)
+
+    expect(mockStorage).toBeCalledTimes(1)
+    expect(mockStorage).toBeCalledWith(userId, itemId)
+    expect(fakeRes.status).toBeCalledWith(204)
+    expect(fakeRes.send).toBeCalled()
   })
 })
