@@ -15,9 +15,27 @@ import {
 
 const MEMORY_STORAGE: { [key: string] : FoodLogEntry[] } = {};
 
+// Making this TOO robust is probably a mistake - this will do for now.
+
 function isValidCreateLogEntry(logEntry: CreateFoodLogEntry): boolean {
-    return logEntry.name !== undefined;
+    return (logEntry as any).id === undefined 
+        && logEntry.name !== undefined
+        && logEntry.labels !== undefined //Check the labels are a set?
+        && logEntry.metrics !== undefined
+        && !Object.values(logEntry.metrics).some(isNaN)
+        && logEntry.time !== undefined
+        && logEntry.time.start !== undefined
+        && logEntry.time.end !== undefined
 }
+
+function isValidEditLogEntry(logEntry: EditFoodLogEntry): boolean {
+    return logEntry.id !== undefined 
+        && (logEntry.metrics === undefined || !Object.values(logEntry.metrics).some(isNaN))
+        && (logEntry.time === undefined || (
+        logEntry.time.start !== undefined
+        && logEntry.time.end !== undefined ))
+}
+
 
 export const storeFoodLog: StoreFoodLogFunction = 
     (userId: string, logEntry: CreateFoodLogEntry) : Promise<Result<string, StorageError>> => {
@@ -25,8 +43,8 @@ export const storeFoodLog: StoreFoodLogFunction =
             return Promise.resolve(err(new ValidationError("Invalid Log Entry")))
         }
         const newItem = {
+            ...logEntry,
             id: crypto.randomUUID(),
-            ...logEntry
         }
         if (MEMORY_STORAGE[userId] !== undefined) {
             MEMORY_STORAGE[userId].push(newItem)
@@ -47,6 +65,9 @@ export const retrieveFoodLog: RetrieveFoodLogFunction =
 
 export const editFoodLog: EditFoodLogFunction =
     (userId: string, logEntry: EditFoodLogEntry) => {
+        if (!isValidEditLogEntry(logEntry)) {
+            return Promise.resolve(err(new ValidationError("Invalid Log Entry")))
+        }
         const log = MEMORY_STORAGE[userId]?.findIndex(x => x && x.id === logEntry.id)
         if (log === undefined || log === -1) {
             return Promise.resolve(err(new NotFoundError("No Log Found")));
