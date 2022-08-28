@@ -1,5 +1,5 @@
-import { addHandlers, createFoodLogHandler, getFoodLogHandler, updateFoodLogHandler, deleteFoodLogHandler } from './FoodLogHandlers'
-import { Express, Request, Response} from 'express';
+import { createFoodLogHandler, getFoodLogHandler, updateFoodLogHandler, deleteFoodLogHandler, buildRouter } from './FoodLogHandlers'
+import { Express, Request, Response, Router } from 'express';
 import crypto from 'node:crypto';
 import { OFDLocals } from '../middlewares';
 import { NotFoundError, ValidationError } from '../storage';
@@ -9,18 +9,20 @@ import { FoodLogEntry } from '../types';
 
 describe("Handler Registration", () => {
   it("Registers all functions on routes", () => {
-    const fakeApp = {
-      post: jest.fn(),
-      get: jest.fn(),
-      put: jest.fn(),
-      delete: jest.fn()
-    } as unknown as Express;
-    addHandlers(fakeApp);
+    const fakeRouter = {
+      route: jest.fn().mockReturnThis(),
+      post: jest.fn().mockReturnThis(),
+      get: jest.fn().mockReturnThis(),
+      put: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis()
+    } as unknown as Router;
 
-    expect(fakeApp.post).toBeCalledWith('/logs', createFoodLogHandler)
-    expect(fakeApp.get).toBeCalledWith('/logs/:logId', getFoodLogHandler)
-    expect(fakeApp.put).toBeCalledWith('/logs/:logId', updateFoodLogHandler)
-    expect(fakeApp.delete).toBeCalledWith('/logs/:logId', deleteFoodLogHandler)
+    buildRouter(fakeRouter);
+
+    expect(fakeRouter.post).toBeCalledWith('/logs', createFoodLogHandler)
+    expect(fakeRouter.get).toBeCalledWith('/logs/:logId', getFoodLogHandler)
+    expect(fakeRouter.put).toBeCalledWith('/logs/:logId', updateFoodLogHandler)
+    expect(fakeRouter.delete).toBeCalledWith('/logs/:logId', deleteFoodLogHandler)
   })
 })
 

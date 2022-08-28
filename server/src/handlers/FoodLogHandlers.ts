@@ -1,4 +1,4 @@
-import { Express, NextFunction, Request, Response } from 'express';
+import express, { NextFunction, Request, Response, Router } from 'express';
 import { isNotFoundError, isValidationError, StorageError } from '../storage';
 import { OFDLocals } from '../middlewares';
 import { DeleteFoodLogFunction, EditFoodLogFunction, RetrieveFoodLogFunction, StoreFoodLogFunction } from '../storage/types/FoodLog';
@@ -7,12 +7,14 @@ import * as storage from '../storage'
 
 const foodStorageProvider = storage.memory.foodLog;
 
-export function addHandlers(app: Express) {
-  app.post('/logs', createFoodLogHandler)
-  app.get('/logs/:logId', getFoodLogHandler)
-  app.put('/logs/:logId', updateFoodLogHandler)
-  app.delete('/logs/:logId', deleteFoodLogHandler)
+export function buildRouter(router: Router): Router {
+  return router.post('/logs', createFoodLogHandler)
+    .get('/logs/:logId', getFoodLogHandler)
+    .put('/logs/:logId', updateFoodLogHandler)
+    .delete('/logs/:logId', deleteFoodLogHandler)
 }
+
+export const FoodStorageRouter = buildRouter(express.Router())
 
 function errorStatusCodeCalculator(err: StorageError): number {
   if (isValidationError(err))
