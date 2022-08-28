@@ -1,4 +1,4 @@
-import { editFoodLog, storeFoodLog } from "./FoodLogStorageFunctions"
+import { editFoodLog, queryFoodLogs, storeFoodLog } from "./FoodLogStorageFunctions"
 import crypto from 'node:crypto'
 import { CreateFoodLogEntry, EditFoodLogEntry, isValidationError } from "../types"
 
@@ -10,8 +10,8 @@ describe("FoodLogStorageFunctions", () => {
                 name: "My Food Log",
                 labels: new Set(["Some Label", "Some other label"]),
                 time: {
-                    start: new Date(),
-                    end: new Date()
+                    start: new Date(1999, 10, 10),
+                    end: new Date(1999, 10, 11)
                 },
                 metrics: {
                     calories: 500
@@ -30,6 +30,9 @@ describe("FoodLogStorageFunctions", () => {
             delete startTimeLess.time.start;
             let endTimeLess: any = structuredClone(GoldInput);
             delete endTimeLess.time.end;
+            let endBeforeStart = structuredClone(GoldInput);
+            endBeforeStart.time.start = new Date(1999, 10, 10)
+            endBeforeStart.time.end = new Date(1999, 8, 10)
     
             const BadValues: any[] = [
                 ["Empty", {}],
@@ -40,11 +43,23 @@ describe("FoodLogStorageFunctions", () => {
                 ["Non-number Metric", weirdMetric],
                 ["No Times", timeless],
                 ["No Start Time", startTimeLess],
-                ["No End Time", endTimeLess]
+                ["No End Time", endTimeLess],
+                ["End before start", endBeforeStart]
             ]
     
             it.each(BadValues)("Rejects Bad Test Case %s", async (name: string, badValue: any) => {
                 const result = await storeFoodLog(testUserId, badValue)
+    
+                expect(result.isErr()).toBeTruthy()
+                expect(isValidationError(result._unsafeUnwrapErr())).toBeTruthy()
+            })
+        })
+    })
+
+    describe("QueryFoodLog", () => {
+        describe("Validation Errors", () => {
+            it("Rejects disordered dates", async () => {
+                const result = await queryFoodLogs(crypto.randomUUID(), new Date(1997, 10, 1), new Date(1987, 10, 1))
     
                 expect(result.isErr()).toBeTruthy()
                 expect(isValidationError(result._unsafeUnwrapErr())).toBeTruthy()
@@ -76,13 +91,17 @@ describe("FoodLogStorageFunctions", () => {
             delete startTimeLess.time.start;
             let endTimeLess: any = structuredClone(GoldInput);
             delete endTimeLess.time.end;
+            let endBeforeStart = structuredClone(GoldInput);
+            endBeforeStart.time!.start = new Date(1999, 10, 10)
+            endBeforeStart.time!.end = new Date(1999, 8, 10)
     
             const BadValues: any[] = [
                 ["Empty", {}],
                 ["WithoutId", { ...GoldInput, id: undefined }],
                 ["Non-number Metric", weirdMetric],
                 ["No Start Time", startTimeLess],
-                ["No End Time", endTimeLess]
+                ["No End Time", endTimeLess],
+                ["End before start", endBeforeStart]
             ]
     
             it.each(BadValues)("Rejects Bad Test Case %s", async (name: string, badValue: any) => {

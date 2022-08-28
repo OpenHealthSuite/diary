@@ -7,6 +7,7 @@ import {
     EditFoodLogEntry,
     EditFoodLogFunction,
     NotFoundError,
+    QueryFoodLogFunction,
     RetrieveFoodLogFunction,
     StorageError,
     StoreFoodLogFunction,
@@ -26,6 +27,7 @@ function isValidCreateLogEntry(logEntry: CreateFoodLogEntry): boolean {
         && logEntry.time !== undefined
         && logEntry.time.start !== undefined
         && logEntry.time.end !== undefined
+        && logEntry.time.end.getTime() >= logEntry.time.start.getTime()
 }
 
 function isValidEditLogEntry(logEntry: EditFoodLogEntry): boolean {
@@ -33,7 +35,8 @@ function isValidEditLogEntry(logEntry: EditFoodLogEntry): boolean {
         && (logEntry.metrics === undefined || !Object.values(logEntry.metrics).some(isNaN))
         && (logEntry.time === undefined || (
         logEntry.time.start !== undefined
-        && logEntry.time.end !== undefined ))
+        && logEntry.time.end !== undefined
+        && logEntry.time.end.getTime() >= logEntry.time.start.getTime() ))
 }
 
 
@@ -61,6 +64,18 @@ export const retrieveFoodLog: RetrieveFoodLogFunction =
             return Promise.resolve(err(new NotFoundError("No Log Found")));
         }
         return Promise.resolve(ok(log));
+    }
+
+
+export const queryFoodLogs: QueryFoodLogFunction =
+    (userId: string, startDate: Date, endDate: Date) : Promise<Result<FoodLogEntry[], StorageError>> => {
+        if (endDate.getTime() < startDate.getTime()) {
+            return Promise.resolve(err(new ValidationError("startDate is after endDate")))
+        }
+        if (!MEMORY_STORAGE[userId]) {
+            return Promise.resolve(ok([] as FoodLogEntry[]));
+        }
+        return Promise.resolve(ok(MEMORY_STORAGE[userId].filter(x => new Date(x.time.start).getTime() >= startDate.getTime() && new Date(x.time.end).getTime() <= endDate.getTime())));
     }
 
 export const editFoodLog: EditFoodLogFunction =

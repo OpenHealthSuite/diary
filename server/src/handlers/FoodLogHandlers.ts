@@ -31,7 +31,12 @@ export function createFoodLogHandler(
   next: NextFunction,
   storeFoodLog: StoreFoodLogFunction = foodStorageProvider.storeFoodLog
 ) {
-  storeFoodLog(res.locals.userId, req.body)
+  let item = structuredClone(req.body);
+  if (item && item.time && item.time.start && item.time.end && validStartEndDateStrings(item.time.start, item.time.end)) {
+    item.time.start = new Date(item.time.start)
+    item.time.end = new Date(item.time.end)
+  }
+  storeFoodLog(res.locals.userId, item)
     .then(result => result.map(res.send)
       .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message))
     )
@@ -40,7 +45,7 @@ export function createFoodLogHandler(
 function validStartEndDateStrings(startDateString: string, endDateString: string): boolean {
   const startDate = new Date(startDateString);
   const endDate = new Date(endDateString);
-  return startDate.toString() !== "Invalid Date" && endDate.toString() !== "Invalid Date" && endDate.getTime() >= startDate.getTime()
+  return startDate.toString() !== "Invalid Date" && endDate.toString() !== "Invalid Date"
 }
 
 export function queryFoodLogHandler(
@@ -77,7 +82,15 @@ export function updateFoodLogHandler(
   next: NextFunction,
   editFoodLog: EditFoodLogFunction = foodStorageProvider.editFoodLog
 ) {
-  editFoodLog(res.locals.userId, { id: req.params.itemId, ...req.body })
+  let item = structuredClone(req.body);
+  if (item.time && item.time.start && item.time.end && validStartEndDateStrings(item.time.start, item.time.end)) {
+    item.time.start = new Date(item.time.start)
+    item.time.end = new Date(item.time.end)
+  } else if (item.time) {
+    res.status(400).send("Unable to parse dates")
+    return;
+  }
+  editFoodLog(res.locals.userId, { id: req.params.itemId, ...item })
     .then(result => result.map(res.send)
       .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message)))
 }

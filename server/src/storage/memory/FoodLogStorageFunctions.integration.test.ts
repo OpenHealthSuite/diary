@@ -1,4 +1,4 @@
-import { deleteFoodLog, editFoodLog, retrieveFoodLog, storeFoodLog } from "./FoodLogStorageFunctions"
+import { deleteFoodLog, editFoodLog, queryFoodLogs, retrieveFoodLog, storeFoodLog } from "./FoodLogStorageFunctions"
 import crypto from 'node:crypto'
 import { CreateFoodLogEntry, isNotFoundError, isValidationError } from "../types"
 
@@ -68,5 +68,82 @@ describe("Food Log Storage Integration Tests", () => {
 
         expect(redeleteResult.isOk()).toBeTruthy()
         expect(redeleteResult._unsafeUnwrap()).toBeFalsy()
+    })
+
+    test("Queries :: can add some logs, and get expected query results", async () => {
+        const testUserId = crypto.randomUUID()
+
+        const pastLog: CreateFoodLogEntry = {
+            name: "My Food Log",
+            labels: new Set(),
+            time: {
+                start: new Date(1999, 10, 10),
+                end: new Date(1999, 10, 11)
+            },
+            metrics: {
+                calories: 500
+            }
+        }
+
+        const centerLog: CreateFoodLogEntry = {
+            name: "My Food Log",
+            labels: new Set(),
+            time: {
+                start: new Date(1999, 10, 15),
+                end: new Date(1999, 10, 16)
+            },
+            metrics: {
+                calories: 500
+            }
+        }
+
+        const futureLog: CreateFoodLogEntry = {
+            name: "My Food Log",
+            labels: new Set(),
+            time: {
+                start: new Date(1999, 10, 20),
+                end: new Date(1999, 10, 21)
+            },
+            metrics: {
+                calories: 500
+            }
+        }
+
+        const past = await storeFoodLog(testUserId, pastLog)
+        const pastItemId = past._unsafeUnwrap()
+
+        const result = await storeFoodLog(testUserId, centerLog)
+        const centerItemId = result._unsafeUnwrap()
+
+        const future = await storeFoodLog(testUserId, futureLog)
+        const futureItemId = future._unsafeUnwrap()
+
+
+        const startingQueryResult = await queryFoodLogs(testUserId, new Date(1999, 10, 15), new Date(1999, 10, 16))
+        
+        expect(startingQueryResult.isOk()).toBeTruthy()
+        const firstTest = startingQueryResult._unsafeUnwrap();
+        expect(firstTest.length).toBe(1)
+        expect(firstTest[0].id).toBe(centerItemId)
+
+        const pastQueryResult = await queryFoodLogs(testUserId, new Date(1999, 10, 9), new Date(1999, 10, 16))
+        
+        expect(pastQueryResult.isOk()).toBeTruthy()
+        const secondTest = pastQueryResult._unsafeUnwrap();
+        expect(secondTest.length).toBe(2)
+        expect(secondTest.map(x => x.id)).toEqual([pastItemId, centerItemId])
+        
+        const futureQueryResult = await queryFoodLogs(testUserId, new Date(1999, 10, 15), new Date(1999, 10, 30))
+        
+        expect(futureQueryResult.isOk()).toBeTruthy()
+        const thirdTest = futureQueryResult._unsafeUnwrap();
+        expect(thirdTest.length).toBe(2)
+        expect(thirdTest.map(x => x.id)).toEqual([centerItemId, futureItemId])
+
+        const wildQueryResult = await queryFoodLogs(testUserId, new Date(2012, 0, 1), new Date(2012, 11, 31))
+        
+        expect(startingQueryResult.isOk()).toBeTruthy()
+        const wildTest = wildQueryResult._unsafeUnwrap();
+        expect(wildTest.length).toBe(0)
     })
 })
