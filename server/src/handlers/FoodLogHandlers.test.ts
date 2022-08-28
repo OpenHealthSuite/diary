@@ -34,7 +34,6 @@ describe("Create Food Log Handler", () => {
 
     const fakeReq = {
       body: input,
-
     }
 
     const fakeRes = {
