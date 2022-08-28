@@ -3,6 +3,10 @@ import { isNotFoundError, isValidationError, StorageError } from '../storage';
 import { OFDLocals } from '../middlewares';
 import { DeleteFoodLogFunction, EditFoodLogFunction, RetrieveFoodLogFunction, StoreFoodLogFunction } from '../storage/types/FoodLog';
 
+import * as storage from '../storage'
+
+const foodStorageProvider = storage.memory.foodLog;
+
 export function addHandlers(app: Express) {
   app.post('/logs', createFoodLogHandler)
   app.get('/logs/:logId', getFoodLogHandler)
@@ -22,7 +26,7 @@ export function createFoodLogHandler(
   req: Request,
   res: Response & { locals: OFDLocals },
   next: NextFunction,
-  storeFoodLog: StoreFoodLogFunction = {} as any
+  storeFoodLog: StoreFoodLogFunction = foodStorageProvider.storeFoodLog
 ) {
   storeFoodLog(res.locals.userId, req.body)
     .then(result => result.map(res.send)
@@ -35,7 +39,7 @@ export function getFoodLogHandler(
   req: Request,
   res: Response & { locals: OFDLocals },
   next: NextFunction,
-  getFoodLog: RetrieveFoodLogFunction = {} as any
+  getFoodLog: RetrieveFoodLogFunction = foodStorageProvider.retrieveFoodLog
 ) {
   getFoodLog(res.locals.userId, req.params.itemId)
     .then(result => result.map(res.send)
@@ -48,7 +52,7 @@ export function updateFoodLogHandler(
   req: Request,
   res: Response & { locals: OFDLocals },
   next: NextFunction,
-  editFoodLog: EditFoodLogFunction = {} as any
+  editFoodLog: EditFoodLogFunction = foodStorageProvider.editFoodLog
 ) {
   editFoodLog(res.locals.userId, { id: req.params.itemId, ...req.body })
     .then(result => result.map(res.send)
@@ -60,7 +64,7 @@ export function deleteFoodLogHandler(
   req: Request,
   res: Response & { locals: OFDLocals },
   next: NextFunction,
-  deleteFoodLog: DeleteFoodLogFunction = {} as any
+  deleteFoodLog: DeleteFoodLogFunction = foodStorageProvider.deleteFoodLog
 ) {
   deleteFoodLog(res.locals.userId, req.params.itemId)
     .then(result => result.map(res.status(204).send)
