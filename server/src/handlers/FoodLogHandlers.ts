@@ -1,11 +1,12 @@
 import { Express, NextFunction, Request, Response } from 'express';
 import { isNotFoundError, isValidationError, StorageError } from '../storage';
 import { OFDLocals } from '../middlewares';
-import { RetrieveFoodLogFunction, StoreFoodLogFunction } from '../storage/types/FoodLog';
+import { EditFoodLogFunction, RetrieveFoodLogFunction, StoreFoodLogFunction } from '../storage/types/FoodLog';
 
 export function addHandlers(app: Express) {
   app.post('/logs', createFoodLogHandler)
   app.get('/logs/:logId', getFoodLogHandler)
+  app.put('/logs/:logId', updateFoodLogHandler)
 }
 
 function errorStatusCodeCalculator(err: StorageError): number {
@@ -40,4 +41,14 @@ export function getFoodLogHandler(
       .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message))
     )
   
+}
+
+export function updateFoodLogHandler(
+  req: Request,
+  res: Response & { locals: OFDLocals },
+  next: NextFunction,
+  editFoodLog: EditFoodLogFunction = {} as any
+) {
+  editFoodLog(res.locals.userId, { id: req.params.itemId, ...req.body })
+    .then(result => result.map(res.send))
 }
