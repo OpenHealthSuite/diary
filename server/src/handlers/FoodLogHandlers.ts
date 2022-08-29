@@ -37,7 +37,7 @@ export function createFoodLogHandler(
     item.time.end = new Date(item.time.end)
   }
   storeFoodLog(res.locals.userId, item)
-    .then(result => result.map(res.send)
+    .then(result => result.map(val => res.send(val))
       .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message))
     )
 }
@@ -52,13 +52,14 @@ export function queryFoodLogHandler(
   req: Request,
   res: Response & { locals: OFDLocals },
   next: NextFunction,
-  queryFoodLog: QueryFoodLogFunction = {} as any
+  queryFoodLog: QueryFoodLogFunction = foodStorageProvider.queryFoodLogs
 ) {
   const { startDate, endDate } = req.query;
   if (typeof startDate === "string" && typeof endDate === "string" && validStartEndDateStrings(startDate, endDate)) {
     queryFoodLog(res.locals.userId, new Date(startDate), new Date(endDate))
-      .then(result => result.map(res.send)
+      .then(result => result.map(val => res.send(val))
         .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message)))
+    return;
   }
   res.status(400).send("Invalid startDate or endDate")
 }
@@ -70,7 +71,7 @@ export function getFoodLogHandler(
   getFoodLog: RetrieveFoodLogFunction = foodStorageProvider.retrieveFoodLog
 ) {
   getFoodLog(res.locals.userId, req.params.itemId)
-    .then(result => result.map(res.send)
+    .then(result => result.map(val => res.send(val))
       .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message))
     )
   
@@ -91,7 +92,7 @@ export function updateFoodLogHandler(
     return;
   }
   editFoodLog(res.locals.userId, { id: req.params.itemId, ...item })
-    .then(result => result.map(res.send)
+    .then(result => result.map(val => res.send(val))
       .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message)))
 }
 
@@ -103,6 +104,6 @@ export function deleteFoodLogHandler(
   deleteFoodLog: DeleteFoodLogFunction = foodStorageProvider.deleteFoodLog
 ) {
   deleteFoodLog(res.locals.userId, req.params.itemId)
-    .then(result => result.map(res.status(204).send)
+    .then(result => result.map(() => res.status(204).send())
       .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message)))
 }

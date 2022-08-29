@@ -7,17 +7,17 @@ const port = process.env.PORT || 3012;
 
 const app = express();
 
-app.settings('query parser', function (str: string) {
-  return qs.parse(str, { })
-})
+app.settings['query parser'] = qs.parse
 
 app.use(express.json())
 app.use(express.static('./public'));
+
+app.get('/api/health', (req, res) => {
+  res.send()
+});
+
 app.use(userMiddleware);
 
-app.get('/api', (req, res) => {
-    res.send('Hello World!')
-});
 
 app.use('/api', FoodStorageRouter)
   
