@@ -282,7 +282,7 @@ describe("Update Food Log Handler", () => {
   test("Happy Path :: Passes to storage, success, returns id of log", async () => {
     const itemId = crypto.randomUUID();
     const userId = crypto.randomUUID();
-    const input: EditFoodLogEntry = {
+    const input = {
       name: 'My Log',
       labels: new Set<string>(),
       time: {
@@ -323,7 +323,7 @@ describe("Update Food Log Handler", () => {
   test("Validation Error :: returns 400 with message", async () => {
     const itemId = crypto.randomUUID();
     const userId = crypto.randomUUID();
-    const input: EditFoodLogEntry = {
+    const input = {
       name: 'My Log',
       labels: new Set<string>()
     }
@@ -360,7 +360,7 @@ describe("Update Food Log Handler", () => {
   test("Not Found Error :: returns 404 with message", async () => {
     const itemId = crypto.randomUUID();
     const userId = crypto.randomUUID();
-    const input: EditFoodLogEntry = {
+    const input = {
       name: 'My Log',
       labels: new Set<string>()
     }
@@ -397,7 +397,7 @@ describe("Update Food Log Handler", () => {
   test("Generic Error :: returns 500 with message", async () => {
     const itemId = crypto.randomUUID();
     const userId = crypto.randomUUID();
-    const input: EditFoodLogEntry = {
+    const input = {
       name: 'My Log',
       labels: new Set<string>()
     }
