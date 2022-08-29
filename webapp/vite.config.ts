@@ -8,6 +8,9 @@ const proxy = {
   '/api': {
        target: 'http://localhost:3012',
        changeOrigin: true,
+       headers: {
+        "X-OpenFoodDiary-UserId": process.env.OPENFOODDIARY_USERID ?? 'f1750ac3-d6cc-4981-9466-f1de2ebbad33'
+       },
        secure: false,      
        ws: true,
    }
