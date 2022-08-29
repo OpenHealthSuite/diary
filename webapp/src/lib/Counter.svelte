@@ -5,7 +5,6 @@
     count += 1
   }
 </script>
-
-<button data-testid="counter-button" on:click={increment}>
+<Button data-testid="counter-button" on:click={increment}>
   count is {count}
-</button>
+</Button>

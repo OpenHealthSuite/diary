@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom'
 import Counter from './Counter.svelte'
 import { render, fireEvent } from '@testing-library/svelte'
 
