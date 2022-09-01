@@ -19,7 +19,7 @@ describe("UserMiddleware", () => {
         const testUserId = crypto.randomUUID()
         const req = {
             headers: {
-                "X-OpenFoodDiary-UserId": testUserId
+                "x-openfooddiary-userid": testUserId
             }
         }
         const res = {
@@ -36,7 +36,7 @@ describe("UserMiddleware", () => {
     })
 
     test("Use different trusted header", () => {
-        process.env.OPENFOODDIARY_USERIDHEADER = "X-UserId";
+        process.env.OPENFOODDIARY_USERIDHEADER = "x-userid";
         const nextfn = jest.fn();
         const testUserId = crypto.randomUUID()
         const req = {
@@ -63,7 +63,7 @@ describe("UserMiddleware", () => {
         const testUserId = crypto.randomUUID()
         const req = {
             headers: {
-                "X-OpenFoodDiary-UserId": testUserId
+                "x-openfooddiary-userid": testUserId
             }
         }
         const res = {
