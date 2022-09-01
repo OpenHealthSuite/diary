@@ -1,27 +1,78 @@
 <script lang="ts">
-    import { DatePicker, TimePicker, FormField } from "attractions";
+    import { createEventDispatcher } from 'svelte';
+    import { Button, DatePicker, TimePicker, FormField } from "attractions";
+    import type { FoodLogEntry } from '../types/FoodLogEntry';
+    import { apiFetch } from "../utilities";
     export let logTime = new Date();
-    export let duration = 1;
-    export let calories = 0;
+    export let log: FoodLogEntry = {
+        id: "",
+        name: "",
+        labels: new Set(),
+        time: {
+            start: undefined,
+            end: undefined
+        },
+        metrics: {
+            calories: 0
+        }
+    }
+
+    const dispatch = createEventDispatcher();
+
+    let name = log.name;
+    let startTime = log.time.start ?? logTime;
+
+    let duration = log.time.end && log.time.start ? 
+        (new Date(log.time.end).getTime() - new Date(log.time.start).getTime()) / 1000 / 60 : 1;
+
+    let calories = log.metrics.calories ?? 0;
+
+    const submitLog = () => {
+        const endTime = new Date(startTime)
+        endTime.setMinutes(endTime.getMinutes() + duration)
+        apiFetch('/logs', {
+            method: 'POST',
+            body: JSON.stringify({
+                name,
+                labels: new Set(),
+                time: {
+                    start: startTime.toISOString(),
+                    end: endTime.toISOString()
+                },
+                metrics: {
+                    calories
+                }
+            })
+        }).then(response => { 
+            if (response.status !== 200) {
+                response.text()
+                    .then(text => dispatch('error', text))
+                    .catch(() => dispatch('error', "An unknown error occured"))
+            }
+            return response.json() 
+        })
+            .then(guid => dispatch('success', guid))
+            .catch(err => dispatch('error', "An unknown error occured"));
+    }
 </script>
 
-<form>
+<div>
     <FormField
         id="name"
         name="Log Name"
         help="Quick description of the food/meal"
         required
         >
-        <input type="text" id="name"/>
+        <input type="text" id="name" bind:value={name}/>
     </FormField>
     <label for="date-picker">Date</label>
-    <DatePicker value={logTime} closeOnSelection />
+    <DatePicker value={startTime} closeOnSelection/>
     <label for="time">Time</label>
     <TimePicker value={logTime} />
     <FormField
         id="duration"
         name="Duration (minutes)"
-        help="Quick description of the food/meal"
+        help="How long you were eating for"
         required
         >
         <input type="number" min="1" bind:value={duration} id="duration"/>
@@ -29,9 +80,10 @@
     <FormField
         id="calories"
         name="Calories"
-        help="Quick description of the food/meal"
+        help="How many calories was the food/meal"
         required
         >
         <input type="number" min="0" bind:value={calories} id="calories"/>
     </FormField>
-</form>
+    <Button disabled={!name} on:click={() => name && submitLog()}>Submit</Button>
+</div>
