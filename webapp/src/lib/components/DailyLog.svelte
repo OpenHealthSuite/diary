@@ -13,7 +13,7 @@
     let dayData: FoodLogEntry[] = [];
 
     apiFetch(`/logs?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`)
-        .then(res => res.json())
+        .then(res => res.status === 200 ? res.json() : new Error())
         .then(data => dayData = data.sort((a, b) => a.time.start.getTime() - b.time.start.getTime()))
         .catch(() => error = true)
         .finally(() => loading = false)
@@ -21,9 +21,11 @@
 
 {#if loading}
 <div data-testid="loading-indicator">
+    Loading data
 </div>
 {:else if error}
 <div data-testid="error-indicator">
+    Error loading data
 </div>
 {:else}
 {#if dayData.length === 0}

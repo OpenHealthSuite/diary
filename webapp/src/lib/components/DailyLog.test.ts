@@ -20,6 +20,7 @@ describe("Daily Log", () => {
         const data = [];
 
         const response = {
+            status: 200,
             json: vi.fn().mockResolvedValue(data)
         };
 
@@ -48,6 +49,7 @@ describe("Daily Log", () => {
             const data = [];
     
             const response = {
+                status: 200,
                 json: vi.fn().mockResolvedValue(data)
             }
     
@@ -87,7 +89,24 @@ describe("Daily Log", () => {
     
             expect(queryByTestId("loading-indicator")).not.toBeInTheDocument()
         })
+
+        const errorCodes = [400, 403, 500]
     
+        it.each(errorCodes)('shows error message on non-200', async (status) => {
+            const testDate = new Date(2017, 8, 10, 12, 0, 0);
+    
+            (apiFetch as Mock<any[], any>).mockResolvedValue({
+                status,
+                json: vi.fn().mockResolvedValue([])
+            })
+            const { getByTestId } = render(DailyLog, {
+                day: testDate
+            })
+    
+            await new Promise(process.nextTick);
+
+            expect(getByTestId("error-indicator")).toBeInTheDocument()
+        })    
     
         it('shows error message on reject', async () => {
             const testDate = new Date(2017, 8, 10, 12, 0, 0);
@@ -114,6 +133,7 @@ describe("Daily Log", () => {
             const data = [];
     
             const response = {
+                status: 200,
                 json: vi.fn().mockResolvedValue(data)
             };
     
@@ -171,6 +191,7 @@ describe("Daily Log", () => {
             ];
     
             const response = {
+                status: 200,
                 json: vi.fn().mockResolvedValue(data)
             };
     
