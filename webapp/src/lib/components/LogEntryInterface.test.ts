@@ -236,3 +236,136 @@ describe("Create Log", () => {
       expect(componentOutput).toBe("An unknown error occured")
     })
   })
+
+
+
+describe("Edit Log", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+  
+  it('start :: it renders form with input log fields', async () => {
+    const date = new Date(2018, 1, 1, 13, 15, 23);
+    vi.setSystemTime(date);
+
+    const duration = 12;
+    const startTime = new Date(2019, 1, 1, 14, 15, 25)
+    const endTime = new Date(startTime);
+    endTime.setMinutes(endTime.getMinutes() + duration)
+
+    const inputLog: FoodLogEntry = {
+        id: crypto.randomUUID(),
+        name: "Input Log",
+        labels: new Set(),
+        time: {
+            start: startTime,
+            end: endTime
+        },
+        metrics: {
+            calories: 345
+        }
+    }
+
+    const { getByLabelText } = render(LogEntryInterface, {
+      log: inputLog
+    })
+
+    const name = getByLabelText("Log Name", { exact: false });
+    // Really just ended up fighting the custom date/time pickers here
+    // const dateInput = getByTestId("date-picker");
+    // const time = getByLabelText("Time");
+    const durationInput = getByLabelText("Duration (minutes)", { exact: false });
+    const calories = getByLabelText("Calories", { exact: false });
+
+    expect(name).toBeInTheDocument();
+    // expect(dateInput).toBeInTheDocument();
+    // expect(time).toBeInTheDocument();
+    expect(durationInput).toBeInTheDocument();
+    expect(calories).toBeInTheDocument();
+
+    expect(name).toHaveValue(inputLog.name)
+    expect(durationInput).toHaveValue(duration);
+    expect(calories).toHaveValue(inputLog.metrics.calories);
+  })
+
+  it('Happy Path :: set name, calories, duration, sends expected request, outputs success', async () => {
+
+    const startTime = new Date(2019, 1, 1, 14, 15, 25)
+
+    const logNameInput = "My Test Log";
+    const durationInput = 10;
+    const caloriesInput = 500;
+    const endDate = new Date(startTime)
+    endDate.setMinutes(endDate.getMinutes() + durationInput)
+
+    const duration = 12;
+    const endTime = new Date(startTime);
+    endTime.setMinutes(endTime.getMinutes() + duration)
+
+    const inputLog: FoodLogEntry = {
+        id: crypto.randomUUID(),
+        name: "Input Log",
+        labels: new Set(),
+        time: {
+            start: startTime,
+            end: endTime
+        },
+        metrics: {
+            calories: 345
+        }
+    }
+
+    const expectedRequest = {
+        id: inputLog.id,
+        name: logNameInput,
+        labels: new Set(),
+        time: {
+            start: startTime.toISOString(),
+            end: endDate.toISOString()
+        },
+        metrics: {
+            calories: caloriesInput
+        }
+    };
+
+    const data = inputLog.id
+
+    const response = {
+        status: 200,
+        json: vi.fn().mockResolvedValue(data)
+    };
+
+    (apiFetch as Mock<any[], any>).mockResolvedValue(response)
+
+    const { getByLabelText, getByText, component } = render(LogEntryInterface, {
+      log: inputLog
+    })
+
+    let componentOutput = undefined;
+
+    component.$on('success', e => { componentOutput = e.detail })
+
+    const name = getByLabelText("Log Name", { exact: false });
+    const durationInputElm = getByLabelText("Duration (minutes)", { exact: false });
+    const calories = getByLabelText("Calories", { exact: false });
+
+    fireEvent.input(name, {target: {value: logNameInput}})
+    fireEvent.input(durationInputElm, {target: {value: durationInput}})
+    fireEvent.input(calories, {target: {value: caloriesInput}})
+
+    await new Promise(process.nextTick);
+
+    const submitButton = getByText("Submit")
+    expect(submitButton).toBeInTheDocument();
+    expect(submitButton).not.toBeDisabled();
+    await fireEvent.click(submitButton)
+    expect(apiFetch).toBeCalledWith("/logs/" + inputLog.id, {
+      method: 'PUT',
+      body: JSON.stringify(expectedRequest)
+    });
+
+    await new Promise(process.nextTick);
+    
+    expect(componentOutput).toBe(data)
+  })
+})

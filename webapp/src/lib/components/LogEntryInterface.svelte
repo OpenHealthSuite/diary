@@ -5,7 +5,7 @@
     import { apiFetch } from "../utilities";
     export let logTime = new Date();
     export let log: FoodLogEntry = {
-        id: "",
+        id: undefined,
         name: "",
         labels: new Set(),
         time: {
@@ -23,16 +23,16 @@
     let startTime = log.time.start ?? logTime;
 
     let duration = log.time.end && log.time.start ? 
-        (new Date(log.time.end).getTime() - new Date(log.time.start).getTime()) / 1000 / 60 : 1;
-
+        ((new Date(log.time.end).getTime()) - (new Date(log.time.start).getTime())) / 1000 / 60 : 1;
     let calories = log.metrics.calories ?? 0;
 
     const submitLog = () => {
         const endTime = new Date(startTime)
         endTime.setMinutes(endTime.getMinutes() + duration)
-        apiFetch('/logs', {
-            method: 'POST',
+        apiFetch(log.id ? '/logs/' + log.id : '/logs', {
+            method: log.id ? 'PUT' : 'POST',
             body: JSON.stringify({
+                id: log.id,
                 name,
                 labels: new Set(),
                 time: {
