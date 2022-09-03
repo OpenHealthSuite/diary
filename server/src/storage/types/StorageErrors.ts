@@ -7,6 +7,10 @@ export function isNotFoundError(error: NotFoundError | Error | any): error is No
     return (error as NotFoundError).notFoundError !== undefined && error.notFoundError;
 }
 
+export function isSystemError(error: SystemError | Error | any): error is SystemError {
+    return (error as SystemError).systemError !== undefined && error.systemError;
+}
+
 export class ValidationError extends Error {
     constructor(msg: string) {
         super(msg);
@@ -24,4 +28,12 @@ export class NotFoundError extends Error {
     notFoundError = true
 }
 
-export type StorageError = ValidationError | Error
+export class SystemError extends Error {
+    constructor(msg: string) {
+        super(msg);
+        Object.setPrototypeOf(this, SystemError.prototype);
+    }
+    systemError = true
+}
+
+export type StorageError = ValidationError | NotFoundError | SystemError | Error

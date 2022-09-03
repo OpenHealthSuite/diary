@@ -11,6 +11,7 @@ import {
     RetrieveFoodLogFunction,
     StorageError,
     StoreFoodLogFunction,
+    SystemError,
     ValidationError
 } from "../types"
 import { Client } from 'cassandra-driver'
@@ -18,6 +19,8 @@ import { Client } from 'cassandra-driver'
 // Probably worth finding a better way of doing this but we only have one dataset for now
 const MIGRATIONS: string[] =[
     "CREATE KEYSPACE IF NOT EXISTS openfooddiary WITH REPLICATION = {'class':'SimpleStrategy','replication_factor':1};", // TODO: Make this optional?
+    `CREATE TYPE IF NOT EXISTS openfooddiary.logTimes (start timestamp, end timestamp);`,
+    `CREATE TABLE IF NOT EXISTS openfooddiary.user_foodlogentry (userId UUID, id UUID, name text, labels set<text>,time frozen<openfooddiary.logTimes>,metrics map<text,int>, PRIMARY KEY ((userId), id));`,
 ]
 
 const CASSANDRA_CLIENT = new Client({
@@ -59,16 +62,50 @@ function isValidEditLogEntry(logEntry: EditFoodLogEntry): boolean {
 
 
 export const storeFoodLog: StoreFoodLogFunction = 
-    (userId: string, logEntry: CreateFoodLogEntry) : Promise<Result<string, StorageError>> => {
+    async (userId: string, logEntry: CreateFoodLogEntry) : Promise<Result<string, StorageError>> => {
         if (!isValidCreateLogEntry(logEntry)) {
             return Promise.resolve(err(new ValidationError("Invalid Log Entry")))
         }
-        throw new Error("Not Implemented")
+        const insertEntry: FoodLogEntry & { userId: string } = {
+            ...logEntry,
+            id: crypto.randomUUID(),
+            userId
+        }
+        try {
+            await CASSANDRA_CLIENT.execute(`INSERT INTO openfooddiary.user_foodlogentry (userId, id, name, labels, time, metrics)
+            values (?, ?, ?, ?, ?, ?);`, 
+                [
+                    userId,
+                    insertEntry.id,
+                    insertEntry.name, 
+                    Array.from(insertEntry.labels), 
+                    insertEntry.time, 
+                    insertEntry.metrics
+                ], { prepare: true });
+            return ok(insertEntry.id);
+        } catch (error: any) {
+            return err(new SystemError(error.message))
+        }
     }
 
 export const retrieveFoodLog: RetrieveFoodLogFunction =
-    (userId: string, logId: string) : Promise<Result<FoodLogEntry, StorageError>> => {
-        throw new Error("Not Implemented")
+    async (userId: string, logId: string) : Promise<Result<FoodLogEntry, StorageError>> => {
+        try {
+            const result = await CASSANDRA_CLIENT.execute(`SELECT CAST(id as text) as id, name, labels, time, metrics 
+            FROM  openfooddiary.user_foodlogentry 
+            WHERE userId = ? AND id = ?;`, [userId, logId], { prepare: true });
+            if (result.rows.length == 0) {
+                return err(new NotFoundError("No Log with Id"))
+            }
+            const item = result.first();
+            const constructed: any = {};
+            item.keys().forEach(key => constructed[key] = item.get(key))
+            // need to manually convert array to set
+            constructed.labels = new Set(constructed.labels)
+            return ok(constructed as FoodLogEntry);
+        } catch (error: any) {
+            return err(new SystemError(error.message))
+        }
     }
 
 
