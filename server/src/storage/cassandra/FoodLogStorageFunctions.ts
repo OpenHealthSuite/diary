@@ -39,6 +39,10 @@ CASSANDRA_CLIENT.connect().then(async () => {
     }
 })
 
+export async function closeCassandra() {
+    await CASSANDRA_CLIENT.shutdown();
+}
+
 function isValidCreateLogEntry(logEntry: CreateFoodLogEntry): boolean {
     return (logEntry as any).id === undefined 
         && logEntry.name !== undefined
@@ -117,15 +121,56 @@ export const queryFoodLogs: QueryFoodLogFunction =
         throw new Error("Not Implemented")
     }
 
+const UPDATEABLE_FIELDS = ["name", "labels", "time", "metrics"]
 export const editFoodLog: EditFoodLogFunction =
-    (userId: string, logEntry: EditFoodLogEntry) => {
+    async (userId: string, logEntry: EditFoodLogEntry) => {
         if (!isValidEditLogEntry(logEntry)) {
             return Promise.resolve(err(new ValidationError("Invalid Log Entry")))
         }
-        throw new Error("Not Implemented")
+        const updateEntity: any = {
+            ...logEntry,
+            userId
+        }
+
+        let updatedFields: string[] = []
+        let updateValues: any[] = []
+
+        UPDATEABLE_FIELDS.forEach(field => {
+            if (updateEntity[field] !== undefined) {
+                updatedFields.push(field + ' = ?');
+                if (field === "labels") {
+                    updateValues.push(Array.from(updateEntity[field]))
+                } else {
+                    updateValues.push(updateEntity[field])
+                }
+            }
+        })
+        try {
+            await CASSANDRA_CLIENT.execute(`UPDATE openfooddiary.user_foodlogentry
+            SET ${updatedFields.join(',')}
+            WHERE userId = ? AND id = ?;`, 
+                [
+                    ...updateValues,
+                    userId,
+                    updateEntity.id,
+                ], { prepare: true });
+            return await retrieveFoodLog(userId, logEntry.id);
+        } catch (error: any) {
+            return err(new SystemError(error.message))
+        }
     }
 
 export const deleteFoodLog: DeleteFoodLogFunction =
-    (userId: string, logId: string): Promise<Result<boolean, StorageError>>  => {
-        throw new Error("Not Implemented")
+    async (userId: string, logId: string): Promise<Result<boolean, StorageError>>  => {
+        try {
+            await CASSANDRA_CLIENT.execute(`DELETE FROM openfooddiary.user_foodlogentry
+            WHERE userId = ? AND id = ?;`, 
+                [
+                    userId,
+                    logId,
+                ], { prepare: true });
+            return ok(true);
+        } catch (error: any) {
+            return err(new SystemError(error.message))
+        }
     }

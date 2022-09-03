@@ -38,36 +38,36 @@ describe("Food Log Storage Integration Tests", () => {
         const storedItem = storedItemResult._unsafeUnwrap()
         expect(storedItem).toEqual({ id: testItemId, ...input })
 
-        // storedItem.name = "Modified Food Log"
-        // storedItem.metrics = {
-        //     calories: 400
-        // }
+        storedItem.name = "Modified Food Log"
+        storedItem.metrics = {
+            calories: 400
+        }
 
-        // const modifiedResult = await editFoodLog(testUserId, storedItem)
-        // expect(modifiedResult.isOk()).toBeTruthy()
-        // const modified = modifiedResult._unsafeUnwrap()
-        // expect(modified).toEqual(storedItem)
+        const modifiedResult = await editFoodLog(testUserId, storedItem)
+        expect(modifiedResult.isOk()).toBeTruthy()
+        const modified = modifiedResult._unsafeUnwrap()
+        expect(modified).toEqual(storedItem)
 
-        // const reretrievedItemResult = await retrieveFoodLog(testUserId, testItemId)
+        const reretrievedItemResult = await retrieveFoodLog(testUserId, testItemId)
 
-        // expect(reretrievedItemResult.isOk()).toBeTruthy()
-        // const reretreived = reretrievedItemResult._unsafeUnwrap()
-        // expect(reretreived).toEqual(storedItem)
+        expect(reretrievedItemResult.isOk()).toBeTruthy()
+        const reretreived = reretrievedItemResult._unsafeUnwrap()
+        expect(reretreived).toEqual(storedItem)
 
-        // const deleteResult = await deleteFoodLog(testUserId, testItemId)
+        const deleteResult = await deleteFoodLog(testUserId, testItemId)
 
-        // expect(deleteResult.isOk()).toBeTruthy()
-        // expect(deleteResult._unsafeUnwrap()).toBeTruthy()
+        expect(deleteResult.isOk()).toBeTruthy()
+        expect(deleteResult._unsafeUnwrap()).toBeTruthy()
 
-        // const postDeleteRetrieve = await retrieveFoodLog(testUserId, testItemId)
+        const postDeleteRetrieve = await retrieveFoodLog(testUserId, testItemId)
 
-        // expect(postDeleteRetrieve.isErr()).toBeTruthy()
-        // expect(isNotFoundError(postDeleteRetrieve._unsafeUnwrapErr())).toBeTruthy();
+        expect(postDeleteRetrieve.isErr()).toBeTruthy()
+        expect(isNotFoundError(postDeleteRetrieve._unsafeUnwrapErr())).toBeTruthy();
 
-        // const redeleteResult = await deleteFoodLog(testUserId, testItemId)
+        const redeleteResult = await deleteFoodLog(testUserId, testItemId)
 
-        // expect(redeleteResult.isOk()).toBeTruthy()
-        // expect(redeleteResult._unsafeUnwrap()).toBeFalsy()
+        expect(redeleteResult.isOk()).toBeTruthy()
+        expect(redeleteResult._unsafeUnwrap()).toBeTruthy()
     })
 
     // test("Queries :: can add some logs, and get expected query results", async () => {

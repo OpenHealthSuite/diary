@@ -1,7 +1,7 @@
 export * from './types/StorageErrors';
 import { FoodLogStorage } from './interfaces';
-import * as memoryFoodLogStorage from './memory/FoodLogStorageFunctions'
+import * as cassandraFoodLogStorage from './cassandra/FoodLogStorageFunctions'
 
-export const memory: { foodLog: FoodLogStorage } = {
-    foodLog: memoryFoodLogStorage
+export const cassandra: { foodLog: FoodLogStorage } = {
+    foodLog: cassandraFoodLogStorage
 }

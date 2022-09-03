@@ -2,6 +2,7 @@ import express from 'express';
 import qs from 'qs';
 import { FoodStorageRouter } from './handlers';
 import { userMiddleware } from './middlewares';
+import { closeCassandra } from './storage/cassandra/FoodLogStorageFunctions';
 
 const port = process.env.PORT || 3012;
 
@@ -24,7 +25,12 @@ app.use('/api', FoodStorageRouter)
 const running = app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 
-    process.on('SIGTERM', () => running.close());
-    process.on('SIGINT', () => running.close()); 
-    process.on('exit', () => running.close()); 
+    const cleanup = () => {
+      closeCassandra()
+      running.close()
+    }
+
+    process.on('SIGTERM', cleanup);
+    process.on('SIGINT', cleanup); 
+    process.on('exit', cleanup); 
 });

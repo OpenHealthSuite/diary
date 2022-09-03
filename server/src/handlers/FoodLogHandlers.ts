@@ -5,7 +5,7 @@ import { DeleteFoodLogFunction, EditFoodLogFunction, QueryFoodLogFunction, Retri
 
 import * as storage from '../storage'
 
-const foodStorageProvider = storage.memory.foodLog;
+const foodStorageProvider = storage.cassandra.foodLog;
 
 export function buildRouter(router: Router): Router {
   return router.post('/logs', createFoodLogHandler)
