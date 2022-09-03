@@ -112,11 +112,29 @@ export const retrieveFoodLog: RetrieveFoodLogFunction =
 
 
 export const queryFoodLogs: QueryFoodLogFunction =
-    (userId: string, startDate: Date, endDate: Date) : Promise<Result<FoodLogEntry[], StorageError>> => {
+    async (userId: string, startDate: Date, endDate: Date) : Promise<Result<FoodLogEntry[], StorageError>> => {
         if (endDate.getTime() < startDate.getTime()) {
             return Promise.resolve(err(new ValidationError("startDate is after endDate")))
         }
-        throw new Error("Not Implemented")
+        try {
+            const result = await CASSANDRA_CLIENT.execute(`SELECT CAST(id as text) as id, name, labels, time, metrics 
+            FROM openfooddiary.user_foodlogentry 
+            WHERE userId = ?;`, // AND time.start < ? AND time.end > ?
+            // TODO: This isn't great...
+            [userId], { prepare: true });
+            const constructed: any[] = result.rows.map(row => {
+                const time = row.get('time');
+                if (!(time.start <= endDate && time.end >= startDate)) {
+                    return undefined;
+                }
+                const subCon: any = {};
+                row.keys().forEach(key => subCon[key] = row.get(key));
+                return subCon;
+            })
+            return ok(constructed.filter((val) => val !== undefined) as FoodLogEntry[]);
+        } catch (error: any) {
+            return err(new SystemError(error.message))
+        }
     }
 
 const UPDATEABLE_FIELDS = ["name", "labels", "time", "metrics"]
