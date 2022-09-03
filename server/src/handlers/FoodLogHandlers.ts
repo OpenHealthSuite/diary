@@ -10,9 +10,9 @@ const foodStorageProvider = storage.cassandra.foodLog;
 export function buildRouter(router: Router): Router {
   return router.post('/logs', createFoodLogHandler)
     .get('/logs', queryFoodLogHandler)
-    .get('/logs/:logId', getFoodLogHandler)
-    .put('/logs/:logId', updateFoodLogHandler)
-    .delete('/logs/:logId', deleteFoodLogHandler)
+    .get('/logs/:itemId', getFoodLogHandler)
+    .put('/logs/:itemId', updateFoodLogHandler)
+    .delete('/logs/:itemId', deleteFoodLogHandler)
 }
 
 export const FoodStorageRouter = buildRouter(express.Router())

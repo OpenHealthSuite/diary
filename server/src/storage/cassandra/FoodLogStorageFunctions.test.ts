@@ -8,7 +8,7 @@ describe("FoodLogStorageFunctions", () => {
 
             const GoldInput : CreateFoodLogEntry = {
                 name: "My Food Log",
-                labels: new Set(["Some Label", "Some other label"]),
+                labels: ["Some Label", "Some other label"],
                 time: {
                     start: new Date(1999, 10, 10),
                     end: new Date(1999, 10, 11)
@@ -73,7 +73,7 @@ describe("FoodLogStorageFunctions", () => {
             const GoldInput : EditFoodLogEntry = {
                 id: crypto.randomUUID(),
                 name: "My Food Log",
-                labels: new Set(["Some Label", "Some other label"]),
+                labels: ["Some Label", "Some other label"],
                 time: {
                     start: new Date(),
                     end: new Date()

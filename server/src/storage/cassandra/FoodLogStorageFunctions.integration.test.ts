@@ -16,7 +16,7 @@ describe("Food Log Storage Integration Tests", () => {
 
         const input: CreateFoodLogEntry = {
             name: "My Food Log",
-            labels: new Set(["Some Label", "Some other label"]),
+            labels: ["Some Label", "Some other label"],
             time: {
                 start: new Date(),
                 end: new Date()

@@ -21,9 +21,9 @@ describe("Handler Registration", () => {
 
     expect(fakeRouter.post).toBeCalledWith('/logs', createFoodLogHandler)
     expect(fakeRouter.get).toBeCalledWith('/logs', queryFoodLogHandler)
-    expect(fakeRouter.get).toBeCalledWith('/logs/:logId', getFoodLogHandler)
-    expect(fakeRouter.put).toBeCalledWith('/logs/:logId', updateFoodLogHandler)
-    expect(fakeRouter.delete).toBeCalledWith('/logs/:logId', deleteFoodLogHandler)
+    expect(fakeRouter.get).toBeCalledWith('/logs/:itemId', getFoodLogHandler)
+    expect(fakeRouter.put).toBeCalledWith('/logs/:itemId', updateFoodLogHandler)
+    expect(fakeRouter.delete).toBeCalledWith('/logs/:itemId', deleteFoodLogHandler)
   })
 })
 
@@ -34,7 +34,7 @@ describe("Create Food Log Handler", () => {
     const userId = crypto.randomUUID();
     const input: CreateFoodLogEntry = {
       name: 'My Log',
-      labels: new Set<string>(),
+      labels: [],
       time: {
         start: new Date(),
         end: new Date()
@@ -67,7 +67,7 @@ describe("Create Food Log Handler", () => {
     const userId = crypto.randomUUID();
     const input: CreateFoodLogEntry = {
       name: 'My Log',
-      labels: new Set<string>(),
+      labels: [],
       time: {
         start: new Date(),
         end: new Date()
@@ -101,7 +101,7 @@ describe("Create Food Log Handler", () => {
     const userId = crypto.randomUUID();
     const input: CreateFoodLogEntry = {
       name: 'My Log',
-      labels: new Set<string>(),
+      labels: [],
       time: {
         start: new Date(),
         end: new Date()
@@ -138,7 +138,7 @@ describe("Query Food Log Handler", () => {
     const foodLog: FoodLogEntry[] = [{
       id: crypto.randomUUID(),
       name: 'My Log',
-      labels: new Set<string>(),
+      labels: [],
       time: {
         start: new Date(),
         end: new Date()
@@ -214,7 +214,7 @@ describe("Get Food Log Handler", () => {
     const foodLog: FoodLogEntry = {
       id: itemId,
       name: 'My Log',
-      labels: new Set<string>(),
+      labels: [],
       time: {
         start: new Date(),
         end: new Date()

@@ -22,7 +22,7 @@ describe("Food Log Storage Integration Tests", () => {
 
         const input = {
             name: "My Food Log",
-            labels: new Set(["Some Label", "Some other label"]),
+            labels: ["Some Label", "Some other label"],
             time: {
                 start: date.toISOString(),
                 end: endDate.toISOString()

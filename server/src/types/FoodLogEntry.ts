@@ -1,7 +1,7 @@
 export type FoodLogEntry = {
     id: string,
     name: string,
-    labels: Set<string>,
+    labels: string[],
     time: {
         start: Date,
         end: Date

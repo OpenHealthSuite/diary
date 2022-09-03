@@ -82,7 +82,7 @@ export const storeFoodLog: StoreFoodLogFunction =
                     userId,
                     insertEntry.id,
                     insertEntry.name, 
-                    Array.from(insertEntry.labels), 
+                    insertEntry.labels, 
                     insertEntry.time, 
                     insertEntry.metrics
                 ], { prepare: true });
@@ -104,8 +104,6 @@ export const retrieveFoodLog: RetrieveFoodLogFunction =
             const item = result.first();
             const constructed: any = {};
             item.keys().forEach(key => constructed[key] = item.get(key))
-            // need to manually convert array to set
-            constructed.labels = new Set(constructed.labels)
             return ok(constructed as FoodLogEntry);
         } catch (error: any) {
             return err(new SystemError(error.message))
@@ -138,11 +136,7 @@ export const editFoodLog: EditFoodLogFunction =
         UPDATEABLE_FIELDS.forEach(field => {
             if (updateEntity[field] !== undefined) {
                 updatedFields.push(field + ' = ?');
-                if (field === "labels") {
-                    updateValues.push(Array.from(updateEntity[field]))
-                } else {
-                    updateValues.push(updateEntity[field])
-                }
+                updateValues.push(updateEntity[field])
             }
         })
         try {
