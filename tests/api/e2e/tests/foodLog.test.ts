@@ -32,7 +32,6 @@ describe("Food Log Storage Integration Tests", () => {
             }
         }
 
-
         const result = await fetch(TEST_CONFIGURATION.API_HOST + '/api/logs' , {
             method: 'POST',
             headers: {
@@ -56,36 +55,56 @@ describe("Food Log Storage Integration Tests", () => {
         const storedItem = await storedItemResult.json()
         expect(storedItem).toEqual({ id: testItemId, ...input })
 
-        // storedItem.name = "Modified Food Log"
-        // storedItem.metrics = {
-        //     calories: 400
-        // }
+        storedItem.name = "Modified Food Log"
+        storedItem.metrics = {
+            calories: 400
+        }
 
-        // const modifiedResult = await editFoodLog(testUserId, storedItem)
-        // expect(modifiedResult.isOk()).toBeTruthy()
-        // const modified = modifiedResult._unsafeUnwrap()
-        // expect(modified).toEqual(storedItem)
+        const modifiedResult = await fetch(TEST_CONFIGURATION.API_HOST + '/api/logs/' + testItemId, {
+            method: 'PUT',
+            headers: {
+                [TEST_CONFIGURATION.USERID_HEADER]: testUserId,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(storedItem)
+        })
+        const modified = await modifiedResult.json();
+        expect(modified).toEqual(storedItem)
 
-        // const reretrievedItemResult = await retrieveFoodLog(testUserId, testItemId)
+        const reRetreivedResult = await fetch(TEST_CONFIGURATION.API_HOST + '/api/logs/' + testItemId, {
+            headers: {
+                [TEST_CONFIGURATION.USERID_HEADER]: testUserId
+            }
+        })
 
-        // expect(reretrievedItemResult.isOk()).toBeTruthy()
-        // const reretreived = reretrievedItemResult._unsafeUnwrap()
-        // expect(reretreived).toEqual(storedItem)
+        const reretreived = await reRetreivedResult.json()
+        expect(storedItem).toEqual(reretreived)
 
-        // const deleteResult = await deleteFoodLog(testUserId, testItemId)
+        const deleteResult = await fetch(TEST_CONFIGURATION.API_HOST + '/api/logs/' + testItemId, {
+            method: 'DELETE',
+            headers: {
+                [TEST_CONFIGURATION.USERID_HEADER]: testUserId
+            }
+        })
 
-        // expect(deleteResult.isOk()).toBeTruthy()
-        // expect(deleteResult._unsafeUnwrap()).toBeTruthy()
+        expect(deleteResult.status).toBe(204);
 
-        // const postDeleteRetrieve = await retrieveFoodLog(testUserId, testItemId)
+        const postDeleteReretreive = await fetch(TEST_CONFIGURATION.API_HOST + '/api/logs/' + testItemId, {
+            headers: {
+                [TEST_CONFIGURATION.USERID_HEADER]: testUserId
+            }
+        })
 
-        // expect(postDeleteRetrieve.isErr()).toBeTruthy()
-        // expect(isNotFoundError(postDeleteRetrieve._unsafeUnwrapErr())).toBeTruthy();
+        expect(postDeleteReretreive.status).toBe(404)
 
-        // const redeleteResult = await deleteFoodLog(testUserId, testItemId)
+        const redeleteResult = await fetch(TEST_CONFIGURATION.API_HOST + '/api/logs/' + testItemId, {
+            method: 'DELETE',
+            headers: {
+                [TEST_CONFIGURATION.USERID_HEADER]: testUserId
+            }
+        })
 
-        // expect(redeleteResult.isOk()).toBeTruthy()
-        // expect(redeleteResult._unsafeUnwrap()).toBeFalsy()
+        expect(redeleteResult.status).toBe(204);
     })
 
     // test("Queries :: can add some logs, and get expected query results", async () => {
