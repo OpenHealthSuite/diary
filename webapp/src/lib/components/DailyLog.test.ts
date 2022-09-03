@@ -155,7 +155,7 @@ describe("Daily Log", () => {
                 {
                     id: crypto.randomUUID(),
                     name: "Food Log Two",
-                    labels: new Set(['label one', 'label two']),
+                    labels: ['label one', 'label two'],
                     time: {
                         start: new Date(2017, 8, 10, 11, 0, 0),
                         end: new Date(2017, 8, 10, 11, 30, 0),
@@ -167,7 +167,7 @@ describe("Daily Log", () => {
                 {
                     id: crypto.randomUUID(),
                     name: "Food Log One",
-                    labels: new Set(['label one', 'label two']),
+                    labels: ['label one', 'label two'],
                     time: {
                         start: new Date(2017, 8, 10, 10, 20, 0),
                         end: new Date(2017, 8, 10, 10, 50, 0),
@@ -179,7 +179,7 @@ describe("Daily Log", () => {
                 {
                     id: crypto.randomUUID(),
                     name: "Food Log Three",
-                    labels: new Set(['label one', 'label two']),
+                    labels: ['label one', 'label two'],
                     time: {
                         start: new Date(2017, 8, 10, 11, 15, 0),
                         end: new Date(2017, 8, 10, 11, 30, 0),

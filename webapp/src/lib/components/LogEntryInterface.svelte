@@ -7,7 +7,7 @@
     export let log: FoodLogEntry = {
         id: undefined,
         name: "",
-        labels: new Set(),
+        labels: [],
         time: {
             start: undefined,
             end: undefined
@@ -34,7 +34,7 @@
             body: JSON.stringify({
                 id: log.id,
                 name,
-                labels: new Set(),
+                labels: [],
                 time: {
                     start: startTime.toISOString(),
                     end: endTime.toISOString()

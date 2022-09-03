@@ -68,7 +68,7 @@ describe("Create Log", () => {
 
       const expectedRequest = {
           name: logNameInput,
-          labels: new Set(),
+          labels: [],
           time: {
               start: date.toISOString(),
               end: endDate.toISOString()
@@ -131,7 +131,7 @@ describe("Create Log", () => {
 
       const expectedRequest = {
           name: logNameInput,
-          labels: new Set(),
+          labels: [],
           time: {
               start: date.toISOString(),
               end: endDate.toISOString()
@@ -192,7 +192,7 @@ describe("Create Log", () => {
 
       const expectedRequest = {
           name: logNameInput,
-          labels: new Set(),
+          labels: [],
           time: {
               start: date.toISOString(),
               end: endDate.toISOString()
@@ -256,7 +256,7 @@ describe("Edit Log", () => {
     const inputLog: FoodLogEntry = {
         id: crypto.randomUUID(),
         name: "Input Log",
-        labels: new Set(),
+        labels: [],
         time: {
             start: startTime,
             end: endTime
@@ -305,10 +305,10 @@ describe("Edit Log", () => {
     const inputLog: FoodLogEntry = {
         id: crypto.randomUUID(),
         name: "Input Log",
-        labels: new Set(),
+        labels: [],
         time: {
             start: startTime,
-            end: endTime
+            end: endDate
         },
         metrics: {
             calories: 345
@@ -318,10 +318,10 @@ describe("Edit Log", () => {
     const expectedRequest = {
         id: inputLog.id,
         name: logNameInput,
-        labels: new Set(),
+        labels: [],
         time: {
             start: startTime.toISOString(),
-            end: endDate.toISOString()
+            end: endTime.toISOString()
         },
         metrics: {
             calories: caloriesInput
@@ -350,7 +350,7 @@ describe("Edit Log", () => {
     const calories = getByLabelText("Calories", { exact: false });
 
     fireEvent.input(name, {target: {value: logNameInput}})
-    fireEvent.input(durationInputElm, {target: {value: durationInput}})
+    fireEvent.input(durationInputElm, {target: {value: duration}})
     fireEvent.input(calories, {target: {value: caloriesInput}})
 
     await new Promise(process.nextTick);
@@ -359,11 +359,14 @@ describe("Edit Log", () => {
     expect(submitButton).toBeInTheDocument();
     expect(submitButton).not.toBeDisabled();
     await fireEvent.click(submitButton)
-    expect(apiFetch).toBeCalledWith("/logs/" + inputLog.id, {
-      method: 'PUT',
-      body: JSON.stringify(expectedRequest)
-    });
-
+    expect((apiFetch as Mock<any[], any>).mock.calls[0][0]).toBe("/logs/" + inputLog.id);
+    const { method, body } = (apiFetch as Mock<any[], any>).mock.calls[0][1];
+    expect(method).toBe('PUT')
+    expect(JSON.parse(body)).toEqual(expectedRequest)
+    // {
+    //   method: 'PUT',
+    //   body: JSON.stringify(expectedRequest)
+    // }
     await new Promise(process.nextTick);
     
     expect(componentOutput).toBe(data)
