@@ -1,0 +1,1 @@
+podman stop openfooddiary-cassandra || true && podman rm openfooddiary-cassandra || true
