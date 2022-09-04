@@ -18,15 +18,20 @@
         endDate.setDate(endDate.getDate() + 1);
         return endDate;
     }
-    
-    $: apiFetch(`/logs?startDate=${getStartDate(day).toISOString()}&endDate=${getEndDate(day).toISOString()}`)
-        .then(res => res.status === 200 ? res.json() : new Error())
-        .then(data => {
-            dayData = data.sort((a, b) => new Date(a.time.start).getTime() - new Date(b.time.start).getTime())
-            error = false;
-        })
-        .catch(() => error = true)
-        .finally(() => loading = false)
+
+    function updateData(inputDay: Date) {
+        loading = true;
+        error = false;
+        apiFetch(`/logs?startDate=${getStartDate(inputDay).toISOString()}&endDate=${getEndDate(inputDay).toISOString()}`)
+            .then(res => res.status === 200 ? res.json() : new Error())
+            .then(data => {
+                dayData = data.sort((a, b) => new Date(a.time.start).getTime() - new Date(b.time.start).getTime())
+            })
+            .catch(() => error = true)
+            .finally(() => loading = false)
+    }
+
+    $: updateData(day)
 </script>
 
 <Card>

@@ -24,7 +24,10 @@ const dateWithCurrentTime = (date: Date) => {
     <Modal bind:open={modalOpen} let:closeCallback>
       <Dialog title="Add Calorie Log" {closeCallback}>
         {#if modalOpen}
-            <LogEntryInterface logTime={dateWithCurrentTime(logDay)} on:success={closeCallback}
+            <LogEntryInterface logTime={dateWithCurrentTime(logDay)} on:success={() => {
+              closeCallback()
+              logDay = logDay
+              }}
               on:error={(event) => console.error(event.detail)}/>
         {/if}
       </Dialog>
