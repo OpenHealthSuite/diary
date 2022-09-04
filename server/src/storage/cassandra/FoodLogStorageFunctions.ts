@@ -20,7 +20,9 @@ import { Client } from 'cassandra-driver'
 const MIGRATIONS: string[] =[
     "CREATE KEYSPACE IF NOT EXISTS openfooddiary WITH REPLICATION = {'class':'SimpleStrategy','replication_factor':1};", // TODO: Make this optional?
     `CREATE TYPE IF NOT EXISTS openfooddiary.logTimes (start timestamp, end timestamp);`,
-    `CREATE TABLE IF NOT EXISTS openfooddiary.user_foodlogentry (userId UUID, id UUID, name text, labels set<text>,time frozen<openfooddiary.logTimes>,metrics map<text,int>, PRIMARY KEY ((userId), id));`,
+    `CREATE TABLE IF NOT EXISTS openfooddiary.user_foodlogentry (userId UUID, id UUID, name text, labels set<text>,time frozen<openfooddiary.logTimes>,metrics map<text,int>, timeStart timestamp, timeEnd timestamp, PRIMARY KEY ((userId), id));`,
+    `CREATE INDEX IF NOT EXISTS ON openfooddiary.user_foodlogentry (timeStart);`,
+    `CREATE INDEX IF NOT EXISTS ON openfooddiary.user_foodlogentry (timeEnd);`,
 ]
 
 const CASSANDRA_CLIENT = new Client({
@@ -76,15 +78,17 @@ export const storeFoodLog: StoreFoodLogFunction =
             userId
         }
         try {
-            await CASSANDRA_CLIENT.execute(`INSERT INTO openfooddiary.user_foodlogentry (userId, id, name, labels, time, metrics)
-            values (?, ?, ?, ?, ?, ?);`, 
+            await CASSANDRA_CLIENT.execute(`INSERT INTO openfooddiary.user_foodlogentry (userId, id, name, labels, time, metrics, timeStart, timeEnd)
+            values (?, ?, ?, ?, ?, ?, ?, ?);`, 
                 [
                     userId,
                     insertEntry.id,
                     insertEntry.name, 
                     insertEntry.labels, 
                     insertEntry.time, 
-                    insertEntry.metrics
+                    insertEntry.metrics,
+                    insertEntry.time.start,
+                    insertEntry.time.end
                 ], { prepare: true });
             return ok(insertEntry.id);
         } catch (error: any) {
@@ -119,19 +123,15 @@ export const queryFoodLogs: QueryFoodLogFunction =
         try {
             const result = await CASSANDRA_CLIENT.execute(`SELECT CAST(id as text) as id, name, labels, time, metrics 
             FROM openfooddiary.user_foodlogentry 
-            WHERE userId = ?;`, // AND time.start < ? AND time.end > ?
-            // TODO: This isn't great...
-            [userId], { prepare: true });
+            WHERE userId = ? AND timeStart <= ? AND timeEnd >= ?
+            ALLOW FILTERING;`,
+            [userId, endDate, startDate], { prepare: true });
             const constructed: any[] = result.rows.map(row => {
-                const time = row.get('time');
-                if (!(time.start <= endDate && time.end >= startDate)) {
-                    return undefined;
-                }
                 const subCon: any = {};
                 row.keys().forEach(key => subCon[key] = row.get(key));
                 return subCon;
             })
-            return ok(constructed.filter((val) => val !== undefined) as FoodLogEntry[]);
+            return ok(constructed as FoodLogEntry[]);
         } catch (error: any) {
             return err(new SystemError(error.message))
         }
@@ -155,6 +155,12 @@ export const editFoodLog: EditFoodLogFunction =
             if (updateEntity[field] !== undefined) {
                 updatedFields.push(field + ' = ?');
                 updateValues.push(updateEntity[field])
+                if (field === 'time') {
+                    updatedFields.push('timeStart = ?');
+                    updatedFields.push('timeEnd = ?');
+                    updateValues.push(updateEntity['time'].start)
+                    updateValues.push(updateEntity['time'].end)
+                }
             }
         })
         try {
