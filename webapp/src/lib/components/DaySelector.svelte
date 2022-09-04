@@ -15,15 +15,16 @@
         day.setDate(day.getDate() - 1)
         day = day
         dispatch('dateChange', day)
-    }}>&lt;</Button>
+    }} outline>&lt;</Button>
     <DatePicker value={day} 
+        format="%Y-%m-%d"
         on:change={dateUpdater}
         closeOnSelection/>
     <Button data-testid="forward-button" on:click={() => {
         day.setDate(day.getDate() + 1)
         day = day
         dispatch('dateChange', day)
-    }}>&gt;</Button>
+    }} outline>&gt;</Button>
 </div>
 <style lang="scss">
     .control-row {

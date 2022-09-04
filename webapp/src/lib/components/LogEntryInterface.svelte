@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
-    import { Button, DatePicker, TimePicker, FormField } from "attractions";
+    import { Button, DatePicker, TimePicker, FormField, TextField } from "attractions";
     import type { FoodLogEntry } from '../types/FoodLogEntry';
     import { apiFetch } from "../utilities";
     export let logTime = new Date();
@@ -43,13 +43,11 @@
                     calories
                 }
             })
-        }).then(response => { 
-            if (response.status !== 200) {
-                response.text()
-                    .then(text => dispatch('error', text))
-                    .catch(() => dispatch('error', "An unknown error occured"))
+        }).then((response) => { 
+            if (response.status === 200) {
+                return response.text()
             }
-            return response.json() 
+            throw new Error() 
         })
             .then(guid => dispatch('success', guid))
             .catch(err => dispatch('error', "An unknown error occured"));
@@ -61,29 +59,42 @@
 </script>
 
 <div>
+    <div class="log-datetime-selectors">
+        <label for="date-picker">Date</label>
+        <DatePicker 
+            value={startTime}
+            format="%Y-%m-%d"
+            on:change={dateUpdater} 
+            closeOnSelection/>
+        <label for="time">Time</label>
+        <TimePicker value={startTime} 
+            on:change={dateUpdater} />
+    </div>
     <FormField
         id="name"
         name="Log Name"
         help="Quick description of the food/meal"
         required
         >
-        <input type="text" id="name" bind:value={name}/>
+        <TextField
+            bind:value={name}
+            id="name"
+            error={name.length < 1 && 'Must add a log name'}
+        />
     </FormField>
-    <label for="date-picker">Date</label>
-    <DatePicker 
-        value={startTime}
-        on:change={dateUpdater} 
-        closeOnSelection/>
-    <label for="time">Time</label>
-    <TimePicker value={startTime} 
-        on:change={dateUpdater} />
     <FormField
         id="duration"
         name="Duration (minutes)"
         help="How long you were eating for"
         required
         >
-        <input type="number" min="1" bind:value={duration} id="duration"/>
+        <TextField
+            bind:value={duration}
+            id="duration"
+            type="number"
+            min="1"
+            error={duration < 1 && 'Must have a positive duration'}
+        />
     </FormField>
     <FormField
         id="calories"
@@ -91,7 +102,23 @@
         help="How many calories was the food/meal"
         required
         >
-        <input type="number" min="0" bind:value={calories} id="calories"/>
+        <TextField
+            bind:value={calories}
+            id="calories"
+            type="number"
+            min="0"
+            error={calories < 0 && 'Must have a positive or zero calories'}
+        />
     </FormField>
-    <Button disabled={!name} on:click={() => name && submitLog()}>Submit</Button>
+    <Button disabled={!name} on:click={() => name && submitLog()} filled>Submit</Button>
 </div>
+
+<style lang="scss">
+    .log-datetime-selectors {
+        label {
+            font-size: 1.1rem;
+            margin-bottom: 0.2em;
+        }
+        margin-bottom: 2em;
+    }
+</style>

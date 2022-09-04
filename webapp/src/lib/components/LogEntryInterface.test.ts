@@ -82,7 +82,7 @@ describe("Create Log", () => {
 
       const response = {
           status: 200,
-          json: vi.fn().mockResolvedValue(data)
+          text: vi.fn().mockResolvedValue(data)
       };
 
       (apiFetch as Mock<any[], any>).mockResolvedValue(response)
@@ -141,7 +141,7 @@ describe("Create Log", () => {
           }
       };
 
-      const data = crypto.randomUUID()
+      const data = "Some error message"
 
       const response = {
           status: errorCode,
@@ -177,7 +177,7 @@ describe("Create Log", () => {
 
       await new Promise(process.nextTick);
       
-      expect(componentOutput).toBe(data)
+      expect(componentOutput).toBe("An unknown error occured")
     })
 
     it('Unhappy Path :: set name, calories, duration, sends expected request, outputs error', async () => {
@@ -332,7 +332,7 @@ describe("Edit Log", () => {
 
     const response = {
         status: 200,
-        json: vi.fn().mockResolvedValue(data)
+        text: vi.fn().mockResolvedValue(data)
     };
 
     (apiFetch as Mock<any[], any>).mockResolvedValue(response)

@@ -18,11 +18,14 @@ const dateWithCurrentTime = (date: Date) => {
 
 <main>
     <DaySelector day={logDay} on:dateChange={dateChange} />
-    <Button on:click={() => modalOpen = true}>Add Log</Button>
+    <div class="controls-row">
+      <Button on:click={() => modalOpen = true} filled>Add Log</Button>
+    </div>
     <Modal bind:open={modalOpen} let:closeCallback>
-      <Dialog title="Hello?" {closeCallback}>
+      <Dialog title="Add Calorie Log" {closeCallback}>
         {#if modalOpen}
-            <LogEntryInterface logTime={dateWithCurrentTime(logDay)} on:success={() => closeCallback()}/>
+            <LogEntryInterface logTime={dateWithCurrentTime(logDay)} on:success={closeCallback}
+              on:error={(event) => console.error(event.detail)}/>
         {/if}
       </Dialog>
     </Modal>
@@ -30,5 +33,10 @@ const dateWithCurrentTime = (date: Date) => {
 </main>
 
 <style>
-
+  .controls-row {
+    margin: 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 </style>
