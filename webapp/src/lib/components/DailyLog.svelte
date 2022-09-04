@@ -1,11 +1,14 @@
 <script lang="ts">
-    import { Card } from 'attractions';
+    import { Accordion, AccordionSection, Button, Card, Dialog, Modal } from 'attractions';
     import { apiFetch } from 'src/lib/utilities/index'
     import type { FoodLogEntry } from '../types/FoodLogEntry';
+    import LogEntryInterface from './LogEntryInterface.svelte';
     export let day: Date;
 
     let loading = true;
     let error = false;
+    let modalOpen = false;
+    let editingLog: FoodLogEntry;
 
     let dayData: FoodLogEntry[] = [];
 
@@ -50,17 +53,29 @@
     </div>
     {:else}
     <div>
-        <dl>
-            {#each dayData as log, i}
-                <dt data-testid="foodlog-{i}">{log.name}<dt>
-                <dd data-testid="foodlog-{i}-calories">{log.metrics['calories']}</dd>
-            {/each}
-        </dl>
+        {#each dayData as log, i}
+            <Button on:click={() => {
+                modalOpen = true;
+                editingLog = log;
+            }} outline>
+            <span data-testid="foodlog-{i}">{log.name}</span> - <span data-testid="foodlog-{i}-calories">{log.metrics['calories']}</span> Calories
+            </Button>
+        {/each}
     </div>
     {/if}
     {/if}
 </Card>
-
+<Modal bind:open={modalOpen} let:closeCallback>
+    <Dialog title="Edit Calorie Log" {closeCallback}>
+      {#if modalOpen}
+          <LogEntryInterface log={editingLog} on:success={() => {
+            closeCallback()
+            updateData(day)
+            }}
+            on:error={(event) => console.error(event.detail)}/>
+      {/if}
+    </Dialog>
+</Modal>
 
 <style>
 

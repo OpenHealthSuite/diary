@@ -20,7 +20,7 @@
     const dispatch = createEventDispatcher();
 
     let name = log.name;
-    let startTime = log.time.start ?? logTime;
+    let startTime = log.time.start ? new Date(log.time.start) : logTime;
 
     let duration = log.time.end && log.time.start ? 
         ((new Date(log.time.end).getTime()) - (new Date(log.time.start).getTime())) / 1000 / 60 : 1;
