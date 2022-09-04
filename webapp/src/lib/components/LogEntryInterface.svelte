@@ -54,6 +54,10 @@
             .then(guid => dispatch('success', guid))
             .catch(err => dispatch('error', "An unknown error occured"));
     }
+
+    const dateUpdater = (event: any) => {
+        startTime = new Date(event.detail.value);
+    }
 </script>
 
 <div>
@@ -66,9 +70,13 @@
         <input type="text" id="name" bind:value={name}/>
     </FormField>
     <label for="date-picker">Date</label>
-    <DatePicker value={startTime} closeOnSelection/>
+    <DatePicker 
+        value={startTime}
+        on:change={dateUpdater} 
+        closeOnSelection/>
     <label for="time">Time</label>
-    <TimePicker value={logTime} />
+    <TimePicker value={startTime} 
+        on:change={dateUpdater} />
     <FormField
         id="duration"
         name="Duration (minutes)"

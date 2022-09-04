@@ -1,7 +1,7 @@
 <script lang="ts">
     import { apiFetch } from 'src/lib/utilities/index'
     import type { FoodLogEntry } from '../types/FoodLogEntry';
-    export let day: Date
+    export let day: Date = new Date()
     const dayString = day.toISOString().split("T")[0];
     const startDate = new Date(dayString);
     const endDate = new Date(dayString)
