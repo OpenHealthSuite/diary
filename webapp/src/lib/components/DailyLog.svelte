@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Card } from 'attractions';
     import { apiFetch } from 'src/lib/utilities/index'
     import type { FoodLogEntry } from '../types/FoodLogEntry';
     export let day: Date;
@@ -28,30 +29,33 @@
         .finally(() => loading = false)
 </script>
 
-{#if loading}
-<div data-testid="loading-indicator">
-    Loading data
-</div>
-{:else if error}
-<div data-testid="error-indicator">
-    Error loading data
-</div>
-{:else}
-{#if dayData.length === 0}
-<div>
-    No Logs Entered for this day
-</div>
-{:else}
-<div>
-    <dl>
-        {#each dayData as log, i}
-            <dt data-testid="foodlog-{i}">{log.name}<dt>
-            <dd data-testid="foodlog-{i}-calories">{log.metrics['calories']}</dd>
-        {/each}
-    </dl>
-</div>
-{/if}
-{/if}
+<Card>
+    {#if loading}
+    <div data-testid="loading-indicator">
+        Loading data
+    </div>
+    {:else if error}
+    <div data-testid="error-indicator">
+        Error loading data
+    </div>
+    {:else}
+    {#if dayData.length === 0}
+    <div>
+        No Logs Entered for this day
+    </div>
+    {:else}
+    <div>
+        <dl>
+            {#each dayData as log, i}
+                <dt data-testid="foodlog-{i}">{log.name}<dt>
+                <dd data-testid="foodlog-{i}-calories">{log.metrics['calories']}</dd>
+            {/each}
+        </dl>
+    </div>
+    {/if}
+    {/if}
+</Card>
+
 
 <style>
 
