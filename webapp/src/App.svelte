@@ -8,6 +8,8 @@ import LogEntryInterface from "./lib/components/LogEntryInterface.svelte";
 let modalOpen = false;
 let logDay = new Date();
 
+const dateChange = (event) => logDay = event.detail;
+
 const dateWithCurrentTime = (date: Date) => {
   return new Date(date.toISOString().split('T')[0] + 'T' + (new Date()).toISOString().split('T')[1])
 }
@@ -15,7 +17,7 @@ const dateWithCurrentTime = (date: Date) => {
 </script>
 
 <main>
-    <DaySelector day={logDay} on:dateChange={(event) => logDay = event.detail} />
+    <DaySelector day={logDay} on:dateChange={dateChange} />
     <Button on:click={() => modalOpen = true}>Add Log</Button>
     <Modal bind:open={modalOpen} let:closeCallback>
       <Dialog title="Hello?" {closeCallback}>
