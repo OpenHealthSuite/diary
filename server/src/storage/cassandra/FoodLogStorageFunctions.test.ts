@@ -5,7 +5,6 @@ import { CreateFoodLogEntry, EditFoodLogEntry, isValidationError } from "../type
 describe("FoodLogStorageFunctions", () => {
     describe("CreateFoodLog", () => {
         describe("Validation Errors", () => {
-
             const GoldInput : CreateFoodLogEntry = {
                 name: "My Food Log",
                 labels: ["Some Label", "Some other label"],

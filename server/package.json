@@ -6,7 +6,8 @@
     "start": "node dist/index.js",
     "start:dev": "ts-node src/index.ts",
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "test:integration": "jest --config jest.integration.config.js"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",
