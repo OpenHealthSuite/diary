@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { Accordion, AccordionSection, Button, Card, Dialog, Modal } from 'attractions';
+    import { Card, Dialog, Modal } from 'attractions';
     import { apiFetch } from 'src/lib/utilities/index'
+import { current_component } from 'svelte/internal';
     import type { FoodLogEntry } from '../types/FoodLogEntry';
     import LogEntryInterface from './LogEntryInterface.svelte';
     export let day: Date;
@@ -53,13 +54,19 @@
     </div>
     {:else}
     <div>
+        <h1>Total: {dayData.reduce((prev, curr) => prev + curr.metrics.calories, 0)} Calories</h1>
         {#each dayData as log, i}
-            <Button on:click={() => {
-                modalOpen = true;
-                editingLog = log;
-            }} outline>
-            <span data-testid="foodlog-{i}">{log.name}</span> - <span data-testid="foodlog-{i}-calories">{log.metrics['calories']}</span> Calories
-            </Button>
+        <div class="food-log {i > 0 ? 'top-border' : ''}">
+            <h2 data-testid="foodlog-{i}-calories">{log.metrics['calories']} Calories</h2>
+            <h5 data-testid="foodlog-{i}">{new Date(log.time.start).toTimeString().split(' ')[0]} - {log.name}</h5>
+            <button class='log-button'
+                on:click={() => {
+                    modalOpen = true;
+                    editingLog = log;
+                }}>
+                Edit
+            </button>
+        </div>
         {/each}
     </div>
     {/if}
@@ -77,6 +84,32 @@
     </Dialog>
 </Modal>
 
-<style>
-
+<style lang="scss">
+    .food-log {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        padding: 1em;
+        h2 {
+            line-height: 0;
+        }
+        h5 {
+            line-height: 0;
+        }
+        button {
+            position: absolute;
+            top: 1.5em;
+            right: 1em;
+            border-radius: 1em;
+            padding: 0.6em;
+            font-weight: 700;
+            cursor: pointer;
+            &:hover {
+                background-color: lightgray;
+            }
+        }
+        &.top-border {
+            border-top: 2px lightgray solid;
+        }
+    }
 </style>
