@@ -1,0 +1,36 @@
+name: Server Build and Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *' # run at 2 AM UTC
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'server/**'
+      - .github/workflows/build_and_test_server.yml
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'server/**'
+      - .github/workflows/build_and_test_server.yml
+
+jobs:
+  build-and-test-server:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version-file: './server/.nvmrc'
+    - name: Restore dependencies
+      working-directory: ./server
+      run: npm ci
+    - name: Test
+      working-directory: ./server
+      run: npm test
+    - name: Build
+      working-directory: ./server
+      run: npm run build
