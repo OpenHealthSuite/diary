@@ -1,15 +1,25 @@
 import { deleteFoodLog, editFoodLog, queryFoodLogs, retrieveFoodLog, storeFoodLog } from "./FoodLogStorageFunctions"
 import crypto from 'node:crypto'
 import { CreateFoodLogEntry, isNotFoundError, isValidationError } from "../types"
+import { Client } from "cassandra-driver"
+import { createClient, doCassandraMigrations } from "."
 
 
 describe("Food Log Storage Integration Tests", () => {
+    let testClient: Client;
+    beforeAll(async () => {
+        testClient = createClient();
+        await doCassandraMigrations();
+    })
+    afterAll(async () => {
+        await testClient.shutdown();
+    })
     test("Happy Path :: Bad Retreives, Creates, Retreives, Edits, Reretrieves, Deletes, Fails Retreive, Redelete succeeds false", async () => {
         const testUserId = crypto.randomUUID()
 
         const randomId = crypto.randomUUID()
 
-        const badResult = await retrieveFoodLog(testUserId, randomId)
+        const badResult = await retrieveFoodLog(testUserId, randomId, testClient)
 
         expect(badResult.isErr()).toBeTruthy()
         expect(isNotFoundError(badResult._unsafeUnwrapErr())).toBeTruthy();
@@ -26,13 +36,13 @@ describe("Food Log Storage Integration Tests", () => {
             }
         }
 
-        const result = await storeFoodLog(testUserId, input)
+        const result = await storeFoodLog(testUserId, input, testClient)
 
         expect(result.isOk()).toBeTruthy()
         const testItemId = result._unsafeUnwrap()
         expect(testItemId.length).toBeGreaterThan(0);
 
-        const storedItemResult = await retrieveFoodLog(testUserId, testItemId)
+        const storedItemResult = await retrieveFoodLog(testUserId, testItemId, testClient)
 
         expect(storedItemResult.isOk()).toBeTruthy()
         const storedItem = storedItemResult._unsafeUnwrap()
@@ -43,28 +53,28 @@ describe("Food Log Storage Integration Tests", () => {
             calories: 400
         }
 
-        const modifiedResult = await editFoodLog(testUserId, storedItem)
+        const modifiedResult = await editFoodLog(testUserId, storedItem, testClient)
         expect(modifiedResult.isOk()).toBeTruthy()
         const modified = modifiedResult._unsafeUnwrap()
         expect(modified).toEqual(storedItem)
 
-        const reretrievedItemResult = await retrieveFoodLog(testUserId, testItemId)
+        const reretrievedItemResult = await retrieveFoodLog(testUserId, testItemId, testClient)
 
         expect(reretrievedItemResult.isOk()).toBeTruthy()
         const reretreived = reretrievedItemResult._unsafeUnwrap()
         expect(reretreived).toEqual(storedItem)
 
-        const deleteResult = await deleteFoodLog(testUserId, testItemId)
+        const deleteResult = await deleteFoodLog(testUserId, testItemId, testClient)
 
         expect(deleteResult.isOk()).toBeTruthy()
         expect(deleteResult._unsafeUnwrap()).toBeTruthy()
 
-        const postDeleteRetrieve = await retrieveFoodLog(testUserId, testItemId)
+        const postDeleteRetrieve = await retrieveFoodLog(testUserId, testItemId, testClient)
 
         expect(postDeleteRetrieve.isErr()).toBeTruthy()
         expect(isNotFoundError(postDeleteRetrieve._unsafeUnwrapErr())).toBeTruthy();
 
-        const redeleteResult = await deleteFoodLog(testUserId, testItemId)
+        const redeleteResult = await deleteFoodLog(testUserId, testItemId, testClient)
 
         expect(redeleteResult.isOk()).toBeTruthy()
         expect(redeleteResult._unsafeUnwrap()).toBeTruthy()
@@ -109,38 +119,38 @@ describe("Food Log Storage Integration Tests", () => {
             }
         }
 
-        const past = await storeFoodLog(testUserId, pastLog)
+        const past = await storeFoodLog(testUserId, pastLog, testClient)
         const pastItemId = past._unsafeUnwrap()
 
-        const result = await storeFoodLog(testUserId, centerLog)
+        const result = await storeFoodLog(testUserId, centerLog, testClient)
         const centerItemId = result._unsafeUnwrap()
 
-        const future = await storeFoodLog(testUserId, futureLog)
+        const future = await storeFoodLog(testUserId, futureLog, testClient)
         const futureItemId = future._unsafeUnwrap()
 
 
-        const startingQueryResult = await queryFoodLogs(testUserId, new Date(1999, 10, 15), new Date(1999, 10, 16))
+        const startingQueryResult = await queryFoodLogs(testUserId, new Date(1999, 10, 15), new Date(1999, 10, 16), testClient)
         
         expect(startingQueryResult.isOk()).toBeTruthy()
         const firstTest = startingQueryResult._unsafeUnwrap();
         expect(firstTest.length).toBe(1)
         expect(firstTest[0].id).toBe(centerItemId)
 
-        const pastQueryResult = await queryFoodLogs(testUserId, new Date(1999, 10, 9), new Date(1999, 10, 16))
+        const pastQueryResult = await queryFoodLogs(testUserId, new Date(1999, 10, 9), new Date(1999, 10, 16), testClient)
         
         expect(pastQueryResult.isOk()).toBeTruthy()
         const secondTest = pastQueryResult._unsafeUnwrap();
         expect(secondTest.length).toBe(2)
         expect(secondTest.map(x => x.id).sort()).toEqual([pastItemId, centerItemId].sort())
         
-        const futureQueryResult = await queryFoodLogs(testUserId, new Date(1999, 10, 15), new Date(1999, 10, 30))
+        const futureQueryResult = await queryFoodLogs(testUserId, new Date(1999, 10, 15), new Date(1999, 10, 30), testClient)
         
         expect(futureQueryResult.isOk()).toBeTruthy()
         const thirdTest = futureQueryResult._unsafeUnwrap();
         expect(thirdTest.length).toBe(2)
         expect(thirdTest.map(x => x.id).sort()).toEqual([centerItemId, futureItemId].sort())
 
-        const wildQueryResult = await queryFoodLogs(testUserId, new Date(2012, 0, 1), new Date(2012, 11, 31))
+        const wildQueryResult = await queryFoodLogs(testUserId, new Date(2012, 0, 1), new Date(2012, 11, 31), testClient)
         
         expect(startingQueryResult.isOk()).toBeTruthy()
         const wildTest = wildQueryResult._unsafeUnwrap();

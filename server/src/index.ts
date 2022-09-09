@@ -2,7 +2,7 @@ import express from 'express';
 import qs from 'qs';
 import { FoodStorageRouter } from './handlers';
 import { userMiddleware } from './middlewares';
-import { closeCassandra } from './storage/cassandra/FoodLogStorageFunctions';
+import { closeCassandra, doCassandraMigrations, setDefaultGlobalClient } from './storage/cassandra';
 
 const port = process.env.PORT || 3012;
 
@@ -19,10 +19,12 @@ app.get('/api/health', (req, res) => {
 
 app.use(userMiddleware);
 
-
 app.use('/api', FoodStorageRouter)
-  
-const running = app.listen(port, () => {
+
+setDefaultGlobalClient();
+
+doCassandraMigrations().then(() => {
+  const running = app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 
     const cleanup = () => {
@@ -33,4 +35,6 @@ const running = app.listen(port, () => {
     process.on('SIGTERM', cleanup);
     process.on('SIGINT', cleanup); 
     process.on('exit', cleanup); 
-});
+  });
+})
+  
