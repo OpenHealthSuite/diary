@@ -1,0 +1,36 @@
+name: Webapp Build and Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *' # run at 2 AM UTC
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'webapp/**'
+      - .github/workflows/build_and_test_webapp.yml
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'webapp/**'
+      - .github/workflows/build_and_test_webapp.yml
+
+jobs:
+  build-and-test-webapp:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version-file: './webapp/.nvmrc'
+    - name: Restore dependencies
+      working-directory: ./webapp
+      run: npm ci
+    - name: Test
+      working-directory: ./webapp
+      run: npm test
+    - name: Build
+      working-directory: ./webapp
+      run: npm run build
