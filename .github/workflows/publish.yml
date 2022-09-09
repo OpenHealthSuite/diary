@@ -1,4 +1,4 @@
-name: API Build, Test, Publish
+name: Publish OpenFoodDiary Container
 
 on:
   release:
@@ -65,6 +65,6 @@ jobs:
     - name: Build and Publish the Docker image
       working-directory: .
       run: |
-        export REPOSITORY="leemartin77/openfooddiary"
+        export REPOSITORY="ghcr.io/leemartin77/openfooddiary"
         export VERSION=${{ github.event.release.tag_name }}
         docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t "$REPOSITORY:latest" -t "$REPOSITORY:$VERSION" --push .
