@@ -16,6 +16,13 @@ import {
 } from "../types"
 
 import { CASSANDRA_CLIENT } from '.'
+import { Client } from "cassandra-driver";
+
+type CassandraStoreFoodLogFunction = (userId: string, logEntry: CreateFoodLogEntry, client?: Client) => Promise<Result<string, StorageError>>;
+type CassandraQueryFoodLogFunction = (userId: string, dateStart: Date, dateEnd: Date, client?: Client) => Promise<Result<FoodLogEntry[], StorageError>>;
+type CassandraRetrieveFoodLogFunction = (userId: string, logId: string, client?: Client) => Promise<Result<FoodLogEntry, StorageError>>;
+type CassandraEditFoodLogFunction = (userId: string, logEntry: EditFoodLogEntry, client?: Client) => Promise<Result<FoodLogEntry, StorageError>>;
+type CassandraDeleteFoodLogFunction = (userId: string, logId: string, client?: Client) => Promise<Result<boolean, StorageError>>;
 
 function isValidCreateLogEntry(logEntry: CreateFoodLogEntry): boolean {
     return (logEntry as any).id === undefined 
@@ -38,8 +45,7 @@ function isValidEditLogEntry(logEntry: EditFoodLogEntry): boolean {
         && logEntry.time.end.getTime() >= logEntry.time.start.getTime() ))
 }
 
-
-export const storeFoodLog: StoreFoodLogFunction = 
+export const storeFoodLog: CassandraStoreFoodLogFunction = 
     async (userId: string, logEntry: CreateFoodLogEntry, cassandraClient = CASSANDRA_CLIENT) : Promise<Result<string, StorageError>> => {
         if (!isValidCreateLogEntry(logEntry)) {
             return Promise.resolve(err(new ValidationError("Invalid Log Entry")))
@@ -68,7 +74,7 @@ export const storeFoodLog: StoreFoodLogFunction =
         }
     }
 
-export const retrieveFoodLog: RetrieveFoodLogFunction =
+export const retrieveFoodLog: CassandraRetrieveFoodLogFunction =
     async (userId: string, logId: string, cassandraClient = CASSANDRA_CLIENT) : Promise<Result<FoodLogEntry, StorageError>> => {
         try {
             const result = await cassandraClient.execute(`SELECT CAST(id as text) as id, name, labels, time, metrics 
@@ -87,7 +93,7 @@ export const retrieveFoodLog: RetrieveFoodLogFunction =
     }
 
 
-export const queryFoodLogs: QueryFoodLogFunction =
+export const queryFoodLogs: CassandraQueryFoodLogFunction =
     async (userId: string, startDate: Date, endDate: Date, cassandraClient = CASSANDRA_CLIENT) : Promise<Result<FoodLogEntry[], StorageError>> => {
         if (endDate.getTime() < startDate.getTime()) {
             return Promise.resolve(err(new ValidationError("startDate is after endDate")))
@@ -110,7 +116,7 @@ export const queryFoodLogs: QueryFoodLogFunction =
     }
 
 const UPDATEABLE_FIELDS = ["name", "labels", "time", "metrics"]
-export const editFoodLog: EditFoodLogFunction =
+export const editFoodLog: CassandraEditFoodLogFunction =
     async (userId: string, logEntry: EditFoodLogEntry, cassandraClient = CASSANDRA_CLIENT) => {
         if (!isValidEditLogEntry(logEntry)) {
             return Promise.resolve(err(new ValidationError("Invalid Log Entry")))
@@ -150,7 +156,7 @@ export const editFoodLog: EditFoodLogFunction =
         }
     }
 
-export const deleteFoodLog: DeleteFoodLogFunction =
+export const deleteFoodLog: CassandraDeleteFoodLogFunction =
     async (userId: string, logId: string, cassandraClient = CASSANDRA_CLIENT): Promise<Result<boolean, StorageError>>  => {
         try {
             await cassandraClient.execute(`DELETE FROM openfooddiary.user_foodlogentry
