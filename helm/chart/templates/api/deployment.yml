@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: openfooddiary
+  namespace: {{ .Release.Namespace }}
+  name: openfooddiary
+spec:
+  replicas: {{ required "replicas is required" .Values.replicas }}
+  selector:
+    matchLabels:
+      app: openfooddiary
+  template:
+    metadata:
+      labels:
+        app: openfooddiary
+      namespace: {{ .Release.Namespace }}
+      name: openfooddiary
+    spec:
+      containers:
+        - name: openfooddiary
+          image: {{ required "image is required" .Values.image }}:{{  required "tag is required" .Values.tag }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: web
+              containerPort: 3012
+          env:
+            - name: OPENFOODDIARY_USERIDHEADER
+              value: x-auth-request-user
+            - name: PORT
+              value: "3012"
+            - name: OPENFOODDIARY_CASSANDRA_CONTACT_POINTS
+              value: {{ required "cassandra.contactpoints is required" .Values.cassandra.contactpoints }}
+            - name: OPENFOODDIARY_CASSANDRA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: openfooddiary-secrets
+                  key: cassandrauser
+            - name: OPENFOODDIARY_CASSANDRA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: openfooddiary-secrets
+                  key: cassandrapassword

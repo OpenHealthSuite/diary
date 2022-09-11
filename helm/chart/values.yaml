@@ -1,0 +1,7 @@
+image: ghcr.io/leemartin77/openfooddiary
+tag: latest
+replicas: 3
+cassandra:
+  user: cassandra
+  password: cassandra
+  contactpoints: cassandra.paceme.svc:9042
