@@ -60,20 +60,17 @@
 
 <div>
     <div class="log-datetime-selectors">
-        <label for="date-picker">Date</label>
         <DatePicker 
             value={startTime}
             format="%Y-%m-%d"
             on:change={dateUpdater} 
             closeOnSelection/>
-        <label for="time">Time</label>
-        <TimePicker value={startTime} 
+        <TimePicker value={startTime} format="%H:%M"
             on:change={dateUpdater} />
     </div>
     <FormField
         id="name"
         name="Log Name"
-        help="Quick description of the food/meal"
         required
         >
         <TextField
@@ -83,23 +80,8 @@
         />
     </FormField>
     <FormField
-        id="duration"
-        name="Duration (minutes)"
-        help="How long you were eating for"
-        required
-        >
-        <TextField
-            bind:value={duration}
-            id="duration"
-            type="number"
-            min="1"
-            error={duration < 1 && 'Must have a positive duration'}
-        />
-    </FormField>
-    <FormField
         id="calories"
         name="Calories"
-        help="How many calories was the food/meal"
         required
         >
         <TextField
@@ -110,15 +92,24 @@
             error={calories < 0 && 'Must have a positive or zero calories'}
         />
     </FormField>
-    <Button disabled={!name} on:click={() => name && submitLog()} filled>Submit</Button>
+    <FormField
+        id="duration"
+        name="Duration (minutes)"
+        required
+        >
+        <TextField
+            bind:value={duration}
+            id="duration"
+            type="number"
+            min="1"
+            error={duration < 1 && 'Must have a positive duration'}
+        />
+    </FormField>
+    <Button disabled={!name} on:click={() => name && submitLog()} outline>Submit</Button>
 </div>
 
 <style lang="scss">
     .log-datetime-selectors {
-        label {
-            font-size: 1.1rem;
-            margin-bottom: 0.2em;
-        }
         margin-bottom: 2em;
     }
 </style>
