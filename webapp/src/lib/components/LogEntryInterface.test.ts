@@ -57,7 +57,7 @@ describe("Create Log", () => {
     })
 
     it('Happy Path :: set name, calories, duration, sends expected request, outputs success', async () => {
-      const date = new Date(2018, 1, 1, 13, 15, 23)
+      const date = new Date(2018, 1, 1, 13, 15, 0, 0)
       vi.setSystemTime(date)
 
       const logNameInput = "My Test Log";
@@ -120,7 +120,7 @@ describe("Create Log", () => {
     const errorCodes = [400, 403, 500]
 
     it.each(errorCodes)('Happy Path :: set name, calories, duration, sends expected request, non 200 response, outputs error', async (errorCode) => {
-      const date = new Date(2018, 1, 1, 13, 15, 23)
+      const date = new Date(2018, 1, 1, 13, 15, 0, 0)
       vi.setSystemTime(date)
 
       const logNameInput = "My Test Log";
@@ -181,7 +181,7 @@ describe("Create Log", () => {
     })
 
     it('Unhappy Path :: set name, calories, duration, sends expected request, outputs error', async () => {
-      const date = new Date(2018, 1, 1, 13, 15, 23)
+      const date = new Date(2018, 1, 1, 13, 15, 0, 0)
       vi.setSystemTime(date)
 
       const logNameInput = "My Test Log";
@@ -245,11 +245,11 @@ describe("Edit Log", () => {
   })
   
   it('start :: it renders form with input log fields', async () => {
-    const date = new Date(2018, 1, 1, 13, 15, 23);
+    const date = new Date(2018, 1, 1, 13, 15, 0, 0);
     vi.setSystemTime(date);
 
     const duration = 12;
-    const startTime = new Date(2019, 1, 1, 14, 15, 25)
+    const startTime = new Date(2019, 1, 1, 14, 15, 0, 0)
     const endTime = new Date(startTime);
     endTime.setMinutes(endTime.getMinutes() + duration)
 
@@ -290,7 +290,7 @@ describe("Edit Log", () => {
 
   it('Happy Path :: set name, calories, duration, sends expected request, outputs success', async () => {
 
-    const startTime = new Date(2019, 1, 1, 14, 15, 25)
+    const startTime = new Date(2019, 1, 1, 14, 15, 0, 0)
 
     const logNameInput = "My Test Log";
     const durationInput = 10;

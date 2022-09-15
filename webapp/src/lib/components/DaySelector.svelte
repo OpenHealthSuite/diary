@@ -5,7 +5,7 @@
     const dispatch = createEventDispatcher();
 
     const dateUpdater = (event: any) => {
-        day = new Date(event.detail.value);
+        day = new Date(event.target.value);
         dispatch('dateChange', day)
     }
 </script>
@@ -16,10 +16,11 @@
         dispatch('dateChange', day)
     }}>&lt;</button>
     <fieldset>
-        <label for="day-selected">Day Selected</label>
-        <input type="date" id="day-selected" name="day-selected"
-            value={day}
-            on:change={dateUpdater}> 
+    <label for="day-selected">Day Selected</label>
+    <input type="date" id="day-selected" name="day-selected"
+        pattern="\d{4}-\d{2}-\d{2}"
+        value={day.toISOString().split('T')[0]}
+        on:change={dateUpdater}> 
     </fieldset>
     <button data-testid="forward-button" on:click={() => {
         day.setDate(day.getDate() + 1)

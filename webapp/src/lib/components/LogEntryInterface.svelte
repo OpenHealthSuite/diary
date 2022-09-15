@@ -25,8 +25,13 @@
         ((new Date(log.time.end).getTime()) - (new Date(log.time.start).getTime())) / 1000 / 60 : 1;
     let calories = log.metrics.calories ?? 0;
 
+    let [dateString, timeString] = startTime.toISOString().split('T')
+
+    timeString = timeString.slice(0, 5)
+
     const submitLog = () => {
-        const endTime = new Date(startTime)
+        const logTime = new Date(dateString+'T'+timeString)
+        const endTime = new Date(logTime)
         endTime.setMinutes(endTime.getMinutes() + duration)
         apiFetch(log.id ? '/logs/' + log.id : '/logs', {
             method: log.id ? 'PUT' : 'POST',
@@ -35,7 +40,7 @@
                 name,
                 labels: [],
                 time: {
-                    start: startTime.toISOString(),
+                    start: logTime,
                     end: endTime.toISOString()
                 },
                 metrics: {
@@ -51,27 +56,17 @@
             .then(guid => dispatch('success', guid))
             .catch(err => dispatch('error', "An unknown error occured"));
     }
-
-    const dateUpdater = (event: any) => {
-        startTime = new Date(event.detail.value);
-    }
-    const timeUpdater = (event: any) => {
-        const [hour, min] = event.detail.value.split(':');
-        startTime.setHours(hour, min, 0)
-        startTime = startTime
-    }
 </script>
 
 <div>
     <fieldset class="log-datetime-selectors">
         <label for="log-entry-day">Log Day</label>
         <input type="date" id="log-entry-day" name="log-entry-day" 
-            value={startTime}
-            on:change={dateUpdater}> 
+            pattern="\d{4}-\d{2}-\d{2}"
+            bind:value={dateString}> 
         <label for="log-entry-day">Log Time</label>
         <input type="time" id="log-entry-day" name="log-entry-day" 
-            value={startTime.toISOString().split('T')[1].slice(0, 5)}
-            on:change={timeUpdater}>
+            bind:value={timeString}>
     </fieldset>
 
 
