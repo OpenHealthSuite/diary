@@ -1,6 +1,5 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
-    import { Button, DatePicker, TimePicker, FormField, TextField } from "attractions";
     import type { FoodLogEntry } from '../types/FoodLogEntry';
     import { apiFetch } from "../utilities";
     export let logTime = new Date();
@@ -56,56 +55,48 @@
     const dateUpdater = (event: any) => {
         startTime = new Date(event.detail.value);
     }
+    const timeUpdater = (event: any) => {
+        const [hour, min] = event.detail.value.split(':');
+        startTime.setHours(hour, min, 0)
+        startTime = startTime
+    }
 </script>
 
 <div>
-    <div class="log-datetime-selectors">
-        <DatePicker 
+    <fieldset class="log-datetime-selectors">
+        <label for="log-entry-day">Log Day</label>
+        <input type="date" id="log-entry-day" name="log-entry-day" 
             value={startTime}
-            format="%Y-%m-%d"
-            on:change={dateUpdater} 
-            closeOnSelection/>
-        <TimePicker value={startTime} format="%H:%M"
-            on:change={dateUpdater} />
-    </div>
-    <FormField
-        id="name"
-        name="Log Name"
-        required
-        >
-        <TextField
-            bind:value={name}
-            id="name"
-            error={name.length < 1 && 'Must add a log name'}
-        />
-    </FormField>
-    <FormField
-        id="calories"
-        name="Calories"
-        required
-        >
-        <TextField
-            bind:value={calories}
-            id="calories"
-            type="number"
-            min="0"
-            error={calories < 0 && 'Must have a positive or zero calories'}
-        />
-    </FormField>
-    <FormField
-        id="duration"
-        name="Duration (minutes)"
-        required
-        >
-        <TextField
-            bind:value={duration}
-            id="duration"
-            type="number"
-            min="1"
-            error={duration < 1 && 'Must have a positive duration'}
-        />
-    </FormField>
-    <Button disabled={!name} on:click={() => name && submitLog()} outline>Submit</Button>
+            on:change={dateUpdater}> 
+        <label for="log-entry-day">Log Time</label>
+        <input type="time" id="log-entry-day" name="log-entry-day" 
+            value={startTime.toISOString().split('T')[1].slice(0, 5)}
+            on:change={timeUpdater}>
+    </fieldset>
+
+
+    <fieldset>
+        <label for="name">Log Name</label>
+        <input id="name" name="name" bind:value={name} />
+        {#if name.length < 1}
+            <div>Must add a log name</div>
+        {/if}
+    </fieldset>
+    <fieldset>
+        <label for="calories">Calories</label>
+        <input type="number" id="calories" name="calories" bind:value={calories} min={0} />
+        {#if calories < 0}
+            <div>Must have min zero calories</div>
+        {/if}
+    </fieldset>
+    <fieldset>
+        <label for="duration">Duration (minutes)</label>
+        <input type="number" id="duration" name="duration" bind:value={duration} min={1} />
+        {#if duration < 1}
+            <div>Must have a positive duration</div>
+        {/if}
+    </fieldset>
+    <button disabled={!name} on:click={() => name && submitLog()}>Submit</button>
 </div>
 
 <style lang="scss">

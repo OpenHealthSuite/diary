@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { Card, Dialog, Modal } from 'attractions';
-    import { apiFetch } from 'src/lib/utilities/index'
-import { current_component } from 'svelte/internal';
+    import Modal from './Modal.svelte';
+    import { apiFetch } from 'src/lib/utilities/index';
     import type { FoodLogEntry } from '../types/FoodLogEntry';
     import LogEntryInterface from './LogEntryInterface.svelte';
     export let day: Date;
@@ -38,7 +37,7 @@ import { current_component } from 'svelte/internal';
     $: updateData(day)
 </script>
 
-<Card>
+<div>
     {#if loading}
     <div data-testid="loading-indicator">
         Loading data
@@ -71,17 +70,17 @@ import { current_component } from 'svelte/internal';
     </div>
     {/if}
     {/if}
-</Card>
-<Modal bind:open={modalOpen} let:closeCallback>
-    <Dialog title="Edit Calorie Log" {closeCallback}>
-      {#if modalOpen}
-          <LogEntryInterface log={editingLog} on:success={() => {
-            closeCallback()
-            updateData(day)
-            }}
-            on:error={(event) => console.error(event.detail)}/>
-      {/if}
-    </Dialog>
+</div>
+
+
+<Modal bind:open={modalOpen}>
+    {#if modalOpen}
+        <LogEntryInterface log={editingLog} on:success={() => {
+        modalOpen = false
+        updateData(day)
+        }}
+        on:error={(event) => console.error(event.detail)}/>
+    {/if}
 </Modal>
 
 <style lang="scss">

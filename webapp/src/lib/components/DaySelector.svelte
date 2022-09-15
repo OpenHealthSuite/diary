@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { Button, DatePicker } from 'attractions';
     import { createEventDispatcher } from 'svelte';
     export let day: Date = new Date();
 
@@ -11,20 +10,22 @@
     }
 </script>
 <div class="control-row">
-    <Button data-testid="backward-button" on:click={() => {
+    <button data-testid="backward-button" on:click={() => {
         day.setDate(day.getDate() - 1)
         day = day
         dispatch('dateChange', day)
-    }} outline>&lt;</Button>
-    <DatePicker value={day} 
-        format="%Y-%m-%d"
-        on:change={dateUpdater}
-        closeOnSelection/>
-    <Button data-testid="forward-button" on:click={() => {
+    }}>&lt;</button>
+    <fieldset>
+        <label for="day-selected">Day Selected</label>
+        <input type="date" id="day-selected" name="day-selected"
+            value={day}
+            on:change={dateUpdater}> 
+    </fieldset>
+    <button data-testid="forward-button" on:click={() => {
         day.setDate(day.getDate() + 1)
         day = day
         dispatch('dateChange', day)
-    }} outline>&gt;</Button>
+    }}>&gt;</button>
 </div>
 <style lang="scss">
     .control-row {
