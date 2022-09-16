@@ -73,8 +73,8 @@
 
 
     <fieldset>
-        <label for="name">Log Name</label>
-        <input style="width: 100%" id="name" name="name" bind:value={name} />
+        <label for="name" hidden>Log Name</label>
+        <input style="width: 95%" id="name" name="name" placeholder="Log Name" bind:value={name} />
         {#if name.length < 1}
             <div class="input-error">Must add a log name</div>
         {/if}
