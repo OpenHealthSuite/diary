@@ -64,7 +64,10 @@
         margin-left: auto;
         margin-right: 0.5em;
         padding: 0.5em;
-        font-weight: 700;
+        color: black;
+        background-color: rgba(0,0,0,0.2);
+        border: none;
+        border-radius: 0.5em;
     }
     .dialog-content {
         padding: 1em;

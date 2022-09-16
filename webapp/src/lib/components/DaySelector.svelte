@@ -49,6 +49,7 @@
         font-weight: 700;
         font-size: 1.3em;
         background-color: rgba(0,0,0,0.2);
+        color: black;
     }
     .day-selector {
         font-size: 1.2em;
@@ -56,5 +57,6 @@
         border: 0;
         border-bottom: 1px solid black;
         background-color: rgba(0,0,0,0.05);
+        color: black;
     }
 </style>

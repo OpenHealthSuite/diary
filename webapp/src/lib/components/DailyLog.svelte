@@ -114,6 +114,7 @@
             right: 1em;
             border-radius: 0.5em;
             background-color: rgba(0,0,0,0.1);
+            color: black;
             border: none;
             padding: 0.4em 0.8em;
             font-weight: 700;

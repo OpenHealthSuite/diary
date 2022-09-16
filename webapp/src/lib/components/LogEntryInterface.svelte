@@ -120,6 +120,7 @@
         border: 0;
         border-bottom: 1px solid black;
         background-color: rgba(0,0,0,0.05);
+        color: black;
     }
     .form-container {
         display: flex;
@@ -130,6 +131,10 @@
         width: 80%;
         align-self: center;
         padding: 0.5em;
+        color: black;
+        background-color: rgba(0,0,0,0.2);
+        border: none;
+        border-radius: 0.5em;
     }
     .left-right-field {
         display: flex;
