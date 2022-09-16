@@ -41,7 +41,7 @@
         justify-content: center;
     }
     .control-button {
-        margin: 1em;
+        margin: 0.5em 1em;
         padding: 1.2em 0.6em;
         border-radius: 0.5em;
         border: none;

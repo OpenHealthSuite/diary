@@ -19,7 +19,8 @@ const dateWithCurrentTime = (date: Date) => {
 <main>
     <DaySelector day={logDay} on:dateChange={dateChange} />
     <div class="controls-row">
-      <button on:click={() => modalOpen = true}>Add Log</button>
+      <button class="add-log-button" 
+        on:click={() => modalOpen = true}>Add Log</button>
     </div>
 
     <Modal bind:open={modalOpen}>
@@ -48,5 +49,14 @@ const dateWithCurrentTime = (date: Date) => {
   .form-wrapper {
     max-height: 70vh;
     overflow-y: scroll;
+  }
+
+  .add-log-button {
+      padding: 0.5em 1em;
+      border-radius: 0.5em;
+      border: none;
+      font-weight: 700;
+      font-size: 1.2em;
+      background-color: rgba(0,0,0,0.2);
   }
 </style>
