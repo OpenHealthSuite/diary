@@ -38,15 +38,6 @@
 </script>
 
 <div class="logs-area">
-    {#if loading}
-    <div data-testid="loading-indicator" class="raw-text-message">
-        Loading data
-    </div>
-    {:else if error}
-    <div data-testid="error-indicator" class="raw-text-message">
-        Error loading data
-    </div>
-    {:else}
     {#if dayData.length === 0}
     <div class="raw-text-message">
         No Logs Entered for this day
@@ -69,6 +60,14 @@
         {/each}
     </div>
     {/if}
+    {#if loading}
+    <div data-testid="loading-indicator" class="raw-text-message">
+        Loading data
+    </div>
+    {:else if error}
+    <div data-testid="error-indicator" class="raw-text-message">
+        Error loading data
+    </div>
     {/if}
 </div>
 
