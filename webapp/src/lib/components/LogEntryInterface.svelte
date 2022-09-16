@@ -58,44 +58,90 @@
     }
 </script>
 
-<div>
+<div class="form-container">
     <fieldset class="log-datetime-selectors">
-        <label for="log-entry-day">Log Day</label>
-        <input type="date" id="log-entry-day" name="log-entry-day" 
+        <label for="log-entry-day">Log Day
+            <input type="date" id="log-entry-day" name="log-entry-day" 
             pattern="\d{4}-\d{2}-\d{2}"
             bind:value={dateString}> 
-        <label for="log-entry-day">Log Time</label>
-        <input type="time" id="log-entry-day" name="log-entry-day" 
+        </label>
+        <label for="log-entry-day">Log Time
+            <input type="time" id="log-entry-day" name="log-entry-day" 
             bind:value={timeString}>
+        </label>
     </fieldset>
 
 
     <fieldset>
         <label for="name">Log Name</label>
-        <input id="name" name="name" bind:value={name} />
+        <input style="width: 100%" id="name" name="name" bind:value={name} />
         {#if name.length < 1}
-            <div>Must add a log name</div>
+            <div class="input-error">Must add a log name</div>
         {/if}
     </fieldset>
-    <fieldset>
+    <fieldset class="left-right-field">
         <label for="calories">Calories</label>
         <input type="number" id="calories" name="calories" bind:value={calories} min={0} />
-        {#if calories < 0}
-            <div>Must have min zero calories</div>
-        {/if}
     </fieldset>
-    <fieldset>
+    {#if calories < 0}
+        <div class="input-error">Must have min zero calories</div>
+    {/if}
+    <fieldset class="left-right-field">
         <label for="duration">Duration (minutes)</label>
         <input type="number" id="duration" name="duration" bind:value={duration} min={1} />
-        {#if duration < 1}
-            <div>Must have a positive duration</div>
-        {/if}
     </fieldset>
-    <button disabled={!name} on:click={() => name && submitLog()}>Submit</button>
+    {#if duration < 1}
+        <div class="input-error">Must have a positive duration</div>
+    {/if}
+    <button class="submit-button" disabled={!name} on:click={() => name && submitLog()}>Submit</button>
 </div>
 
 <style lang="scss">
+    fieldset {
+        border: none;
+        padding: 0;
+    }
     .log-datetime-selectors {
-        margin-bottom: 2em;
+        margin-bottom: 1em;
+        display: flex;
+        flex-direction: column;
+        label {
+            margin: 0.3em 0;
+        }
+    }
+    label {
+        font-size: 0.8em;
+    }
+    .input-error {
+        font-size: 0.7em;
+    }
+    input {
+        padding: 0.5em;
+        border: 0;
+        border-bottom: 1px solid black;
+        background-color: rgba(0,0,0,0.05);
+    }
+    .form-container {
+        display: flex;
+        flex-direction: column;
+    }
+    .submit-button {
+        margin-top: 2em;
+        width: 80%;
+        align-self: center;
+        padding: 0.5em;
+    }
+    .left-right-field {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 1em;
+        label {
+            width: 45%;
+        }
+        input {
+            width: 40%;
+        }
     }
 </style>
