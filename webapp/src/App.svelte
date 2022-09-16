@@ -58,5 +58,6 @@ const dateWithCurrentTime = (date: Date) => {
       font-weight: 700;
       font-size: 1.2em;
       background-color: rgba(0,0,0,0.2);
+      color: black;
   }
 </style>
