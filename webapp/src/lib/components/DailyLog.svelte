@@ -37,23 +37,23 @@
     $: updateData(day)
 </script>
 
-<div>
+<div class="logs-area">
     {#if loading}
-    <div data-testid="loading-indicator">
+    <div data-testid="loading-indicator" class="raw-text-message">
         Loading data
     </div>
     {:else if error}
-    <div data-testid="error-indicator">
+    <div data-testid="error-indicator" class="raw-text-message">
         Error loading data
     </div>
     {:else}
     {#if dayData.length === 0}
-    <div>
+    <div class="raw-text-message">
         No Logs Entered for this day
     </div>
     {:else}
     <div>
-        <h1>Total: {dayData.reduce((prev, curr) => prev + curr.metrics.calories, 0)} Calories</h1>
+        <h1 class="calories-total">{dayData.reduce((prev, curr) => prev + curr.metrics.calories, 0).toLocaleString()} Calories Total</h1>
         {#each dayData as log, i}
         <div class="food-log {i > 0 ? 'top-border' : ''}">
             <h2 data-testid="foodlog-{i}-calories">{log.metrics['calories']} Calories</h2>
@@ -84,6 +84,20 @@
 </Modal>
 
 <style lang="scss">
+    .logs-area {
+        padding: 0.5em;
+        margin: 0.5em;
+        border-radius: 1em;
+        border: 1px solid rgba(0,0,0,0.2);
+        .raw-text-message {
+            text-align: center;
+            padding: 1em 0;
+        }
+    }
+    .calories-total {
+        text-align: center;
+        line-height: 1em;
+    }
     .food-log {
         position: relative;
         display: flex;
@@ -99,8 +113,10 @@
             position: absolute;
             top: 1.5em;
             right: 1em;
-            border-radius: 1em;
-            padding: 0.6em;
+            border-radius: 0.5em;
+            background-color: rgba(0,0,0,0.1);
+            border: none;
+            padding: 0.4em 0.8em;
             font-weight: 700;
             cursor: pointer;
             &:hover {
@@ -108,7 +124,7 @@
             }
         }
         &.top-border {
-            border-top: 2px lightgray solid;
+            border-top: 2px rgba(0,0,0,0.1) dashed;
         }
     }
 </style>
