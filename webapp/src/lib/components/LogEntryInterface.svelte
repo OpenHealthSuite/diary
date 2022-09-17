@@ -27,7 +27,7 @@
 
     let [dateString] = startTime.toISOString().split('T')
 
-    let timeString = startTime.toLocaleTimeString().slice(0, 5);
+    let timeString = `${startTime.getHours()}:${startTime.getMinutes()}`;
 
     const submitLog = () => {
         const logTime = new Date(dateString+'T'+timeString)
