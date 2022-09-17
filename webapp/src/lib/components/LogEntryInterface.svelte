@@ -25,9 +25,9 @@
         ((new Date(log.time.end).getTime()) - (new Date(log.time.start).getTime())) / 1000 / 60 : 1;
     let calories = log.metrics.calories ?? 0;
 
-    let [dateString, timeString] = startTime.toISOString().split('T')
+    let [dateString] = startTime.toISOString().split('T')
 
-    timeString = timeString.slice(0, 5)
+    let timeString = startTime.toLocaleTimeString().slice(0, 5);
 
     const submitLog = () => {
         const logTime = new Date(dateString+'T'+timeString)
