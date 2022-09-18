@@ -56,8 +56,13 @@ describe("Create Log", () => {
       expect(apiFetch).not.toBeCalled();
     })
 
-    it('Happy Path :: set name, calories, duration, sends expected request, outputs success', async () => {
-      const date = new Date(2018, 1, 1, 13, 15, 0, 0)
+    const testTimes = [
+      [15, 0],
+      [6, 5]
+    ]
+
+    it.each(testTimes)('Happy Path :: set name, calories, duration, sends expected request, outputs success', async (hours, minutes) => {
+      const date = new Date(2018, 1, 1, hours, minutes, 0, 0)
       vi.setSystemTime(date)
 
       const logNameInput = "My Test Log";
