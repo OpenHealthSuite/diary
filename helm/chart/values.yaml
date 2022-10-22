@@ -4,4 +4,4 @@ replicas: 3
 cassandra:
   user: cassandra
   password: cassandra
-  contactpoints: cassandra.paceme.svc:9042
+  contactpoints: cassandra.service.svc:9042
