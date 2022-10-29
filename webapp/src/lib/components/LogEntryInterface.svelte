@@ -29,10 +29,13 @@
 
     let timeString = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}`;
 
+    let loading = false;
+
     const submitLog = () => {
         const logTime = new Date(dateString+'T'+timeString)
         const endTime = new Date(logTime)
         endTime.setMinutes(endTime.getMinutes() + duration)
+        loading = true;
         apiFetch(log.id ? '/logs/' + log.id : '/logs', {
             method: log.id ? 'PUT' : 'POST',
             body: JSON.stringify({
@@ -54,7 +57,27 @@
             throw new Error() 
         })
             .then(guid => dispatch('success', guid))
-            .catch(err => dispatch('error', "An unknown error occured"));
+            .catch(err => dispatch('error', "An unknown error occured"))
+            .finally(() => {
+                loading = false;
+            });
+    }
+
+    const deleteLog = (logId: string) => {
+        loading = true;
+        apiFetch('/logs/' + logId , {
+            method: 'DELETE',
+        }).then((response) => { 
+            if (response.status === 204) {
+                return;
+            }
+            throw new Error() 
+        })
+        .then(() => dispatch('success', undefined))
+        .catch(() => dispatch('error', "An unknown error occured"))
+        .finally(() => {
+            loading = false;
+        });
     }
 </script>
 
@@ -93,7 +116,10 @@
     {#if duration < 1}
         <div class="input-error">Must have a positive duration</div>
     {/if}
-    <button class="submit-button" disabled={!name} on:click={() => name && submitLog()}>Submit</button>
+    <button class="submit-button" disabled={!name || loading} on:click={() => name && submitLog()}>Submit</button>
+    {#if log.id}
+        <button class="submit-button" disabled={loading} on:click={() => deleteLog(log.id)}>Delete</button>
+    {/if}
 </div>
 
 <style lang="scss">
