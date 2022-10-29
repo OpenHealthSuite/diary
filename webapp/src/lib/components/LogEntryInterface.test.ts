@@ -1,379 +1,403 @@
-import LogEntryInterface from './LogEntryInterface.svelte'
-import { vi } from 'vitest';
-import type { Mock } from 'vitest';
-import { render, fireEvent } from '@testing-library/svelte'
-import { apiFetch } from 'src/lib/utilities'
-import type { FoodLogEntry } from '../types/FoodLogEntry';
-import crypto from 'node:crypto';
+import LogEntryInterface from "./LogEntryInterface.svelte";
+import { vi } from "vitest";
+import type { Mock } from "vitest";
+import { render, fireEvent } from "@testing-library/svelte";
+import { apiFetch } from "src/lib/utilities";
+import type { FoodLogEntry } from "../types/FoodLogEntry";
+import crypto from "node:crypto";
 
-vi.mock('src/lib/utilities', () => {
-    return { apiFetch: vi.fn() }
-})
+vi.mock("src/lib/utilities", () => {
+    return { apiFetch: vi.fn() };
+});
 
 describe("Create Log", () => {
     afterEach(() => {
-      vi.clearAllMocks()
-    })
-    
-    it('start :: it renders form with empty fields and current time', async () => {
-      const date = new Date(2018, 1, 1, 13, 15, 23)
-      vi.setSystemTime(date)
+        vi.clearAllMocks();
+    });
 
-      const { getByLabelText } = render(LogEntryInterface)
+    it("start :: it renders form with empty fields and current time", async () => {
+        const date = new Date(2018, 1, 1, 13, 15, 23);
+        vi.setSystemTime(date);
 
-      const name = getByLabelText("Log Name", { exact: false });
-      // Really just ended up fighting the custom date/time pickers here
-      // const dateInput = getByTestId("date-picker");
-      // const time = getByLabelText("Time");
-      const duration = getByLabelText("Duration (minutes)", { exact: false });
-      const calories = getByLabelText("Calories", { exact: false });
+        const { getByLabelText } = render(LogEntryInterface);
 
-      expect(name).toBeInTheDocument();
-      // expect(dateInput).toBeInTheDocument();
-      // expect(time).toBeInTheDocument();
-      expect(duration).toBeInTheDocument();
-      expect(calories).toBeInTheDocument();
+        const name = getByLabelText("Log Name", { exact: false });
+        // Really just ended up fighting the custom date/time pickers here
+        // const dateInput = getByTestId("date-picker");
+        // const time = getByLabelText("Time");
+        const duration = getByLabelText("Duration (minutes)", { exact: false });
+        const calories = getByLabelText("Calories", { exact: false });
 
-      expect(name).toHaveValue("")
-      expect(duration).toHaveValue(1);
-      expect(calories).toHaveValue(0);
-    })
+        expect(name).toBeInTheDocument();
+        // expect(dateInput).toBeInTheDocument();
+        // expect(time).toBeInTheDocument();
+        expect(duration).toBeInTheDocument();
+        expect(calories).toBeInTheDocument();
 
-    it('validation :: no name given, submit is not enabled', async () => {
-      const date = new Date(2018, 1, 1, 13, 15, 23)
-      vi.setSystemTime(date)
+        expect(name).toHaveValue("");
+        expect(duration).toHaveValue(1);
+        expect(calories).toHaveValue(0);
+    });
 
-      const { getByLabelText, getByText } = render(LogEntryInterface)
+    it("validation :: no name given, submit is not enabled", async () => {
+        const date = new Date(2018, 1, 1, 13, 15, 23);
+        vi.setSystemTime(date);
 
-      const name = getByLabelText("Log Name", { exact: false });
-      expect(name).toBeInTheDocument()
-      expect(name).toHaveValue("")
+        const { getByLabelText, getByText } = render(LogEntryInterface);
 
-      const submitButton = getByText("Submit")
-      expect(submitButton).toBeInTheDocument();
-      expect(submitButton).toBeDisabled();
-      await fireEvent.click(submitButton)
-      expect(apiFetch).not.toBeCalled();
-    })
+        const name = getByLabelText("Log Name", { exact: false });
+        expect(name).toBeInTheDocument();
+        expect(name).toHaveValue("");
+
+        const submitButton = getByText("Submit");
+        expect(submitButton).toBeInTheDocument();
+        expect(submitButton).toBeDisabled();
+        await fireEvent.click(submitButton);
+        expect(apiFetch).not.toBeCalled();
+    });
 
     const testTimes = [
-      [15, 0],
-      [6, 5]
-    ]
+        [15, 0],
+        [6, 5],
+    ];
 
-    it.each(testTimes)('Happy Path :: set name, calories, duration, sends expected request, outputs success', async (hours, minutes) => {
-      const date = new Date(2018, 1, 1, hours, minutes, 0, 0)
-      vi.setSystemTime(date)
+    it.each(testTimes)(
+        "Happy Path :: set name, calories, duration, sends expected request, outputs success",
+        async (hours, minutes) => {
+            const date = new Date(2018, 1, 1, hours, minutes, 0, 0);
+            vi.setSystemTime(date);
 
-      const logNameInput = "My Test Log";
-      const durationInput = 10;
-      const caloriesInput = 500;
-      const endDate = new Date(date)
-      endDate.setMinutes(endDate.getMinutes() + durationInput)
+            const logNameInput = "My Test Log";
+            const durationInput = 10;
+            const caloriesInput = 500;
+            const endDate = new Date(date);
+            endDate.setMinutes(endDate.getMinutes() + durationInput);
 
-      const expectedRequest = {
-          name: logNameInput,
-          labels: [],
-          time: {
-              start: date.toISOString(),
-              end: endDate.toISOString()
-          },
-          metrics: {
-              calories: caloriesInput
-          }
-      };
+            const expectedRequest = {
+                name: logNameInput,
+                labels: [],
+                time: {
+                    start: date.toISOString(),
+                    end: endDate.toISOString(),
+                },
+                metrics: {
+                    calories: caloriesInput,
+                },
+            };
 
-      const data = crypto.randomUUID()
+            const data = crypto.randomUUID();
 
-      const response = {
-          status: 200,
-          text: vi.fn().mockResolvedValue(data)
-      };
+            const response = {
+                status: 200,
+                text: vi.fn().mockResolvedValue(data),
+            };
 
-      (apiFetch as Mock<any[], any>).mockResolvedValue(response)
+            (apiFetch as Mock<any[], any>).mockResolvedValue(response);
 
-      const { getByLabelText, getByText, component } = render(LogEntryInterface)
+            const { getByLabelText, getByText, component } =
+                render(LogEntryInterface);
 
-      let componentOutput = undefined;
+            let componentOutput = undefined;
 
-      component.$on('success', e => { componentOutput = e.detail })
+            component.$on("success", (e) => {
+                componentOutput = e.detail;
+            });
 
-      const name = getByLabelText("Log Name", { exact: false });
-      const duration = getByLabelText("Duration (minutes)", { exact: false });
-      const calories = getByLabelText("Calories", { exact: false });
+            const name = getByLabelText("Log Name", { exact: false });
+            const duration = getByLabelText("Duration (minutes)", {
+                exact: false,
+            });
+            const calories = getByLabelText("Calories", { exact: false });
 
-      fireEvent.input(name, {target: {value: logNameInput}})
-      fireEvent.input(duration, {target: {value: durationInput}})
-      fireEvent.input(calories, {target: {value: caloriesInput}})
+            fireEvent.input(name, { target: { value: logNameInput } });
+            fireEvent.input(duration, { target: { value: durationInput } });
+            fireEvent.input(calories, { target: { value: caloriesInput } });
 
-      await new Promise(process.nextTick);
+            await new Promise(process.nextTick);
 
-      const submitButton = getByText("Submit")
-      expect(submitButton).toBeInTheDocument();
-      expect(submitButton).not.toBeDisabled();
-      await fireEvent.click(submitButton)
-      expect(apiFetch).toBeCalledWith("/logs", {
-        method: 'POST',
-        body: JSON.stringify(expectedRequest)
-      });
+            const submitButton = getByText("Submit");
+            expect(submitButton).toBeInTheDocument();
+            expect(submitButton).not.toBeDisabled();
+            await fireEvent.click(submitButton);
+            expect(apiFetch).toBeCalledWith("/logs", {
+                method: "POST",
+                body: JSON.stringify(expectedRequest),
+            });
 
-      await new Promise(process.nextTick);
-      
-      expect(componentOutput).toBe(data)
-    })
+            await new Promise(process.nextTick);
 
-    const errorCodes = [400, 403, 500]
+            expect(componentOutput).toBe(data);
+        }
+    );
 
-    it.each(errorCodes)('Happy Path :: set name, calories, duration, sends expected request, non 200 response, outputs error', async (errorCode) => {
-      const date = new Date(2018, 1, 1, 13, 15, 0, 0)
-      vi.setSystemTime(date)
+    const errorCodes = [400, 403, 500];
 
-      const logNameInput = "My Test Log";
-      const durationInput = 10;
-      const caloriesInput = 500;
-      const endDate = new Date(date)
-      endDate.setMinutes(endDate.getMinutes() + durationInput)
+    it.each(errorCodes)(
+        "Happy Path :: set name, calories, duration, sends expected request, non 200 response, outputs error",
+        async (errorCode) => {
+            const date = new Date(2018, 1, 1, 13, 15, 0, 0);
+            vi.setSystemTime(date);
 
-      const expectedRequest = {
-          name: logNameInput,
-          labels: [],
-          time: {
-              start: date.toISOString(),
-              end: endDate.toISOString()
-          },
-          metrics: {
-              calories: caloriesInput
-          }
-      };
+            const logNameInput = "My Test Log";
+            const durationInput = 10;
+            const caloriesInput = 500;
+            const endDate = new Date(date);
+            endDate.setMinutes(endDate.getMinutes() + durationInput);
 
-      const data = "Some error message"
+            const expectedRequest = {
+                name: logNameInput,
+                labels: [],
+                time: {
+                    start: date.toISOString(),
+                    end: endDate.toISOString(),
+                },
+                metrics: {
+                    calories: caloriesInput,
+                },
+            };
 
-      const response = {
-          status: errorCode,
-          text: vi.fn().mockResolvedValue(data)
-      };
+            const data = "Some error message";
 
-      (apiFetch as Mock<any[], any>).mockResolvedValue(response)
+            const response = {
+                status: errorCode,
+                text: vi.fn().mockResolvedValue(data),
+            };
 
-      const { getByLabelText, getByText, component } = render(LogEntryInterface)
+            (apiFetch as Mock<any[], any>).mockResolvedValue(response);
 
-      let componentOutput = undefined;
+            const { getByLabelText, getByText, component } =
+                render(LogEntryInterface);
 
-      component.$on('error', e => { componentOutput = e.detail })
+            let componentOutput = undefined;
 
-      const name = getByLabelText("Log Name", { exact: false });
-      const duration = getByLabelText("Duration (minutes)", { exact: false });
-      const calories = getByLabelText("Calories", { exact: false });
+            component.$on("error", (e) => {
+                componentOutput = e.detail;
+            });
 
-      fireEvent.input(name, {target: {value: logNameInput}})
-      fireEvent.input(duration, {target: {value: durationInput}})
-      fireEvent.input(calories, {target: {value: caloriesInput}})
+            const name = getByLabelText("Log Name", { exact: false });
+            const duration = getByLabelText("Duration (minutes)", {
+                exact: false,
+            });
+            const calories = getByLabelText("Calories", { exact: false });
 
-      await new Promise(process.nextTick);
+            fireEvent.input(name, { target: { value: logNameInput } });
+            fireEvent.input(duration, { target: { value: durationInput } });
+            fireEvent.input(calories, { target: { value: caloriesInput } });
 
-      const submitButton = getByText("Submit")
-      expect(submitButton).toBeInTheDocument();
-      expect(submitButton).not.toBeDisabled();
-      await fireEvent.click(submitButton)
-      expect(apiFetch).toBeCalledWith("/logs", {
-        method: 'POST',
-        body: JSON.stringify(expectedRequest)
-      });
+            await new Promise(process.nextTick);
 
-      await new Promise(process.nextTick);
-      
-      expect(componentOutput).toBe("An unknown error occured")
-    })
+            const submitButton = getByText("Submit");
+            expect(submitButton).toBeInTheDocument();
+            expect(submitButton).not.toBeDisabled();
+            await fireEvent.click(submitButton);
+            expect(apiFetch).toBeCalledWith("/logs", {
+                method: "POST",
+                body: JSON.stringify(expectedRequest),
+            });
 
-    it('Unhappy Path :: set name, calories, duration, sends expected request, outputs error', async () => {
-      const date = new Date(2018, 1, 1, 13, 15, 0, 0)
-      vi.setSystemTime(date)
+            await new Promise(process.nextTick);
 
-      const logNameInput = "My Test Log";
-      const durationInput = 10;
-      const caloriesInput = 500;
-      const endDate = new Date(date)
-      endDate.setMinutes(endDate.getMinutes() + durationInput)
+            expect(componentOutput).toBe("An unknown error occured");
+        }
+    );
 
-      const expectedRequest = {
-          name: logNameInput,
-          labels: [],
-          time: {
-              start: date.toISOString(),
-              end: endDate.toISOString()
-          },
-          metrics: {
-              calories: caloriesInput
-          }
-      };
+    it("Unhappy Path :: set name, calories, duration, sends expected request, outputs error", async () => {
+        const date = new Date(2018, 1, 1, 13, 15, 0, 0);
+        vi.setSystemTime(date);
 
-      const data = "Something went wrong";
+        const logNameInput = "My Test Log";
+        const durationInput = 10;
+        const caloriesInput = 500;
+        const endDate = new Date(date);
+        endDate.setMinutes(endDate.getMinutes() + durationInput);
 
-      (apiFetch as Mock<any[], any>).mockRejectedValue(data)
+        const expectedRequest = {
+            name: logNameInput,
+            labels: [],
+            time: {
+                start: date.toISOString(),
+                end: endDate.toISOString(),
+            },
+            metrics: {
+                calories: caloriesInput,
+            },
+        };
 
-      const { getByLabelText, getByText, component } = render(LogEntryInterface)
+        const data = "Something went wrong";
 
-      let componentOutput = undefined;
+        (apiFetch as Mock<any[], any>).mockRejectedValue(data);
 
-      component.$on('error', e => { componentOutput = e.detail })
+        const { getByLabelText, getByText, component } =
+            render(LogEntryInterface);
 
-      const name = getByLabelText("Log Name", { exact: false });
-      const duration = getByLabelText("Duration (minutes)", { exact: false });
-      const calories = getByLabelText("Calories", { exact: false });
+        let componentOutput = undefined;
 
-      fireEvent.input(name, {target: {value: logNameInput}})
-      fireEvent.input(duration, {target: {value: durationInput}})
-      fireEvent.input(calories, {target: {value: caloriesInput}})
+        component.$on("error", (e) => {
+            componentOutput = e.detail;
+        });
 
-      await new Promise(process.nextTick);
+        const name = getByLabelText("Log Name", { exact: false });
+        const duration = getByLabelText("Duration (minutes)", { exact: false });
+        const calories = getByLabelText("Calories", { exact: false });
 
-      const submitButton = getByText("Submit")
-      expect(submitButton).toBeInTheDocument();
-      expect(submitButton).not.toBeDisabled();
-      await fireEvent.click(submitButton)
-      expect(apiFetch).toBeCalledWith("/logs", {
-        method: 'POST',
-        body: JSON.stringify(expectedRequest)
-      });
+        fireEvent.input(name, { target: { value: logNameInput } });
+        fireEvent.input(duration, { target: { value: durationInput } });
+        fireEvent.input(calories, { target: { value: caloriesInput } });
 
-      await new Promise(process.nextTick);
-      
-      expect(componentOutput).toBe("An unknown error occured")
-    })
-  })
+        await new Promise(process.nextTick);
 
+        const submitButton = getByText("Submit");
+        expect(submitButton).toBeInTheDocument();
+        expect(submitButton).not.toBeDisabled();
+        await fireEvent.click(submitButton);
+        expect(apiFetch).toBeCalledWith("/logs", {
+            method: "POST",
+            body: JSON.stringify(expectedRequest),
+        });
 
+        await new Promise(process.nextTick);
+
+        expect(componentOutput).toBe("An unknown error occured");
+    });
+});
 
 describe("Edit Log", () => {
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
-  
-  it('start :: it renders form with input log fields', async () => {
-    const date = new Date(2018, 1, 1, 13, 15, 0, 0);
-    vi.setSystemTime(date);
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
 
-    const duration = 12;
-    const startTime = new Date(2019, 1, 1, 14, 15, 0, 0)
-    const endTime = new Date(startTime);
-    endTime.setMinutes(endTime.getMinutes() + duration)
+    it("start :: it renders form with input log fields", async () => {
+        const date = new Date(2018, 1, 1, 13, 15, 0, 0);
+        vi.setSystemTime(date);
 
-    const inputLog: FoodLogEntry = {
-        id: crypto.randomUUID(),
-        name: "Input Log",
-        labels: [],
-        time: {
-            start: startTime,
-            end: endTime
-        },
-        metrics: {
-            calories: 345
-        }
-    }
+        const duration = 12;
+        const startTime = new Date(2019, 1, 1, 14, 15, 0, 0);
+        const endTime = new Date(startTime);
+        endTime.setMinutes(endTime.getMinutes() + duration);
 
-    const { getByLabelText } = render(LogEntryInterface, {
-      log: inputLog
-    })
+        const inputLog: FoodLogEntry = {
+            id: crypto.randomUUID(),
+            name: "Input Log",
+            labels: [],
+            time: {
+                start: startTime,
+                end: endTime,
+            },
+            metrics: {
+                calories: 345,
+            },
+        };
 
-    const name = getByLabelText("Log Name", { exact: false });
-    // Really just ended up fighting the custom date/time pickers here
-    // const dateInput = getByTestId("date-picker");
-    // const time = getByLabelText("Time");
-    const durationInput = getByLabelText("Duration (minutes)", { exact: false });
-    const calories = getByLabelText("Calories", { exact: false });
+        const { getByLabelText } = render(LogEntryInterface, {
+            log: inputLog,
+        });
 
-    expect(name).toBeInTheDocument();
-    // expect(dateInput).toBeInTheDocument();
-    // expect(time).toBeInTheDocument();
-    expect(durationInput).toBeInTheDocument();
-    expect(calories).toBeInTheDocument();
+        const name = getByLabelText("Log Name", { exact: false });
+        // Really just ended up fighting the custom date/time pickers here
+        // const dateInput = getByTestId("date-picker");
+        // const time = getByLabelText("Time");
+        const durationInput = getByLabelText("Duration (minutes)", {
+            exact: false,
+        });
+        const calories = getByLabelText("Calories", { exact: false });
 
-    expect(name).toHaveValue(inputLog.name)
-    expect(durationInput).toHaveValue(duration);
-    expect(calories).toHaveValue(inputLog.metrics.calories);
-  })
+        expect(name).toBeInTheDocument();
+        // expect(dateInput).toBeInTheDocument();
+        // expect(time).toBeInTheDocument();
+        expect(durationInput).toBeInTheDocument();
+        expect(calories).toBeInTheDocument();
 
-  it('Happy Path :: set name, calories, duration, sends expected request, outputs success', async () => {
+        expect(name).toHaveValue(inputLog.name);
+        expect(durationInput).toHaveValue(duration);
+        expect(calories).toHaveValue(inputLog.metrics.calories);
+    });
 
-    const startTime = new Date(2019, 1, 1, 14, 15, 0, 0)
+    it("Happy Path :: set name, calories, duration, sends expected request, outputs success", async () => {
+        const startTime = new Date(2019, 1, 1, 14, 15, 0, 0);
 
-    const logNameInput = "My Test Log";
-    const durationInput = 10;
-    const caloriesInput = 500;
-    const endDate = new Date(startTime)
-    endDate.setMinutes(endDate.getMinutes() + durationInput)
+        const logNameInput = "My Test Log";
+        const durationInput = 10;
+        const caloriesInput = 500;
+        const endDate = new Date(startTime);
+        endDate.setMinutes(endDate.getMinutes() + durationInput);
 
-    const duration = 12;
-    const endTime = new Date(startTime);
-    endTime.setMinutes(endTime.getMinutes() + duration)
+        const duration = 12;
+        const endTime = new Date(startTime);
+        endTime.setMinutes(endTime.getMinutes() + duration);
 
-    const inputLog: FoodLogEntry = {
-        id: crypto.randomUUID(),
-        name: "Input Log",
-        labels: [],
-        time: {
-            start: startTime,
-            end: endDate
-        },
-        metrics: {
-            calories: 345
-        }
-    }
+        const inputLog: FoodLogEntry = {
+            id: crypto.randomUUID(),
+            name: "Input Log",
+            labels: [],
+            time: {
+                start: startTime,
+                end: endDate,
+            },
+            metrics: {
+                calories: 345,
+            },
+        };
 
-    const expectedRequest = {
-        id: inputLog.id,
-        name: logNameInput,
-        labels: [],
-        time: {
-            start: startTime.toISOString(),
-            end: endTime.toISOString()
-        },
-        metrics: {
-            calories: caloriesInput
-        }
-    };
+        const expectedRequest = {
+            id: inputLog.id,
+            name: logNameInput,
+            labels: [],
+            time: {
+                start: startTime.toISOString(),
+                end: endTime.toISOString(),
+            },
+            metrics: {
+                calories: caloriesInput,
+            },
+        };
 
-    const data = inputLog.id
+        const data = inputLog.id;
 
-    const response = {
-        status: 200,
-        text: vi.fn().mockResolvedValue(data)
-    };
+        const response = {
+            status: 200,
+            text: vi.fn().mockResolvedValue(data),
+        };
 
-    (apiFetch as Mock<any[], any>).mockResolvedValue(response)
+        (apiFetch as Mock<any[], any>).mockResolvedValue(response);
 
-    const { getByLabelText, getByText, component } = render(LogEntryInterface, {
-      log: inputLog
-    })
+        const { getByLabelText, getByText, component } = render(
+            LogEntryInterface,
+            {
+                log: inputLog,
+            }
+        );
 
-    let componentOutput = undefined;
+        let componentOutput = undefined;
 
-    component.$on('success', e => { componentOutput = e.detail })
+        component.$on("success", (e) => {
+            componentOutput = e.detail;
+        });
 
-    const name = getByLabelText("Log Name", { exact: false });
-    const durationInputElm = getByLabelText("Duration (minutes)", { exact: false });
-    const calories = getByLabelText("Calories", { exact: false });
+        const name = getByLabelText("Log Name", { exact: false });
+        const durationInputElm = getByLabelText("Duration (minutes)", {
+            exact: false,
+        });
+        const calories = getByLabelText("Calories", { exact: false });
 
-    fireEvent.input(name, {target: {value: logNameInput}})
-    fireEvent.input(durationInputElm, {target: {value: duration}})
-    fireEvent.input(calories, {target: {value: caloriesInput}})
+        fireEvent.input(name, { target: { value: logNameInput } });
+        fireEvent.input(durationInputElm, { target: { value: duration } });
+        fireEvent.input(calories, { target: { value: caloriesInput } });
 
-    await new Promise(process.nextTick);
+        await new Promise(process.nextTick);
 
-    const submitButton = getByText("Submit")
-    expect(submitButton).toBeInTheDocument();
-    expect(submitButton).not.toBeDisabled();
-    await fireEvent.click(submitButton)
-    expect((apiFetch as Mock<any[], any>).mock.calls[0][0]).toBe("/logs/" + inputLog.id);
-    const { method, body } = (apiFetch as Mock<any[], any>).mock.calls[0][1];
-    expect(method).toBe('PUT')
-    expect(JSON.parse(body)).toEqual(expectedRequest)
-    // {
-    //   method: 'PUT',
-    //   body: JSON.stringify(expectedRequest)
-    // }
-    await new Promise(process.nextTick);
-    
-    expect(componentOutput).toBe(data)
-  })
-})
+        const submitButton = getByText("Submit");
+        expect(submitButton).toBeInTheDocument();
+        expect(submitButton).not.toBeDisabled();
+        await fireEvent.click(submitButton);
+        expect((apiFetch as Mock<any[], any>).mock.calls[0][0]).toBe(
+            "/logs/" + inputLog.id
+        );
+        const { method, body } = (apiFetch as Mock<any[], any>).mock
+            .calls[0][1];
+        expect(method).toBe("PUT");
+        expect(JSON.parse(body)).toEqual(expectedRequest);
+        await new Promise(process.nextTick);
+
+        expect(componentOutput).toBe(data);
+    });
+});
