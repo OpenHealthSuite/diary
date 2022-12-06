@@ -1,5 +1,10 @@
 import express, { NextFunction, Request, Response, Router } from "express";
-import { isNotFoundError, isValidationError, StorageError } from "../storage";
+import {
+  isNotFoundError,
+  isValidationError,
+  StorageError,
+  STORAGE,
+} from "../storage";
 import { OFDLocals } from "../middlewares";
 import {
   DeleteFoodLogFunction,
@@ -9,9 +14,7 @@ import {
   StoreFoodLogFunction,
 } from "../storage/types/FoodLog";
 
-import { cassandra } from "../storage/cassandra";
-
-const foodStorageProvider = cassandra.foodLog;
+let foodStorageProvider = STORAGE.foodLog;
 
 export function buildRouter(router: Router): Router {
   return router

@@ -5,7 +5,7 @@ import * as sqliteFoodLogStorage from "./FoodLogStorageFunctions";
 export const DEFAULT_CLIENT_CONFIG: Knex.Config = {
   client: "better-sqlite3",
   connection: {
-    filename: ".sqlite/openfooddiary.sqlite",
+    filename: process.env.SQLITE3_FILENAME ?? ".sqlite/openfooddiary.sqlite",
   },
   useNullAsDefault: true,
 };
@@ -27,8 +27,12 @@ export async function setupDatabase(knex: Knex = knexInstance) {
   await knex.raw(setup);
 }
 
+export async function shutdownDatabase(knex: Knex = knexInstance) {
+  await knex.destroy();
+}
+
 export const sqlite3: StorageType = {
   setupDatabase,
-  shutdownDatabase: () => Promise.resolve(),
+  shutdownDatabase,
   foodLog: sqliteFoodLogStorage,
 };

@@ -2,7 +2,7 @@ import express from "express";
 import qs from "qs";
 import { FoodStorageRouter } from "./handlers";
 import { userMiddleware } from "./middlewares";
-import { cassandra } from "./storage/cassandra";
+import { STORAGE } from "./storage";
 
 const port = process.env.PORT || 3012;
 
@@ -21,12 +21,12 @@ app.use(userMiddleware);
 
 app.use("/api", FoodStorageRouter);
 
-cassandra.setupDatabase().then(() => {
+STORAGE.setupDatabase().then(() => {
   const running = app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 
     const cleanup = () => {
-      cassandra.shutdownDatabase();
+      STORAGE.shutdownDatabase();
       running.close();
     };
 

@@ -116,7 +116,6 @@ export const retrieveFoodLog: SqliteRetrieveFoodLogFunction = async (
     }
     return ok(generalFromSql(log));
   } catch (error: any) {
-    console.log(error.message);
     return err(new SystemError(error.message));
   }
 };
