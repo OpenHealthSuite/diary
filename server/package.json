@@ -19,8 +19,10 @@
         "typescript": "^4.8.2"
     },
     "dependencies": {
+        "better-sqlite3": "^8.0.1",
         "cassandra-driver": "^4.6.4",
         "express": "^4.18.1",
+        "knex": "^2.3.0",
         "neverthrow": "^5.0.0"
     }
 }

@@ -29,6 +29,7 @@ RUN npm run build
 # Build runtime image
 FROM node:18.7.0-alpine
 WORKDIR /app
+RUN mkdir .sqlite
 COPY --from=server-depns /server/node_modules /app/node_modules
 COPY --from=server-build /server/dist /app
 COPY --from=webapp-build /webapp/dist /app/public
