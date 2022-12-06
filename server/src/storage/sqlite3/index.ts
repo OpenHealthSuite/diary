@@ -5,7 +5,9 @@ import * as sqliteFoodLogStorage from "./FoodLogStorageFunctions";
 export const DEFAULT_CLIENT_CONFIG: Knex.Config = {
   client: "better-sqlite3",
   connection: {
-    filename: process.env.SQLITE3_FILENAME ?? ".sqlite/openfooddiary.sqlite",
+    filename:
+      process.env.OPENFOODDIARY_SQLITE3_FILENAME ??
+      ".sqlite/openfooddiary.sqlite",
   },
   useNullAsDefault: true,
 };

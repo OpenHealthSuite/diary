@@ -15,7 +15,7 @@ const AVAILABLE_STORAGES: StorageDrivers = {
 
 let setupStorage = AVAILABLE_STORAGES.sqlite3;
 
-switch (process.env.STORAGE_PROVIDER) {
+switch (process.env.OPENFOODDIARY_STORAGE_PROVIDER) {
   case "cassandra":
     setupStorage = AVAILABLE_STORAGES.cassandra;
     break;

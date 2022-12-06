@@ -4,7 +4,7 @@ import { FoodStorageRouter } from "./handlers";
 import { userMiddleware } from "./middlewares";
 import { STORAGE } from "./storage";
 
-const port = process.env.PORT || 3012;
+const port = process.env.OPENFOODDIARY_PORT || 3012;
 
 const app = express();
 
