@@ -1,32 +1,47 @@
-import { Client, DseClientOptions } from 'cassandra-driver'
-
-export * from './FoodLogStorageFunctions'
-export * from './migrations'
+import { Client } from "cassandra-driver";
+import { StorageType } from "../interfaces";
+import * as cassandraFoodLogStorage from "./FoodLogStorageFunctions";
 
 export const DEFAULT_CLIENT_CONFIG = {
-    contactPoints: process.env.OPENFOODDIARY_CASSANDRA_CONTACT_POINTS ? 
-      process.env.OPENFOODDIARY_CASSANDRA_CONTACT_POINTS.split(';') : ['localhost:9042'],
-    localDataCenter: process.env.OPENFOODDIARY_CASSANDRA_LOCALDATACENTER ?? 'datacenter1',
-    credentials: {
-      username: process.env.OPENFOODDIARY_CASSANDRA_USER ?? 'cassandra',
-      password: process.env.OPENFOODDIARY_CASSANDRA_PASSWORD ?? 'cassandra'
+  contactPoints: process.env.OPENFOODDIARY_CASSANDRA_CONTACT_POINTS
+    ? process.env.OPENFOODDIARY_CASSANDRA_CONTACT_POINTS.split(";")
+    : ["localhost:9042"],
+  localDataCenter:
+    process.env.OPENFOODDIARY_CASSANDRA_LOCALDATACENTER ?? "datacenter1",
+  credentials: {
+    username: process.env.OPENFOODDIARY_CASSANDRA_USER ?? "cassandra",
+    password: process.env.OPENFOODDIARY_CASSANDRA_PASSWORD ?? "cassandra",
+  },
+};
+
+export const CASSANDRA_CLIENT: Client = new Client(DEFAULT_CLIENT_CONFIG);
+
+export async function shutdownDatabase() {
+  await CASSANDRA_CLIENT.shutdown();
+}
+
+// Probably worth looking into this more formally
+const MIGRATIONS: string[] = [
+  "CREATE KEYSPACE IF NOT EXISTS openfooddiary WITH REPLICATION = {'class':'SimpleStrategy','replication_factor':1};", // TODO: Make this optional?
+  `CREATE TYPE IF NOT EXISTS openfooddiary.logTimes (start timestamp, end timestamp);`,
+  `CREATE TABLE IF NOT EXISTS openfooddiary.user_foodlogentry (userId UUID, id UUID, name text, labels set<text>,time frozen<openfooddiary.logTimes>,metrics map<text,int>, timeStart timestamp, timeEnd timestamp, PRIMARY KEY ((userId), id));`,
+  `CREATE INDEX IF NOT EXISTS ON openfooddiary.user_foodlogentry (timeStart);`,
+  `CREATE INDEX IF NOT EXISTS ON openfooddiary.user_foodlogentry (timeEnd);`,
+];
+
+export async function setupDatabase(
+  migrationClient: Client = new Client(DEFAULT_CLIENT_CONFIG)
+) {
+  await migrationClient.connect().then(async () => {
+    for (let migration of MIGRATIONS) {
+      await migrationClient.execute(migration);
     }
+    return migrationClient.shutdown();
+  });
 }
 
-export function createClient(clientConfig: DseClientOptions = DEFAULT_CLIENT_CONFIG) {
-    return new Client(clientConfig);
-}
-
-export function setGlobalClient(client: Client) {
-  CASSANDRA_CLIENT = client;
-}
-
-export function setDefaultGlobalClient() {
-  CASSANDRA_CLIENT = createClient(DEFAULT_CLIENT_CONFIG);
-}
-
-export let CASSANDRA_CLIENT: Client;
-
-export async function closeCassandra() {
-    await CASSANDRA_CLIENT.shutdown();
-}
+export const cassandra: StorageType = {
+  setupDatabase,
+  shutdownDatabase,
+  foodLog: cassandraFoodLogStorage,
+};

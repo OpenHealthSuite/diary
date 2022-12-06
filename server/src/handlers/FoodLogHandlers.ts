@@ -1,28 +1,33 @@
-import express, { NextFunction, Request, Response, Router } from 'express';
-import { isNotFoundError, isValidationError, StorageError } from '../storage';
-import { OFDLocals } from '../middlewares';
-import { DeleteFoodLogFunction, EditFoodLogFunction, QueryFoodLogFunction, RetrieveFoodLogFunction, StoreFoodLogFunction } from '../storage/types/FoodLog';
+import express, { NextFunction, Request, Response, Router } from "express";
+import { isNotFoundError, isValidationError, StorageError } from "../storage";
+import { OFDLocals } from "../middlewares";
+import {
+  DeleteFoodLogFunction,
+  EditFoodLogFunction,
+  QueryFoodLogFunction,
+  RetrieveFoodLogFunction,
+  StoreFoodLogFunction,
+} from "../storage/types/FoodLog";
 
-import * as storage from '../storage'
+import { cassandra } from "../storage/cassandra";
 
-const foodStorageProvider = storage.cassandra.foodLog;
+const foodStorageProvider = cassandra.foodLog;
 
 export function buildRouter(router: Router): Router {
-  return router.post('/logs', createFoodLogHandler)
-    .get('/logs', queryFoodLogHandler)
-    .get('/logs/:itemId', getFoodLogHandler)
-    .put('/logs/:itemId', updateFoodLogHandler)
-    .delete('/logs/:itemId', deleteFoodLogHandler)
+  return router
+    .post("/logs", createFoodLogHandler)
+    .get("/logs", queryFoodLogHandler)
+    .get("/logs/:itemId", getFoodLogHandler)
+    .put("/logs/:itemId", updateFoodLogHandler)
+    .delete("/logs/:itemId", deleteFoodLogHandler);
 }
 
-export const FoodStorageRouter = buildRouter(express.Router())
+export const FoodStorageRouter = buildRouter(express.Router());
 
 function errorStatusCodeCalculator(err: StorageError): number {
-  if (isValidationError(err))
-    return 400
-  if (isNotFoundError(err))
-    return 404
-  return 500
+  if (isValidationError(err)) return 400;
+  if (isNotFoundError(err)) return 404;
+  return 500;
 }
 
 export function createFoodLogHandler(
@@ -32,20 +37,35 @@ export function createFoodLogHandler(
   storeFoodLog: StoreFoodLogFunction = foodStorageProvider.storeFoodLog
 ) {
   let item = structuredClone(req.body);
-  if (item && item.time && item.time.start && item.time.end && validStartEndDateStrings(item.time.start, item.time.end)) {
-    item.time.start = new Date(item.time.start)
-    item.time.end = new Date(item.time.end)
+  if (
+    item &&
+    item.time &&
+    item.time.start &&
+    item.time.end &&
+    validStartEndDateStrings(item.time.start, item.time.end)
+  ) {
+    item.time.start = new Date(item.time.start);
+    item.time.end = new Date(item.time.end);
   }
-  storeFoodLog(res.locals.userId, item)
-    .then(result => result.map(val => res.send(val))
-      .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message))
-    )
+  storeFoodLog(res.locals.userId, item).then((result) =>
+    result
+      .map((val) => res.send(val))
+      .mapErr((err) =>
+        res.status(errorStatusCodeCalculator(err)).send(err.message)
+      )
+  );
 }
 
-function validStartEndDateStrings(startDateString: string, endDateString: string): boolean {
+function validStartEndDateStrings(
+  startDateString: string,
+  endDateString: string
+): boolean {
   const startDate = new Date(startDateString);
   const endDate = new Date(endDateString);
-  return startDate.toString() !== "Invalid Date" && endDate.toString() !== "Invalid Date"
+  return (
+    startDate.toString() !== "Invalid Date" &&
+    endDate.toString() !== "Invalid Date"
+  );
 }
 
 export function queryFoodLogHandler(
@@ -55,13 +75,25 @@ export function queryFoodLogHandler(
   queryFoodLog: QueryFoodLogFunction = foodStorageProvider.queryFoodLogs
 ) {
   const { startDate, endDate } = req.query;
-  if (typeof startDate === "string" && typeof endDate === "string" && validStartEndDateStrings(startDate, endDate)) {
-    queryFoodLog(res.locals.userId, new Date(startDate), new Date(endDate))
-      .then(result => result.map(val => res.send(val))
-        .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message)))
+  if (
+    typeof startDate === "string" &&
+    typeof endDate === "string" &&
+    validStartEndDateStrings(startDate, endDate)
+  ) {
+    queryFoodLog(
+      res.locals.userId,
+      new Date(startDate),
+      new Date(endDate)
+    ).then((result) =>
+      result
+        .map((val) => res.send(val))
+        .mapErr((err) =>
+          res.status(errorStatusCodeCalculator(err)).send(err.message)
+        )
+    );
     return;
   }
-  res.status(400).send("Invalid startDate or endDate")
+  res.status(400).send("Invalid startDate or endDate");
 }
 
 export function getFoodLogHandler(
@@ -70,11 +102,13 @@ export function getFoodLogHandler(
   next: NextFunction,
   getFoodLog: RetrieveFoodLogFunction = foodStorageProvider.retrieveFoodLog
 ) {
-  getFoodLog(res.locals.userId, req.params.itemId)
-    .then(result => result.map(val => res.send(val))
-      .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message))
-    )
-  
+  getFoodLog(res.locals.userId, req.params.itemId).then((result) =>
+    result
+      .map((val) => res.send(val))
+      .mapErr((err) =>
+        res.status(errorStatusCodeCalculator(err)).send(err.message)
+      )
+  );
 }
 
 export function updateFoodLogHandler(
@@ -84,18 +118,27 @@ export function updateFoodLogHandler(
   editFoodLog: EditFoodLogFunction = foodStorageProvider.editFoodLog
 ) {
   let item = structuredClone(req.body);
-  if (item.time && item.time.start && item.time.end && validStartEndDateStrings(item.time.start, item.time.end)) {
-    item.time.start = new Date(item.time.start)
-    item.time.end = new Date(item.time.end)
+  if (
+    item.time &&
+    item.time.start &&
+    item.time.end &&
+    validStartEndDateStrings(item.time.start, item.time.end)
+  ) {
+    item.time.start = new Date(item.time.start);
+    item.time.end = new Date(item.time.end);
   } else if (item.time) {
-    res.status(400).send("Unable to parse dates")
+    res.status(400).send("Unable to parse dates");
     return;
   }
-  editFoodLog(res.locals.userId, { id: req.params.itemId, ...item })
-    .then(result => result.map(val => res.send(val))
-      .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message)))
+  editFoodLog(res.locals.userId, { id: req.params.itemId, ...item }).then(
+    (result) =>
+      result
+        .map((val) => res.send(val))
+        .mapErr((err) =>
+          res.status(errorStatusCodeCalculator(err)).send(err.message)
+        )
+  );
 }
-
 
 export function deleteFoodLogHandler(
   req: Request,
@@ -103,7 +146,11 @@ export function deleteFoodLogHandler(
   next: NextFunction,
   deleteFoodLog: DeleteFoodLogFunction = foodStorageProvider.deleteFoodLog
 ) {
-  deleteFoodLog(res.locals.userId, req.params.itemId)
-    .then(result => result.map(() => res.status(204).send())
-      .mapErr(err => res.status(errorStatusCodeCalculator(err)).send(err.message)))
+  deleteFoodLog(res.locals.userId, req.params.itemId).then((result) =>
+    result
+      .map(() => res.status(204).send())
+      .mapErr((err) =>
+        res.status(errorStatusCodeCalculator(err)).send(err.message)
+      )
+  );
 }
