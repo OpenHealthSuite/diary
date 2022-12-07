@@ -1,5 +1,5 @@
-helm upgrade openfooddiary ./chart \
-  --namespace paceme \
+helm upgrade openfooddiary-app ./chart \
+  --namespace openfooddiary \
   --create-namespace \
   --install \
   --atomic
