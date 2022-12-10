@@ -1,0 +1,13 @@
+name: Publish Bleed OpenFoodDiary Container
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  publish-bleed:
+    uses: ./.github/workflows/build_docker_image.yml
+    with:
+      VERSION: bleed
+      PUSH: true
+      PUSH_LATEST: false

@@ -9,7 +9,7 @@ RUN npm ci
 COPY server ./
 RUN npm run build
 
-FROM node:18.7.0 AS server-depns
+FROM --platform=$TARGETPLATFORM node:18.7.0 AS server-depns
 WORKDIR /server
 
 # Get Dependancies
@@ -27,7 +27,7 @@ COPY webapp .
 RUN npm run build
 
 # Build runtime image
-FROM node:18.7.0-slim
+FROM --platform=$TARGETPLATFORM node:18.7.0-slim
 WORKDIR /app
 RUN mkdir .sqlite
 COPY --from=server-depns /server/node_modules /app/node_modules

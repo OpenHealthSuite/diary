@@ -1,0 +1,45 @@
+name: Build and Publish OpenFoodDiary Container
+
+on:
+  workflow_call:
+    inputs:
+      VERSION:
+        type: string
+        required: true
+      PUSH:
+        type: boolean
+        default: false
+        required: false
+      PUSH_LATEST:
+        type: boolean
+        default: false
+        required: false
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Login to GHCR
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Publish the Container image
+        working-directory: .
+        run: |
+          sudo apt install qemu-user-static
+          platarch=linux/arm/v7,linux/arm64/v8,linux/amd64
+          podman build --jobs=3 --platform=$platarch --manifest "ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }}" .
+
+      - name: Push Version
+        if: ${{ inputs.PUSH }}
+        run: podman push "ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }}"
+
+      - name: Push Latest
+        if: ${{ inputs.PUSH && inputs.PUSH_LATEST }}
+        run: |
+          podman tag "ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }}" "ghcr.io/leemartin77/openfooddiary:latest"
+          podman push "ghcr.io/leemartin77/openfooddiary:latest"
