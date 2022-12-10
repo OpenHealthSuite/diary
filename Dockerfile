@@ -9,7 +9,7 @@ RUN npm ci
 COPY server ./
 RUN npm run build
 
-FROM --platform=$BUILDPLATFORM node:18.7.0 AS server-depns
+FROM node:18.7.0 AS server-depns
 WORKDIR /server
 
 # Get Dependancies
