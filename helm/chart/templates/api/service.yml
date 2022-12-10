@@ -7,10 +7,10 @@ metadata:
     app: openfooddiary
 spec:
   ports:
-  - name: http
-    port: 3012
-    protocol: TCP
-    targetPort: 3012
+    - name: http
+      port: 3012
+      protocol: TCP
+      targetPort: web
   selector:
     app: openfooddiary
   type: ClusterIP

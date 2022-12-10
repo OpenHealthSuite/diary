@@ -20,15 +20,16 @@ spec:
       containers:
         - name: openfooddiary
           image: {{ required "image is required" .Values.image }}:{{  required "tag is required" .Values.tag }}
-          imagePullPolicy: IfNotPresent
           ports:
             - name: web
-              containerPort: 3012
+              containerPort: 3024
           env:
             - name: OPENFOODDIARY_USERIDHEADER
               value: x-auth-request-user
-            - name: PORT
-              value: "3012"
+            - name: OPENFOODDIARY_PORT
+              value: "3024"
+            - name: OPENFOODDIARY_STORAGE_PROVIDER
+              value: cassandra
             - name: OPENFOODDIARY_CASSANDRA_CONTACT_POINTS
               value: {{ required "cassandra.contactpoints is required" .Values.cassandra.contactpoints }}
             - name: OPENFOODDIARY_CASSANDRA_USER
