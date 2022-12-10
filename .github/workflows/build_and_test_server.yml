@@ -1,6 +1,7 @@
 name: Server Build and Test
 
 on:
+  workflow_call:
   workflow_dispatch:
   schedule:
     - cron: "0 2 * * *" # run at 2 AM UTC
