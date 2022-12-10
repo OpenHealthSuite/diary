@@ -36,40 +36,42 @@
 
     $: updateData(day)
 </script>
-
-<div class="logs-area">
-    {#if dayData.length === 0}
-    <div class="raw-text-message">
-        No Logs Entered for this day
-    </div>
-    {:else}
-    <div>
-        <h1 class="calories-total">{dayData.reduce((prev, curr) => prev + curr.metrics.calories, 0).toLocaleString()} Calories Total</h1>
-        {#each dayData as log, i}
-        <div class="food-log {i > 0 ? 'top-border' : ''}">
-            <h2 data-testid="foodlog-{i}-calories">{log.metrics['calories']} Calories</h2>
-            <h5 data-testid="foodlog-{i}">{new Date(log.time.start).toTimeString().split(' ')[0]} - {log.name}</h5>
-            <button class='log-button'
-                on:click={() => {
-                    modalOpen = true;
-                    editingLog = log;
-                }}>
-                Edit
-            </button>
+<div class="logs-area-container">
+    <div class="logs-area">
+        {#if dayData.length === 0}
+        <div class="raw-text-message">
+            No Logs Entered for this day
         </div>
-        {/each}
+        {:else}
+        <div>
+            <h1 class="calories-total">{dayData.reduce((prev, curr) => prev + curr.metrics.calories, 0).toLocaleString()} Calories Total</h1>
+            {#each dayData as log, i}
+            <div class="food-log {i > 0 ? 'top-border' : ''}">
+                <h2 data-testid="foodlog-{i}-calories">{log.metrics['calories']} Calories</h2>
+                <h5 data-testid="foodlog-{i}">{new Date(log.time.start).toTimeString().split(' ')[0]} - {log.name}</h5>
+                <button class='log-button'
+                    on:click={() => {
+                        modalOpen = true;
+                        editingLog = log;
+                    }}>
+                    Edit
+                </button>
+            </div>
+            {/each}
+        </div>
+        {/if}
+        {#if loading}
+        <div data-testid="loading-indicator" class="raw-text-message">
+            Loading data
+        </div>
+        {:else if error}
+        <div data-testid="error-indicator" class="raw-text-message">
+            Error loading data
+        </div>
+        {/if}
     </div>
-    {/if}
-    {#if loading}
-    <div data-testid="loading-indicator" class="raw-text-message">
-        Loading data
-    </div>
-    {:else if error}
-    <div data-testid="error-indicator" class="raw-text-message">
-        Error loading data
-    </div>
-    {/if}
 </div>
+
 
 
 <Modal bind:open={modalOpen}>
@@ -83,15 +85,22 @@
 </Modal>
 
 <style lang="scss">
-    .logs-area {
-        padding: 0.5em;
-        margin: 0.5em;
-        border-radius: 1em;
-        border: 1px solid rgba(0,0,0,0.2);
-        .raw-text-message {
-            text-align: center;
-            padding: 1em 0;
+    .logs-area-container {
+        display: flex;
+        justify-content: center;
+        .logs-area {
+            padding: 0.5em;
+            margin: 0.5em;
+            border-radius: 1em;
+            border: 1px solid rgba(0,0,0,0.2);
+            width: 560px;
+            max-width: 100vw;
+            .raw-text-message {
+                text-align: center;
+                padding: 1em 0;
+            }
         }
+
     }
     .calories-total {
         text-align: center;

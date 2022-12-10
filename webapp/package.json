@@ -25,5 +25,8 @@
     "typescript": "^4.8.2",
     "vite": "^3.0.7",
     "vitest": "^0.22.1"
+  },
+  "dependencies": {
+    "svelte-routing": "^1.6.0"
   }
 }
