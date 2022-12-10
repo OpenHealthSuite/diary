@@ -23,7 +23,7 @@ app.use("/api", FoodStorageRouter);
 
 STORAGE.setupDatabase().then(() => {
   const running = app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
+    console.log(`OpenFoodDiary listening on port ${port}`);
 
     const cleanup = () => {
       STORAGE.shutdownDatabase();
