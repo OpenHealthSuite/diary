@@ -47,7 +47,7 @@
             <h1 class="calories-total">{dayData.reduce((prev, curr) => prev + curr.metrics.calories, 0).toLocaleString()} Calories Total</h1>
             {#each dayData as log, i}
             <div class="food-log {i > 0 ? 'top-border' : ''}">
-                <h2 data-testid="foodlog-{i}-calories">{log.metrics['calories']} Calories</h2>
+                <h2 data-testid="foodlog-{i}-calories">{log.metrics['calories'].toLocaleString()} Calories</h2>
                 <h5 data-testid="foodlog-{i}">{new Date(log.time.start).toTimeString().split(' ')[0]} - {log.name}</h5>
                 <button class='log-button'
                     on:click={() => {
