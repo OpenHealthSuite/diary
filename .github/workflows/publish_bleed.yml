@@ -4,6 +4,10 @@ on:
   push:
     branches: ["main"]
 
+concurrency:
+  group: "publish-bleed"
+  cancel-in-progress: true
+
 jobs:
   publish-bleed:
     uses: ./.github/workflows/build_docker_image.yml

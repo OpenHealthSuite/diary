@@ -32,14 +32,14 @@ jobs:
         run: |
           sudo apt install qemu-user-static
           platarch=linux/arm/v7,linux/arm64/v8,linux/amd64
-          podman build --jobs=3 --platform=$platarch --manifest "ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }}" .
+          podman build --jobs=6 --platform=$platarch --manifest ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }} .
 
       - name: Push Version
         if: ${{ inputs.PUSH }}
-        run: podman push "ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }}"
+        run: podman manifest push ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }} ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }}
 
       - name: Push Latest
         if: ${{ inputs.PUSH && inputs.PUSH_LATEST }}
         run: |
-          podman tag "ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }}" "ghcr.io/leemartin77/openfooddiary:latest"
-          podman push "ghcr.io/leemartin77/openfooddiary:latest"
+          podman tag ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }} ghcr.io/leemartin77/openfooddiary:latest
+          podman manifest push ghcr.io/leemartin77/openfooddiary:latest ghcr.io/leemartin77/openfooddiary:latest
