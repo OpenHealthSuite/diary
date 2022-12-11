@@ -18,7 +18,7 @@ export const configs = [
       afterAllTeardown: async (testClient: any) => {
         await testClient.destroy();
       },
-      storage: sqlite3.sqlite3.foodLog,
+      storage: sqlite3.sqlite3,
     },
   },
   {
@@ -33,7 +33,7 @@ export const configs = [
       afterAllTeardown: async (testClient: any) => {
         await testClient.shutdown();
       },
-      storage: cassandra.cassandra.foodLog,
+      storage: cassandra.cassandra,
     },
   },
 ];

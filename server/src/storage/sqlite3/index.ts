@@ -1,6 +1,7 @@
 import knex, { Knex } from "knex";
 import { StorageType } from "../interfaces";
 import * as sqliteFoodLogStorage from "./FoodLogStorageFunctions";
+import * as sqliteConfigurationStorage from "./ConfigurationStorageFunctions";
 
 export const DEFAULT_CLIENT_CONFIG: Knex.Config = {
   client: "better-sqlite3",
@@ -30,7 +31,6 @@ export async function setupDatabase(knex: Knex = knexInstance) {
   (
     user_id TEXT, --UUID 
     id TEXT,
-    label TEXT,
     serialised_value TEXT
   );`,
   ];
@@ -43,8 +43,10 @@ export async function shutdownDatabase(knex: Knex = knexInstance) {
   await knex.destroy();
 }
 
-export const sqlite3: StorageType = {
+export const sqlite3 = {
+  //StorageType
   setupDatabase,
   shutdownDatabase,
   foodLog: sqliteFoodLogStorage,
+  configuration: sqliteConfigurationStorage,
 };

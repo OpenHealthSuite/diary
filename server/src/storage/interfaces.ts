@@ -1,21 +1,9 @@
-import {
-  DeleteFoodLogFunction,
-  EditFoodLogFunction,
-  QueryFoodLogFunction,
-  RetrieveFoodLogFunction,
-  StoreFoodLogFunction,
-} from "./types";
-
-export interface FoodLogStorage {
-  storeFoodLog: StoreFoodLogFunction;
-  retrieveFoodLog: RetrieveFoodLogFunction;
-  editFoodLog: EditFoodLogFunction;
-  deleteFoodLog: DeleteFoodLogFunction;
-  queryFoodLogs: QueryFoodLogFunction;
-}
+import { FoodLogStorage } from "./types";
+import { ConfigurationStorage } from "./types/Configuration";
 
 export interface StorageType {
   setupDatabase: () => Promise<void>;
   shutdownDatabase: () => Promise<void>;
   foodLog: FoodLogStorage;
+  configuration: ConfigurationStorage;
 }

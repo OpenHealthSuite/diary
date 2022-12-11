@@ -13,13 +13,12 @@ describe.each(configs)(
     afterAll(async () => {
       await config.afterAllTeardown(testClient);
     });
-    afterAll(async () => {});
-    test("Happy Path :: Bad Retreives, Creates, Retreives, Edits, Reretrieves, Deletes, Fails Retreive, Redelete succeeds false", async () => {
+    test("Happy Path :: Bad Retreives, Creates, Retreives, Edits, Reretrieves, Deletes, Fails Retreive", async () => {
       const testUserId = crypto.randomUUID();
 
       const randomId = crypto.randomUUID();
 
-      const badResult = await (config.storage.retrieveFoodLog as any)(
+      const badResult = await (config.storage.foodLog.retrieveFoodLog as any)(
         testUserId,
         randomId,
         testClient
@@ -40,7 +39,7 @@ describe.each(configs)(
         },
       };
 
-      const result = await (config.storage.storeFoodLog as any)(
+      const result = await (config.storage.foodLog.storeFoodLog as any)(
         testUserId,
         input,
         testClient
@@ -50,11 +49,9 @@ describe.each(configs)(
       const testItemId = result._unsafeUnwrap();
       expect(testItemId.length).toBeGreaterThan(0);
 
-      const storedItemResult = await (config.storage.retrieveFoodLog as any)(
-        testUserId,
-        testItemId,
-        testClient
-      );
+      const storedItemResult = await (
+        config.storage.foodLog.retrieveFoodLog as any
+      )(testUserId, testItemId, testClient);
 
       expect(storedItemResult.isOk()).toBeTruthy();
       const storedItem = storedItemResult._unsafeUnwrap();
@@ -65,7 +62,7 @@ describe.each(configs)(
         calories: 400,
       };
 
-      const modifiedResult = await (config.storage.editFoodLog as any)(
+      const modifiedResult = await (config.storage.foodLog.editFoodLog as any)(
         testUserId,
         storedItem,
         testClient
@@ -75,14 +72,14 @@ describe.each(configs)(
       expect(modified).toEqual(storedItem);
 
       const reretrievedItemResult = await (
-        config.storage.retrieveFoodLog as any
+        config.storage.foodLog.retrieveFoodLog as any
       )(testUserId, testItemId, testClient);
 
       expect(reretrievedItemResult.isOk()).toBeTruthy();
       const reretreived = reretrievedItemResult._unsafeUnwrap();
       expect(reretreived).toEqual(storedItem);
 
-      const deleteResult = await (config.storage.deleteFoodLog as any)(
+      const deleteResult = await (config.storage.foodLog.deleteFoodLog as any)(
         testUserId,
         testItemId,
         testClient
@@ -91,22 +88,18 @@ describe.each(configs)(
       expect(deleteResult.isOk()).toBeTruthy();
       expect(deleteResult._unsafeUnwrap()).toBeTruthy();
 
-      const postDeleteRetrieve = await (config.storage.retrieveFoodLog as any)(
-        testUserId,
-        testItemId,
-        testClient
-      );
+      const postDeleteRetrieve = await (
+        config.storage.foodLog.retrieveFoodLog as any
+      )(testUserId, testItemId, testClient);
 
       expect(postDeleteRetrieve.isErr()).toBeTruthy();
       expect(
         isNotFoundError(postDeleteRetrieve._unsafeUnwrapErr())
       ).toBeTruthy();
 
-      const redeleteResult = await (config.storage.deleteFoodLog as any)(
-        testUserId,
-        testItemId,
-        testClient
-      );
+      const redeleteResult = await (
+        config.storage.foodLog.deleteFoodLog as any
+      )(testUserId, testItemId, testClient);
 
       expect(redeleteResult.isOk()).toBeTruthy();
       expect(redeleteResult._unsafeUnwrap()).toBeTruthy();
@@ -151,45 +144,39 @@ describe.each(configs)(
         },
       };
 
-      const past = await (config.storage.storeFoodLog as any)(
+      const past = await (config.storage.foodLog.storeFoodLog as any)(
         testUserId,
         pastLog,
         testClient
       );
       const pastItemId = past._unsafeUnwrap();
 
-      const result = await (config.storage.storeFoodLog as any)(
+      const result = await (config.storage.foodLog.storeFoodLog as any)(
         testUserId,
         centerLog,
         testClient
       );
       const centerItemId = result._unsafeUnwrap();
 
-      const future = await (config.storage.storeFoodLog as any)(
+      const future = await (config.storage.foodLog.storeFoodLog as any)(
         testUserId,
         futureLog,
         testClient
       );
       const futureItemId = future._unsafeUnwrap();
 
-      const startingQueryResult = await (config.storage.queryFoodLogs as any)(
-        testUserId,
-        new Date(1999, 10, 15),
-        new Date(1999, 10, 16),
-        testClient
-      );
+      const startingQueryResult = await (
+        config.storage.foodLog.queryFoodLogs as any
+      )(testUserId, new Date(1999, 10, 15), new Date(1999, 10, 16), testClient);
 
       expect(startingQueryResult.isOk()).toBeTruthy();
       const firstTest = startingQueryResult._unsafeUnwrap();
       expect(firstTest.length).toBe(1);
       expect(firstTest[0].id).toBe(centerItemId);
 
-      const pastQueryResult = await (config.storage.queryFoodLogs as any)(
-        testUserId,
-        new Date(1999, 10, 9),
-        new Date(1999, 10, 16),
-        testClient
-      );
+      const pastQueryResult = await (
+        config.storage.foodLog.queryFoodLogs as any
+      )(testUserId, new Date(1999, 10, 9), new Date(1999, 10, 16), testClient);
 
       expect(pastQueryResult.isOk()).toBeTruthy();
       const secondTest = pastQueryResult._unsafeUnwrap();
@@ -198,12 +185,9 @@ describe.each(configs)(
         [pastItemId, centerItemId].sort()
       );
 
-      const futureQueryResult = await (config.storage.queryFoodLogs as any)(
-        testUserId,
-        new Date(1999, 10, 15),
-        new Date(1999, 10, 30),
-        testClient
-      );
+      const futureQueryResult = await (
+        config.storage.foodLog.queryFoodLogs as any
+      )(testUserId, new Date(1999, 10, 15), new Date(1999, 10, 30), testClient);
 
       expect(futureQueryResult.isOk()).toBeTruthy();
       const thirdTest = futureQueryResult._unsafeUnwrap();
@@ -212,12 +196,9 @@ describe.each(configs)(
         [centerItemId, futureItemId].sort()
       );
 
-      const wildQueryResult = await (config.storage.queryFoodLogs as any)(
-        testUserId,
-        new Date(2012, 0, 1),
-        new Date(2012, 11, 31),
-        testClient
-      );
+      const wildQueryResult = await (
+        config.storage.foodLog.queryFoodLogs as any
+      )(testUserId, new Date(2012, 0, 1), new Date(2012, 11, 31), testClient);
 
       expect(startingQueryResult.isOk()).toBeTruthy();
       const wildTest = wildQueryResult._unsafeUnwrap();

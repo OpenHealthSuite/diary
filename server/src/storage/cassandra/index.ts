@@ -1,5 +1,6 @@
 import { Client } from "cassandra-driver";
 import { StorageType } from "../interfaces";
+import { ConfigurationStorage } from "../types/Configuration";
 import * as cassandraFoodLogStorage from "./FoodLogStorageFunctions";
 
 export const DEFAULT_CLIENT_CONFIG = {
@@ -44,4 +45,5 @@ export const cassandra: StorageType = {
   setupDatabase,
   shutdownDatabase,
   foodLog: cassandraFoodLogStorage,
+  configuration: {} as ConfigurationStorage,
 };

@@ -6,7 +6,7 @@ import {
   EditFoodLogEntry,
   isValidationError,
 } from "./types";
-import { FoodLogStorage } from "./interfaces";
+import { FoodLogStorage } from "./types/FoodLog";
 
 const configs = [
   { name: "sqlite3", config: sqlite3.foodLog },
