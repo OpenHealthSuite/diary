@@ -15,7 +15,8 @@ export const DEFAULT_CLIENT_CONFIG: Knex.Config = {
 export const knexInstance = knex(DEFAULT_CLIENT_CONFIG);
 
 export async function setupDatabase(knex: Knex = knexInstance) {
-  const setup = `CREATE TABLE IF NOT EXISTS user_foodlogentry 
+  const migrations = [
+    `CREATE TABLE IF NOT EXISTS user_foodlogentry 
   (
     user_id TEXT, --UUID 
     id TEXT, --UUID 
@@ -24,9 +25,18 @@ export async function setupDatabase(knex: Knex = knexInstance) {
     metrics TEXT, --map<text,int>
     time_start DATETIME,
     time_end DATETIME
-  );`;
-
-  await knex.raw(setup);
+  );`,
+    `CREATE TABLE IF NOT EXISTS user_config 
+  (
+    user_id TEXT, --UUID 
+    id TEXT,
+    label TEXT,
+    serialised_value TEXT
+  );`,
+  ];
+  for (const migration of migrations) {
+    await knex.raw(migration);
+  }
 }
 
 export async function shutdownDatabase(knex: Knex = knexInstance) {

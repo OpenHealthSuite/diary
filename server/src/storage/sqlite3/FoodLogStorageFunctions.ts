@@ -12,7 +12,7 @@ import {
 
 import { knexInstance } from ".";
 import { isValidCreateLogEntry, isValidEditLogEntry } from "../validation";
-import knex, { Knex } from "knex";
+import { Knex } from "knex";
 
 type SqliteStoreFoodLogFunction = (
   userId: string,
