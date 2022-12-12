@@ -3,7 +3,7 @@ import { MetricsConfiguration, SummaryConfiguration } from "../types";
 import { isNotFoundError } from "./types";
 import { configs } from "./_testConfigs";
 
-describe.each([configs[0]])(
+describe.each(configs)(
   "$name Configuration Storage Integration Tests",
   ({ config }) => {
     let testClient: any;

@@ -2,6 +2,7 @@ import { Client } from "cassandra-driver";
 import { StorageType } from "../interfaces";
 import { ConfigurationStorage } from "../types/Configuration";
 import * as cassandraFoodLogStorage from "./FoodLogStorageFunctions";
+import * as cassandraConfigStorage from "./ConfigurationStorageFunctions";
 
 export const DEFAULT_CLIENT_CONFIG = {
   contactPoints: process.env.OPENFOODDIARY_CASSANDRA_CONTACT_POINTS
@@ -25,9 +26,10 @@ export async function shutdownDatabase() {
 const MIGRATIONS: string[] = [
   "CREATE KEYSPACE IF NOT EXISTS openfooddiary WITH REPLICATION = {'class':'SimpleStrategy','replication_factor':1};", // TODO: Make this optional?
   `CREATE TYPE IF NOT EXISTS openfooddiary.logTimes (start timestamp, end timestamp);`,
-  `CREATE TABLE IF NOT EXISTS openfooddiary.user_foodlogentry (userId UUID, id UUID, name text, labels set<text>,time frozen<openfooddiary.logTimes>,metrics map<text,int>, timeStart timestamp, timeEnd timestamp, PRIMARY KEY ((userId), id));`,
+  `CREATE TABLE IF NOT EXISTS openfooddiary.user_foodlogentry (userId text, id UUID, name text, labels set<text>,time frozen<openfooddiary.logTimes>,metrics map<text,int>, timeStart timestamp, timeEnd timestamp, PRIMARY KEY ((userId), id));`,
   `CREATE INDEX IF NOT EXISTS ON openfooddiary.user_foodlogentry (timeStart);`,
   `CREATE INDEX IF NOT EXISTS ON openfooddiary.user_foodlogentry (timeEnd);`,
+  `CREATE TABLE IF NOT EXISTS openfooddiary.user_config (user_id text, id text, serialised_value text, PRIMARY KEY ((user_id), id));`,
 ];
 
 export async function setupDatabase(
@@ -45,5 +47,5 @@ export const cassandra: StorageType = {
   setupDatabase,
   shutdownDatabase,
   foodLog: cassandraFoodLogStorage,
-  configuration: {} as ConfigurationStorage,
+  configuration: cassandraConfigStorage,
 };
