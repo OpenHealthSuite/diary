@@ -141,13 +141,6 @@
     .input-error {
         font-size: 0.7em;
     }
-    input {
-        padding: 0.5em;
-        border: 0;
-        border-bottom: 1px solid black;
-        background-color: rgba(0,0,0,0.05);
-        color: black;
-    }
     .form-container {
         display: flex;
         flex-direction: column;

@@ -17,16 +17,16 @@
       <Route path="/config"><Config /></Route>
       <Route path="*"><NotFound /></Route>
       <div class="navigation">
-        {#if pathname != '/config'}
-          <button on:click={() => {
-            pathname = '/config'
-            navigate('/config')
-          }}>Config</button>
-        {:else}
+        {#if pathname != '/'}
           <button on:click={() => {
             pathname = '/'
             navigate('/')
           }}>Logs</button>
+        {:else}
+          <button on:click={() => {
+            pathname = '/config'
+            navigate('/config')
+          }}>Config</button>
         {/if}
       </div>
   </Router>

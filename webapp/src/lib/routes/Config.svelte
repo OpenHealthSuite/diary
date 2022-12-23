@@ -1,11 +1,13 @@
 <script lang="ts">
 
+import MetricsConfiguration from "../components/configuration/MetricsConfiguration.svelte";
+
 </script>
 <div class="container">
   <h1>Config</h1>
   <div class="config-container">
     <div class="config-item">
-      Coming soon...
+      <MetricsConfiguration />
     </div>
   </div>
 </div>

@@ -1,6 +1,6 @@
 import express from "express";
 import qs from "qs";
-import { FoodStorageRouter } from "./handlers";
+import { FoodStorageRouter, ConfigurationRouter } from "./handlers";
 import { userMiddleware } from "./middlewares";
 import { STORAGE } from "./storage";
 
@@ -20,6 +20,7 @@ app.get("/api/health", (req, res) => {
 app.use(userMiddleware);
 
 app.use("/api", FoodStorageRouter);
+app.use("/api", ConfigurationRouter);
 
 STORAGE.setupDatabase().then(() => {
   const running = app.listen(port, () => {
