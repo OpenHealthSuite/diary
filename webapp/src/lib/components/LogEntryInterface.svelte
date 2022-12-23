@@ -1,8 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
     import type { FoodLogEntry } from '../types/FoodLogEntry';
-    import { apiFetch } from "../utilities";
+    import { apiFetch, DEFAULT_METRICS } from "../utilities";
     export let logTime = new Date();
+    export let metricConfig = DEFAULT_METRICS;
     export let log: FoodLogEntry = {
         id: undefined,
         name: "",
@@ -11,9 +12,10 @@
             start: undefined,
             end: undefined
         },
-        metrics: {
-            calories: 0
-        }
+        metrics: Object.entries(metricConfig).reduce((acc, [key]) => {
+            acc[key] = 0;
+            return acc;
+        }, {})
     }
 
     const dispatch = createEventDispatcher();
@@ -23,7 +25,6 @@
 
     let duration = log.time.end && log.time.start ? 
         ((new Date(log.time.end).getTime()) - (new Date(log.time.start).getTime())) / 1000 / 60 : 1;
-    let calories = log.metrics.calories ?? 0;
 
     let [dateString] = startTime.toISOString().split('T')
 
@@ -46,9 +47,7 @@
                     start: logTime,
                     end: endTime.toISOString()
                 },
-                metrics: {
-                    calories
-                }
+                metrics: log.metrics
             })
         }).then((response) => { 
             if (response.status === 200) {
@@ -102,13 +101,15 @@
             <div class="input-error">Must add a log name</div>
         {/if}
     </fieldset>
-    <fieldset class="left-right-field">
-        <label for="calories">Calories</label>
-        <input type="number" id="calories" name="calories" bind:value={calories} min={0} />
-    </fieldset>
-    {#if calories < 0}
-        <div class="input-error">Must have min zero calories</div>
-    {/if}
+    {#each Object.entries(metricConfig) as [key, value] (key)}
+        <fieldset class="left-right-field">
+            <label for={key}>{value.label}</label>
+            <input type="number" id={key} name={key} bind:value={log.metrics[key]} min={0} />
+        </fieldset>
+        {#if log.metrics[key] < 0}
+            <div class="input-error">Must have min zero {value.label}</div>
+        {/if}
+    {/each}
     <fieldset class="left-right-field">
         <label for="duration">Duration (minutes)</label>
         <input type="number" id="duration" name="duration" bind:value={duration} min={1} />

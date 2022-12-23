@@ -17,3 +17,7 @@ export function apiFetch(input: Partial<RequestInfo>, init?: RequestInit, fetchF
             'Content-Type': init.headers && init.headers['Content-Type'] ? init.headers['Content-Type'] : 'application/json' 
         }}: undefined);
 }
+
+export const DEFAULT_METRICS = {
+    calories: { label: "Calories", priority: 0 }
+};

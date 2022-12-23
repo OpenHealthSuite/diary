@@ -3,9 +3,22 @@
   import DaySelector from "../components/DaySelector.svelte";
   import LogEntryInterface from "../components/LogEntryInterface.svelte";
   import Modal from "../components/Modal.svelte";
+  import { apiFetch, DEFAULT_METRICS } from "../utilities";
 
   let modalOpen = false;
   let logDay = new Date();
+
+  let metricConfig = DEFAULT_METRICS;
+
+  apiFetch("/config/metrics").then(res => {
+            switch (res.status) {
+                case 200:
+                    res.json().then(mtrcs => {
+                      metricConfig = mtrcs.value;
+                    })
+                    return;
+            }
+        })
 
   const dateChange = (event) => logDay = event.detail;
 
@@ -27,12 +40,13 @@
       modalOpen = false
       logDay = logDay
       }}
+      metricConfig={metricConfig}
       on:error={(event) => console.error(event.detail)}/>
   </div>
   {/if}
 </Modal>
 
-<DailyLog day={logDay} />
+<DailyLog day={logDay} metricConfig={metricConfig} />
 
 <style>
   .controls-row {

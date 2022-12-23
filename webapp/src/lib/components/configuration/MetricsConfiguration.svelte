@@ -1,14 +1,12 @@
 <script lang="ts">
-    import { apiFetch } from 'src/lib/utilities/index';
+    import { apiFetch, DEFAULT_METRICS } from 'src/lib/utilities/index';
     import { onMount } from 'svelte';
 
     let loading = true;
     let error = false;
     // This is the default metrics if they've not been set
     // This should be exportable from elsewhere
-    let metrics: {[key: string]: { label: string; priority: number }} = {
-        calories: { label: "Calories", priority: 0 }
-    };
+    let metrics: {[key: string]: { label: string; priority: number }} = DEFAULT_METRICS
 
     let newMetric: string | undefined = undefined;
 

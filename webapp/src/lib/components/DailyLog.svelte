@@ -1,10 +1,14 @@
 <script lang="ts">
     import Modal from './Modal.svelte';
-    import { apiFetch } from 'src/lib/utilities/index';
+    import { apiFetch, DEFAULT_METRICS } from 'src/lib/utilities/index';
     import type { FoodLogEntry } from '../types/FoodLogEntry';
     import LogEntryInterface from './LogEntryInterface.svelte';
     export let day: Date;
+    export let metricConfig = DEFAULT_METRICS;
 
+    $: topMetric = Object.entries(metricConfig)
+        .sort((a, b) => a[1].priority - b[1].priority)[0]
+        
     let loading = true;
     let error = false;
     let modalOpen = false;
@@ -44,10 +48,14 @@
         </div>
         {:else}
         <div>
-            <h1 class="calories-total">{dayData.reduce((prev, curr) => prev + curr.metrics.calories, 0).toLocaleString()} Calories Total</h1>
+            {#if topMetric}
+                <h1 class="{topMetric[0]}-total">{dayData.reduce((prev, curr) => prev + (curr.metrics[topMetric[0]] ?? 0), 0).toLocaleString()} {topMetric[1].label} Total</h1>
+            {/if}
             {#each dayData as log, i}
             <div class="food-log {i > 0 ? 'top-border' : ''}">
-                <h2 data-testid="foodlog-{i}-calories">{log.metrics['calories'].toLocaleString()} Calories</h2>
+                {#if topMetric}
+                    <h2 data-testid="foodlog-{i}-{topMetric[0]}">{log.metrics[topMetric[0]]?.toLocaleString() ?? 0} {topMetric[1].label}</h2>
+                {/if}
                 <h5 data-testid="foodlog-{i}">{new Date(log.time.start).toTimeString().split(' ')[0]} - {log.name}</h5>
                 <button class='log-button'
                     on:click={() => {
@@ -80,6 +88,7 @@
         modalOpen = false
         updateData(day)
         }}
+        metricConfig={metricConfig}
         on:error={(event) => console.error(event.detail)}/>
     {/if}
 </Modal>
