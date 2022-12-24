@@ -1,7 +1,13 @@
 import { ConfigurationRouter } from "./ConfigHandlers";
 import express, { Express } from "express";
 import { STORAGE } from "../storage";
-import { ok } from "neverthrow";
+import {
+  NotFoundError,
+  StorageError,
+  SystemError,
+  ValidationError,
+} from "../storage/types/StorageErrors";
+import { err, ok } from "neverthrow";
 import request from "supertest";
 import qs from "qs";
 
@@ -15,6 +21,12 @@ jest.mock("../storage", () => {
     },
   };
 });
+
+const errors: { error: StorageError; statusCode: number }[] = [
+  { error: new ValidationError(), statusCode: 400 },
+  { error: new NotFoundError(), statusCode: 404 },
+  { error: new SystemError(), statusCode: 500 },
+];
 
 const FAKE_ROOT = "/testapi";
 const FAKE_USER_ID = "some-user-id";
@@ -54,6 +66,22 @@ describe("ConfigHandlers", () => {
         STORAGE.configuration.retrieveUserConfiguration as jest.Mock
       ).toBeCalledWith(FAKE_USER_ID, "metrics");
     });
+    test.each(errors)(
+      "Storage Error $error.errorType :: Returns $statusCode code",
+      async ({ error, statusCode }) => {
+        (
+          STORAGE.configuration.retrieveUserConfiguration as jest.Mock
+        ).mockResolvedValue(err(error));
+
+        const res = await request(app)
+          .get(FAKE_ROOT + "/config/metrics")
+          .expect(statusCode);
+
+        expect(
+          STORAGE.configuration.retrieveUserConfiguration as jest.Mock
+        ).toBeCalledWith(FAKE_USER_ID, "metrics");
+      }
+    );
   });
 
   describe("POST config", () => {
@@ -77,5 +105,23 @@ describe("ConfigHandlers", () => {
         STORAGE.configuration.storeConfiguration as jest.Mock
       ).toBeCalledWith(FAKE_USER_ID, { id: "metrics", value: fakeConfig });
     });
+    test.each(errors)(
+      "Storage Error $error.errorType :: Returns $statusCode code",
+      async ({ error, statusCode }) => {
+        const fakeConfig = { whoami: "fakeconfig" };
+
+        (
+          STORAGE.configuration.storeConfiguration as jest.Mock
+        ).mockResolvedValue(err(error));
+        const res = await request(app)
+          .post(FAKE_ROOT + "/config/metrics")
+          .send(fakeConfig)
+          .expect(statusCode);
+
+        expect(
+          STORAGE.configuration.storeConfiguration as jest.Mock
+        ).toBeCalledWith(FAKE_USER_ID, { id: "metrics", value: fakeConfig });
+      }
+    );
   });
 });
