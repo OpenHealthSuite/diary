@@ -241,7 +241,6 @@ export const bulkExportFoodLogs: SqliteBulkExportFoodLogsFunction = async (
           log.metrics,
         ];
       });
-      console.log(exportedLogs);
       fs.appendFileSync(filename, stringify(exportedLogs));
     }
     return ok(filename);

@@ -218,20 +218,6 @@ export const bulkExportFoodLogs: CassandraBulkExportFoodLogsFunction = async (
 ): Promise<Result<string, StorageError>> => {
   try {
     const filename = `${TEMP_DIR}/${crypto.randomUUID()}.csv`;
-    const result = await cassandraClient.execute(
-      `SELECT CAST(id as text) as id, name, labels, time, metrics 
-            FROM openfooddiary.user_foodlogentry 
-            WHERE userId = ?
-            ALLOW FILTERING;`,
-      [userId],
-      { prepare: true }
-    );
-    const constructed: FoodLogEntry[] = result.rows.map((row) => {
-      const subCon: any = {};
-      row.keys().forEach((key) => (subCon[key] = row.get(key)));
-      return subCon;
-    }) as FoodLogEntry[];
-    const exportedLogs = constructed.map(bulkFromResult);
     fs.writeFileSync(
       filename,
       stringify([["id", "name", "labels", "timeStart", "timeEnd", "metrics"]]),
@@ -239,21 +225,32 @@ export const bulkExportFoodLogs: CassandraBulkExportFoodLogsFunction = async (
         flag: "w",
       }
     );
-    for (const log of exportedLogs) {
-      fs.appendFileSync(
-        filename,
-        stringify([
-          [
-            log.id,
-            log.name,
-            log.labels,
-            log.timeStart,
-            log.timeEnd,
-            log.metrics,
-          ],
-        ])
-      );
-    }
+
+    let logs: FoodLogEntry[] = [];
+
+    const result = await cassandraClient.execute(
+      `SELECT CAST(id as text) as id, name, labels, time, metrics
+            FROM openfooddiary.user_foodlogentry
+            WHERE userId = ?;`,
+      [userId],
+      { prepare: true }
+    );
+    logs = result.rows.map((row) => {
+      const subCon: any = {};
+      row.keys().forEach((key) => (subCon[key] = row.get(key)));
+      return subCon;
+    }) as FoodLogEntry[];
+    const exportedLogs = logs
+      .map(bulkFromResult)
+      .map((log) => [
+        log.id,
+        log.name,
+        log.labels,
+        log.timeStart,
+        log.timeEnd,
+        log.metrics,
+      ]);
+    fs.appendFileSync(filename, stringify(exportedLogs));
     return ok(filename);
   } catch (error: any) {
     console.error(error.message);
