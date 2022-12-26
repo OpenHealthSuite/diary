@@ -2,6 +2,7 @@ import { err, ok, Result } from "neverthrow";
 import { FoodLogEntry } from "../../types";
 import crypto from "node:crypto";
 import {
+  BulkExportFoodLogEntry,
   CreateFoodLogEntry,
   EditFoodLogEntry,
   NotFoundError,
@@ -9,7 +10,8 @@ import {
   SystemError,
   ValidationError,
 } from "../types";
-
+import { stringify } from "csv-stringify/sync";
+import fs from "node:fs";
 import { knexInstance } from ".";
 import { isValidCreateLogEntry, isValidEditLogEntry } from "../validation";
 import { Knex } from "knex";
@@ -40,6 +42,10 @@ type SqliteDeleteFoodLogFunction = (
   logId: string,
   client?: Knex
 ) => Promise<Result<boolean, StorageError>>;
+type SqliteBulkExportFoodLogsFunction = (
+  userId: string,
+  client?: Knex
+) => Promise<Result<string, StorageError>>;
 
 interface SqliteFoodLogEntry {
   user_id: string;
@@ -189,6 +195,58 @@ export const deleteFoodLog: SqliteDeleteFoodLogFunction = async (
       .andWhere("id", logId);
     return ok(true);
   } catch (error: any) {
+    return err(new SystemError(error.message));
+  }
+};
+
+const TEMP_DIR = process.env.OPENFOODDIARY_TEMP_DIRECTORY ?? "/tmp";
+
+function bulkFromSql(sql: SqliteFoodLogEntry): BulkExportFoodLogEntry {
+  return {
+    id: sql.id,
+    name: sql.name,
+    labels: JSON.parse(sql.labels),
+    timeStart: new Date(sql.time_start * 1000).toISOString(),
+    timeEnd: new Date(sql.time_end * 1000).toISOString(),
+    metrics: JSON.parse(sql.metrics),
+  };
+}
+
+export const bulkExportFoodLogs: SqliteBulkExportFoodLogsFunction = async (
+  userId: string,
+  client = knexInstance
+): Promise<Result<string, StorageError>> => {
+  try {
+    const filename = `${TEMP_DIR}/${crypto.randomUUID()}.csv`;
+    const logs = await client<SqliteFoodLogEntry>("user_foodlogentry")
+      .select()
+      .where("user_id", userId);
+    const exportedLogs = logs.map(bulkFromSql);
+    fs.writeFileSync(
+      filename,
+      stringify([["id", "name", "labels", "timeStart", "timeEnd", "metrics"]]),
+      {
+        flag: "w",
+      }
+    );
+    for (const log of exportedLogs) {
+      fs.appendFileSync(
+        filename,
+        stringify([
+          [
+            log.id,
+            log.name,
+            log.labels,
+            log.timeStart,
+            log.timeEnd,
+            log.metrics,
+          ],
+        ])
+      );
+    }
+    return ok(filename);
+  } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };

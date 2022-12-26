@@ -15,6 +15,8 @@ This application is designed as a FOSS webapp for tracking your food. It doesn't
   - Denotes the header that will be populated with a user id
 - `OPENFOODDIARY_USERID`: defaults to undefined
   - Denotes userid that will _always_ be populated - intended for dev and single-user modes
+- `OPENFOODDIARY_TEMP_DIRECTORY`: defaults to "/tmp"
+  - Directory where scratch temp files will be written
 
 ### Storage
 

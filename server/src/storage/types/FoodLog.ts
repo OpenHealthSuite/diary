@@ -7,6 +7,14 @@ export type CreateFoodLogEntry = Pick<
   "name" | "labels" | "time" | "metrics"
 >;
 
+export type BulkExportFoodLogEntry = Pick<
+  FoodLogEntry,
+  "id" | "name" | "labels" | "metrics"
+> & {
+  timeStart: string;
+  timeEnd: string;
+};
+
 export type EditFoodLogEntry = Pick<FoodLogEntry, "id"> &
   Partial<Pick<FoodLogEntry, "name" | "labels" | "time" | "metrics">>;
 
@@ -36,10 +44,15 @@ export type DeleteFoodLogFunction = (
   logId: string
 ) => Promise<Result<boolean, StorageError>>;
 
+export type BulkExportFoodLogs = (
+  userId: string
+) => Promise<Result<string, StorageError>>;
+
 export interface FoodLogStorage {
   storeFoodLog: StoreFoodLogFunction;
   retrieveFoodLog: RetrieveFoodLogFunction;
   editFoodLog: EditFoodLogFunction;
   deleteFoodLog: DeleteFoodLogFunction;
   queryFoodLogs: QueryFoodLogFunction;
+  bulkExportFoodLogs: BulkExportFoodLogs;
 }

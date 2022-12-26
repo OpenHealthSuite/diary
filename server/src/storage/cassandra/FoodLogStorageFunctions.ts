@@ -2,6 +2,7 @@ import { err, ok, Result } from "neverthrow";
 import { FoodLogEntry } from "../../types";
 import crypto from "node:crypto";
 import {
+  BulkExportFoodLogEntry,
   CreateFoodLogEntry,
   EditFoodLogEntry,
   NotFoundError,
@@ -9,7 +10,8 @@ import {
   SystemError,
   ValidationError,
 } from "../types";
-
+import fs from "node:fs";
+import { stringify } from "csv-stringify/sync";
 import { CASSANDRA_CLIENT } from ".";
 import { Client } from "cassandra-driver";
 import { isValidCreateLogEntry, isValidEditLogEntry } from "../validation";
@@ -40,6 +42,10 @@ type CassandraDeleteFoodLogFunction = (
   logId: string,
   client?: Client
 ) => Promise<Result<boolean, StorageError>>;
+type CassandraBulkExportFoodLogsFunction = (
+  userId: string,
+  client?: Client
+) => Promise<Result<string, StorageError>>;
 
 export const storeFoodLog: CassandraStoreFoodLogFunction = async (
   userId: string,
@@ -189,6 +195,68 @@ export const deleteFoodLog: CassandraDeleteFoodLogFunction = async (
     );
     return ok(true);
   } catch (error: any) {
+    return err(new SystemError(error.message));
+  }
+};
+
+const TEMP_DIR = process.env.OPENFOODDIARY_TEMP_DIRECTORY ?? "/tmp";
+
+function bulkFromResult(log: FoodLogEntry): BulkExportFoodLogEntry {
+  return {
+    id: log.id,
+    name: log.name,
+    labels: log.labels,
+    timeStart: log.time.start.toISOString(),
+    timeEnd: log.time.end.toISOString(),
+    metrics: log.metrics,
+  };
+}
+
+export const bulkExportFoodLogs: CassandraBulkExportFoodLogsFunction = async (
+  userId: string,
+  cassandraClient = CASSANDRA_CLIENT
+): Promise<Result<string, StorageError>> => {
+  try {
+    const filename = `${TEMP_DIR}/${crypto.randomUUID()}.csv`;
+    const result = await cassandraClient.execute(
+      `SELECT CAST(id as text) as id, name, labels, time, metrics 
+            FROM openfooddiary.user_foodlogentry 
+            WHERE userId = ?
+            ALLOW FILTERING;`,
+      [userId],
+      { prepare: true }
+    );
+    const constructed: FoodLogEntry[] = result.rows.map((row) => {
+      const subCon: any = {};
+      row.keys().forEach((key) => (subCon[key] = row.get(key)));
+      return subCon;
+    }) as FoodLogEntry[];
+    const exportedLogs = constructed.map(bulkFromResult);
+    fs.writeFileSync(
+      filename,
+      stringify([["id", "name", "labels", "timeStart", "timeEnd", "metrics"]]),
+      {
+        flag: "w",
+      }
+    );
+    for (const log of exportedLogs) {
+      fs.appendFileSync(
+        filename,
+        stringify([
+          [
+            log.id,
+            log.name,
+            log.labels,
+            log.timeStart,
+            log.timeEnd,
+            log.metrics,
+          ],
+        ])
+      );
+    }
+    return ok(filename);
+  } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };
