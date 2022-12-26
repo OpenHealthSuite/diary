@@ -218,10 +218,6 @@ export const bulkExportFoodLogs: SqliteBulkExportFoodLogsFunction = async (
 ): Promise<Result<string, StorageError>> => {
   try {
     const filename = `${TEMP_DIR}/${crypto.randomUUID()}.csv`;
-    const logs = await client<SqliteFoodLogEntry>("user_foodlogentry")
-      .select()
-      .where("user_id", userId);
-    const exportedLogs = logs.map(bulkFromSql);
     fs.writeFileSync(
       filename,
       stringify([["id", "name", "labels", "timeStart", "timeEnd", "metrics"]]),
@@ -229,21 +225,30 @@ export const bulkExportFoodLogs: SqliteBulkExportFoodLogsFunction = async (
         flag: "w",
       }
     );
-    for (const log of exportedLogs) {
-      fs.appendFileSync(
-        filename,
-        stringify([
-          [
+    let logs: SqliteFoodLogEntry[] = [];
+    const batchSize = 100;
+    let batchindex = 0;
+    do {
+      logs = await client<SqliteFoodLogEntry>("user_foodlogentry")
+        .select()
+        .where("user_id", userId)
+        .orderBy("id")
+        .limit(batchSize)
+        .offset(batchSize * batchindex);
+      if (logs.length > 0) {
+        const exportedLogs = logs
+          .map(bulkFromSql)
+          .map((log) => [
             log.id,
             log.name,
             log.labels,
             log.timeStart,
             log.timeEnd,
             log.metrics,
-          ],
-        ])
-      );
-    }
+          ]);
+        fs.appendFileSync(filename, stringify(exportedLogs));
+      }
+    } while (logs.length > 0);
     return ok(filename);
   } catch (error: any) {
     console.error(error.message);
