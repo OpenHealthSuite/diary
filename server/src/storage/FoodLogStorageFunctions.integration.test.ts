@@ -208,9 +208,9 @@ describe.each(configs)(
 
     test("Bulk Actions :: Can dump logs to temp file", async () => {
       const testUserId = crypto.randomUUID();
-      let logs = [];
+      let logs: any[] = [];
 
-      for (let i = 0; i++; i < 1000) {
+      for (let i = 0; i < 1000; i++) {
         const pastLog: CreateFoodLogEntry = {
           name: "My Food Log " + i,
           labels: ["some-label-" + i],
@@ -259,7 +259,9 @@ describe.each(configs)(
         a.name.normalize().localeCompare(b.name.normalize())
       );
       logs.sort((a, b) => a.name.normalize().localeCompare(b.name.normalize()));
-      expect(records).toEqual(logs);
+      expect(logs.length).toBe(1000);
+      expect(records.length).toBe(1000);
+      expect(records).toStrictEqual(logs);
     });
   }
 );

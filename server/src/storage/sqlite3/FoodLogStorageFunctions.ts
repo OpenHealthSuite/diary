@@ -225,30 +225,25 @@ export const bulkExportFoodLogs: SqliteBulkExportFoodLogsFunction = async (
         flag: "w",
       }
     );
-    let logs: SqliteFoodLogEntry[] = [];
-    const batchSize = 100;
-    let batchindex = 0;
-    do {
-      logs = await client<SqliteFoodLogEntry>("user_foodlogentry")
-        .select()
-        .where("user_id", userId)
-        .orderBy("id")
-        .limit(batchSize)
-        .offset(batchSize * batchindex);
-      if (logs.length > 0) {
-        const exportedLogs = logs
-          .map(bulkFromSql)
-          .map((log) => [
-            log.id,
-            log.name,
-            log.labels,
-            log.timeStart,
-            log.timeEnd,
-            log.metrics,
-          ]);
-        fs.appendFileSync(filename, stringify(exportedLogs));
-      }
-    } while (logs.length > 0);
+
+    const logs = await client<SqliteFoodLogEntry>("user_foodlogentry")
+      .select()
+      .where("user_id", userId)
+      .orderBy("id");
+    if (logs.length > 0) {
+      const exportedLogs = logs.map(bulkFromSql).map((log) => {
+        return [
+          log.id,
+          log.name,
+          log.labels,
+          log.timeStart,
+          log.timeEnd,
+          log.metrics,
+        ];
+      });
+      console.log(exportedLogs);
+      fs.appendFileSync(filename, stringify(exportedLogs));
+    }
     return ok(filename);
   } catch (error: any) {
     console.error(error.message);
