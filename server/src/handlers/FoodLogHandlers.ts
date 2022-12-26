@@ -20,6 +20,7 @@ export function buildRouter(router: Router): Router {
   return router
     .post("/logs", createFoodLogHandler)
     .get("/logs", queryFoodLogHandler)
+    .get("/logs/export", exportLogsHandler)
     .get("/logs/:itemId", getFoodLogHandler)
     .put("/logs/:itemId", updateFoodLogHandler)
     .delete("/logs/:itemId", deleteFoodLogHandler);
@@ -156,4 +157,16 @@ export function deleteFoodLogHandler(
         res.status(errorStatusCodeCalculator(err)).send(err.message)
       )
   );
+}
+
+async function exportLogsHandler(
+  req: Request,
+  res: Response & { locals: OFDLocals }
+) {
+  const tempFile = await foodStorageProvider.bulkExportFoodLogs(
+    res.locals.userId
+  );
+  tempFile
+    .map((tmpFilePath) => res.download(tmpFilePath))
+    .mapErr((err) => res.sendStatus(errorStatusCodeCalculator(err)));
 }

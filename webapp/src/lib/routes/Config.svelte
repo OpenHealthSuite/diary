@@ -10,6 +10,12 @@ import MetricsConfiguration from "../components/configuration/MetricsConfigurati
       <MetricsConfiguration />
     </div>
   </div>
+  <div class="config-container">
+    <div class="config-item">
+      <h2>Data Management</h2>
+      <a href="/api/logs/export" target="_blank" download><button>Download logs</button></a>
+    </div>
+  </div>
 </div>
 <style lang="scss">
   .container {
