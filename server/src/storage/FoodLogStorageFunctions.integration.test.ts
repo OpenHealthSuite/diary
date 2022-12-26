@@ -206,27 +206,38 @@ describe.each(configs)(
       expect(wildTest.length).toBe(0);
     });
 
-    test("Bulk Actions :: Can dump logs to temp file and return filename", async () => {
+    test("Bulk Actions :: Can dump logs to temp file", async () => {
       const testUserId = crypto.randomUUID();
+      let logs = [];
 
-      const pastLog: CreateFoodLogEntry = {
-        name: "My Food Log",
-        labels: ["some-label"],
-        time: {
-          start: new Date(1999, 10, 10),
-          end: new Date(1999, 10, 11),
-        },
-        metrics: {
-          calories: 500,
-        },
-      };
+      for (let i = 0; i++; i < 1000) {
+        const pastLog: CreateFoodLogEntry = {
+          name: "My Food Log " + i,
+          labels: ["some-label-" + i],
+          time: {
+            start: new Date(1999, 10, 10),
+            end: new Date(1999, 10, 11),
+          },
+          metrics: {
+            calories: 500 + 1,
+          },
+        };
 
-      const past = await (config.storage.foodLog.storeFoodLog as any)(
-        testUserId,
-        pastLog,
-        testClient
-      );
-      const pastItemId = past._unsafeUnwrap();
+        const past = await (config.storage.foodLog.storeFoodLog as any)(
+          testUserId,
+          pastLog,
+          testClient
+        );
+        const pastItemId = past._unsafeUnwrap();
+        logs.push({
+          id: pastItemId,
+          name: pastLog.name,
+          labels: pastLog.labels,
+          timeStart: pastLog.time.start.toISOString(),
+          timeEnd: pastLog.time.end.toISOString(),
+          metrics: pastLog.metrics,
+        });
+      }
 
       const bulkFilepathResult = await (
         config.storage.foodLog.bulkExportFoodLogs as any
@@ -237,27 +248,18 @@ describe.each(configs)(
       const records = parse(filedataString, {
         columns: true,
         skip_empty_lines: true,
-      });
-      expect(
-        records.map((x: any) => {
-          return {
-            ...x,
-            metrics: JSON.parse(x.metrics),
-            labels: JSON.parse(x.labels),
-          };
-        })
-      ).toEqual([
-        {
-          id: pastItemId,
-          name: "My Food Log",
-          labels: ["some-label"],
-          timeStart: new Date(1999, 10, 10).toISOString(),
-          timeEnd: new Date(1999, 10, 11).toISOString(),
-          metrics: {
-            calories: 500,
-          },
-        },
-      ]);
+      }).map((x: any) => {
+        return {
+          ...x,
+          metrics: JSON.parse(x.metrics),
+          labels: JSON.parse(x.labels),
+        };
+      }) as any[];
+      records.sort((a, b) =>
+        a.name.normalize().localeCompare(b.name.normalize())
+      );
+      logs.sort((a, b) => a.name.normalize().localeCompare(b.name.normalize()));
+      expect(records).toEqual(logs);
     });
   }
 );
