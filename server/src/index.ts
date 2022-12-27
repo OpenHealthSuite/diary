@@ -22,6 +22,14 @@ app.use(userMiddleware);
 app.use("/api", FoodStorageRouter);
 app.use("/api", ConfigurationRouter);
 
+app.get("/*", (req, res) => {
+  res.sendFile("index.html", { root: "./public" });
+});
+
+app.get("/api/*", (req, res) => {
+  res.sendStatus(404);
+});
+
 STORAGE.setupDatabase().then(() => {
   const running = app.listen(port, () => {
     console.log(`OpenFoodDiary listening on port ${port}`);
