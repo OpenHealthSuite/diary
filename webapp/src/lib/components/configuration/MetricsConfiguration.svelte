@@ -61,7 +61,6 @@
     onMount(() => refreshMetricsConfig());
 </script>
 <div>
-    <h3>Metrics</h3>
     {#if !loading && error}
         <div>Error</div>
     {/if}

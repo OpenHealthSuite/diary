@@ -12,6 +12,8 @@
     "test:watch": "vitest src"
   },
   "devDependencies": {
+    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
+    "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
     "@sveltejs/vite-plugin-svelte": "^1.0.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/svelte": "^3.2.1",
@@ -27,6 +29,7 @@
     "vitest": "^0.22.1"
   },
   "dependencies": {
+    "csv-parse": "^5.3.3",
     "svelte-routing": "^1.6.0"
   }
 }

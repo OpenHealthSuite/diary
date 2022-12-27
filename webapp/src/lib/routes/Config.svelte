@@ -1,12 +1,14 @@
 <script lang="ts">
 
 import MetricsConfiguration from "../components/configuration/MetricsConfiguration.svelte";
-
+import BulkLogUpload from "../components/configuration/BulkLogUpload.svelte";
+  
 </script>
 <div class="container">
   <h1>Config</h1>
   <div class="config-container">
     <div class="config-item">
+      <h2>Metrics</h2>
       <MetricsConfiguration />
     </div>
   </div>
@@ -14,6 +16,7 @@ import MetricsConfiguration from "../components/configuration/MetricsConfigurati
     <div class="config-item">
       <h2>Data Management</h2>
       <a href="/api/logs/export" target="_blank" download><button>Download logs</button></a>
+      <BulkLogUpload />
     </div>
   </div>
 </div>
