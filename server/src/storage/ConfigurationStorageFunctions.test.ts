@@ -1,7 +1,6 @@
 import { sqlite3 } from "./sqlite3";
 import { isValidationError } from "./types";
 import { ConfigurationStorage } from "./types/Configuration";
-import { storeConfiguration } from "./sqlite3/ConfigurationStorageFunctions";
 import { Configuration } from "../types";
 import { cassandra } from "./cassandra";
 
@@ -12,7 +11,7 @@ const configs = [
 
 describe.each(configs)(
   "$name ConfigurationStorageFunctions",
-  ({ config }: { config: ConfigurationStorage }) => {
+  ({ config: storeConfig }: { config: ConfigurationStorage }) => {
     describe("UpsertConfiguration", () => {
       const BAD_USER_IDS = [undefined, null, ""];
       const BAD_CONFIGS: { reason: string; config: Configuration }[] = [
@@ -65,7 +64,7 @@ describe.each(configs)(
         // },
       ];
       test.each(BAD_USER_IDS)("%s user id rejected", async (userId) => {
-        const result = await storeConfiguration(userId as any, {
+        const result = await storeConfig.storeConfiguration(userId as any, {
           id: "metrics",
           value: {
             calories: {
@@ -82,7 +81,10 @@ describe.each(configs)(
       test.each(BAD_CONFIGS)(
         "$reason rejected",
         async ({ config }: { config: Configuration }) => {
-          const result = await storeConfiguration("test-user-id", config);
+          const result = await storeConfig.storeConfiguration(
+            "test-user-id",
+            config
+          );
           expect(result.isErr()).toBeTruthy();
           expect(isValidationError(result._unsafeUnwrapErr())).toBeTruthy();
           expect(result._unsafeUnwrapErr().message).toBe(
