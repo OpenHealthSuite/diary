@@ -1,18 +1,19 @@
 import { sqlite3 } from "./sqlite3";
 import { isValidationError } from "./types";
 import { ConfigurationStorage } from "./types/Configuration";
-import { storeConfiguration } from "./sqlite3/ConfigurationStorageFunctions";
 import { Configuration } from "../types";
 import { cassandra } from "./cassandra";
+import * as neo4j from "./neo4j";
 
 const configs = [
   { name: "sqlite3", config: sqlite3.configuration },
   { name: "cassandra", config: cassandra.configuration },
+  { name: "neo4j", config: neo4j.storageConfig.configuration },
 ];
 
 describe.each(configs)(
   "$name ConfigurationStorageFunctions",
-  ({ config }: { config: ConfigurationStorage }) => {
+  ({ config: storageConfig }: { config: ConfigurationStorage }) => {
     describe("UpsertConfiguration", () => {
       const BAD_USER_IDS = [undefined, null, ""];
       const BAD_CONFIGS: { reason: string; config: Configuration }[] = [
@@ -65,7 +66,7 @@ describe.each(configs)(
         // },
       ];
       test.each(BAD_USER_IDS)("%s user id rejected", async (userId) => {
-        const result = await storeConfiguration(userId as any, {
+        const result = await storageConfig.storeConfiguration(userId as any, {
           id: "metrics",
           value: {
             calories: {
@@ -82,7 +83,10 @@ describe.each(configs)(
       test.each(BAD_CONFIGS)(
         "$reason rejected",
         async ({ config }: { config: Configuration }) => {
-          const result = await storeConfiguration("test-user-id", config);
+          const result = await storageConfig.storeConfiguration(
+            "test-user-id",
+            config
+          );
           expect(result.isErr()).toBeTruthy();
           expect(isValidationError(result._unsafeUnwrapErr())).toBeTruthy();
           expect(result._unsafeUnwrapErr().message).toBe(

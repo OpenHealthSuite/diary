@@ -1,5 +1,6 @@
 import * as sqlite3 from "./sqlite3";
 import * as cassandra from "./cassandra";
+import * as neo4j from "./neo4j";
 import knex from "knex";
 import { Client } from "cassandra-driver";
 
@@ -34,6 +35,18 @@ export const configs = [
         await testClient.shutdown();
       },
       storage: cassandra.cassandra,
+    },
+  },
+  {
+    name: "neo4j",
+    config: {
+      beforeAllSetup: async () => {
+        await neo4j.storageConfig.setupDatabase();
+      },
+      afterAllTeardown: async (testClient: any) => {
+        await neo4j.storageConfig.shutdownDatabase();
+      },
+      storage: neo4j.storageConfig,
     },
   },
 ];

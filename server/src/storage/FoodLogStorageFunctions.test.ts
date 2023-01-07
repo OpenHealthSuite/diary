@@ -7,10 +7,12 @@ import {
   isValidationError,
 } from "./types";
 import { FoodLogStorage } from "./types/FoodLog";
+import * as neo4j from "./neo4j";
 
 const configs = [
   { name: "sqlite3", config: sqlite3.foodLog },
   { name: "cassandra", config: cassandra.foodLog },
+  { name: "neo4j", config: neo4j.storageConfig.foodLog },
 ];
 
 describe.each(configs)(
