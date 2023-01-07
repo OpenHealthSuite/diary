@@ -17,32 +17,111 @@ import {
   isValidCreateLogEntry,
   isValidEditLogEntry,
 } from "../validation";
+import { randomUUID } from "node:crypto";
 
-// Create a driver instance, for the user `neo4j` with password `password`.
-// It should be enough to have a single driver per database per application.
 export const NEO4J_DRIVER = neo4j.driver(
   "neo4j://localhost:7687",
   neo4j.auth.basic("neo4j", "s3cr3tly")
 );
 
-// Close the driver when application exits.
-// This closes all used network connections.
-
 const foodLog: FoodLogStorage = {
-  storeFoodLog: function (
+  storeFoodLog: async function (
     userId: string,
     logEntry: CreateFoodLogEntry
   ): Promise<Result<string, StorageError>> {
     if (!isValidCreateLogEntry(logEntry)) {
       return Promise.resolve(err(new ValidationError("Invalid Log Entry")));
     }
-    throw new Error("Function not implemented.");
+    const session = NEO4J_DRIVER.session();
+    try {
+      const labelMap = logEntry.labels.reduce((prev, curr, i) => {
+        return { ...prev, [`fll${i}`]: curr };
+      }, {});
+      const id = randomUUID();
+      await session.run(
+        `MERGE (u:User {userid: $userid})
+          MERGE (fl:Foodlog { 
+            id: $id,
+            name: $name,
+            metrics: $metrics
+          })
+          ${logEntry.labels
+            .map((_, i) => `MERGE (fll${i}: FoodLogLabel { value: $fll${i} })`)
+            .join("\n")}
+          MERGE (st: Time { logTime: datetime($startTime) })
+          MERGE (et: Time { logTime: datetime($endTime) })
+          MERGE (u)-[:ENTERED_LOG]->(fl)
+          MERGE (fl)<-[:START_TIME]-(st)
+          MERGE (fl)<-[:END_TIME]-(et)
+          ${logEntry.labels
+            .map((_, i) => `MERGE (fl)<-[:HAS_LABEL]-(fll${i})\n`)
+            .join("\n")}
+          RETURN fl.id as id`,
+        {
+          userid: userId,
+          name: logEntry.name,
+          id,
+          metrics: JSON.stringify(logEntry.metrics),
+          startTime: logEntry.time.start.toISOString(),
+          endTime: logEntry.time.end.toISOString(),
+          ...labelMap,
+        }
+      );
+
+      await session.close();
+      return ok(id);
+    } catch (error: any) {
+      await session.close();
+      console.error(error);
+      return err(new SystemError(error.message));
+    }
   },
-  retrieveFoodLog: function (
+  retrieveFoodLog: async function (
     userId: string,
     logId: string
   ): Promise<Result<FoodLogEntry, StorageError>> {
-    throw new Error("Function not implemented.");
+    const session = NEO4J_DRIVER.session();
+    try {
+      const res = await session.run<any>(
+        `MATCH (:User {userid: $userid})-[r:ENTERED_LOG]-(fl:FoodLog {id: $logid})
+         MATCH (st: Time)-[:START_TIME]-(fl)
+         MATCH (et: Time)-[:END_TIME]-(fl)
+         MATCH (fl)-[:HAS_LABEL]-(fll)
+          RETURN fl.id as id, 
+            fl.name as name, 
+            fl.metrics as metrics, 
+            collect(fll.value) as labels,
+            st.logTime as startTime,
+            et.logTime as endTime`,
+        {
+          userid: userId,
+          logid: logId,
+        }
+      );
+      await session.close();
+      if (res.records.length == 0) {
+        return err(new NotFoundError("Not Found"));
+      }
+
+      return ok(
+        res.records.map((rec) => {
+          return {
+            id: rec.get("id"),
+            name: rec.get("name"),
+            labels: rec.get("labels"),
+            time: {
+              start: rec.get("startTime"),
+              end: rec.get("endTime"),
+            },
+            metrics: JSON.parse(rec.get("metrics")),
+          };
+        })[0]
+      );
+    } catch (error: any) {
+      await session.close();
+      console.error(error);
+      return err(new SystemError(error.message));
+    }
   },
   editFoodLog: function (
     userId: string,
@@ -74,6 +153,7 @@ const foodLog: FoodLogStorage = {
   bulkExportFoodLogs: function (
     userId: string
   ): Promise<Result<string, StorageError>> {
+    // lets not touch this...
     throw new Error("Function not implemented.");
   },
 };
@@ -94,7 +174,7 @@ const configuration: ConfigurationStorage = {
       await session.run(
         `MERGE (u:User {userid: $userid})
           MERGE (c:Config { value: $value })
-          MERGE (u)-[r:IS_CONFIG_FOR { type: $type }]->(c)
+          MERGE (u)-[r:HAS_CONFIG { type: $type }]->(c)
           RETURN r.type`,
         {
           userid: userId,
@@ -117,7 +197,7 @@ const configuration: ConfigurationStorage = {
     const session = NEO4J_DRIVER.session();
     try {
       const res = await session.run<{ id: string; value: string }>(
-        `MATCH (:User {userid: $userid})-[r:IS_CONFIG_FOR]-(c:Config)
+        `MATCH (:User {userid: $userid})-[r:HAS_CONFIG]-(c:Config)
           RETURN r.type as id, c.value as value`,
         {
           userid: userId,
@@ -146,7 +226,7 @@ const configuration: ConfigurationStorage = {
     const session = NEO4J_DRIVER.session();
     try {
       const res = await session.run<{ id: string; value: string }>(
-        `MATCH (:User {userid: $userid})-[r:IS_CONFIG_FOR { type: $type }]-(c:Config)
+        `MATCH (:User {userid: $userid})-[r:HAS_CONFIG { type: $type }]-(c:Config)
           RETURN r.type as id, c.value as value
           LIMIT 1`,
         {
@@ -180,7 +260,7 @@ const configuration: ConfigurationStorage = {
     const session = NEO4J_DRIVER.session();
     try {
       const res = await session.run<{ id: string; value: string }>(
-        `MATCH (:User {userid: $userid})-[:IS_CONFIG_FOR { type: $type }]-(c:Config)
+        `MATCH (:User {userid: $userid})-[:HAS_CONFIG { type: $type }]-(c:Config)
           DETACH DELETE c`,
         {
           userid: userId,
