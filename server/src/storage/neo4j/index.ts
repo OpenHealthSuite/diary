@@ -4,10 +4,12 @@ import {
   CreateFoodLogEntry,
   EditFoodLogEntry,
   FoodLogStorage,
+  NotFoundError,
   StorageError,
+  SystemError,
   ValidationError,
 } from "../types";
-import { Result, err } from "neverthrow";
+import { Result, err, ok } from "neverthrow";
 import { Configuration, FoodLogEntry } from "../../types";
 import { ConfigurationStorage } from "../types/Configuration";
 import {
@@ -87,24 +89,111 @@ const configuration: ConfigurationStorage = {
     if (!isValidConfigurationItem(configuration)) {
       return err(new ValidationError("Error with Configuration"));
     }
-    throw new Error("Function not implemented.");
+    const session = NEO4J_DRIVER.session();
+    try {
+      await session.run(
+        `MERGE (u:User {userid: $userid})
+          MERGE (c:Config { value: $value })
+          MERGE (u)-[r:IS_CONFIG_FOR { type: $type }]->(c)
+          RETURN r.type`,
+        {
+          userid: userId,
+          value: JSON.stringify(configuration.value),
+          type: configuration.id,
+        }
+      );
+
+      await session.close();
+      return ok(configuration.id);
+    } catch (error: any) {
+      await session.close();
+      console.error(error);
+      return err(new SystemError(error.message));
+    }
   },
-  queryUserConfiguration: function (
+  queryUserConfiguration: async function (
     userId: string
   ): Promise<Result<Configuration[], StorageError>> {
-    throw new Error("Function not implemented.");
+    const session = NEO4J_DRIVER.session();
+    try {
+      const res = await session.run<{ id: string; value: string }>(
+        `MATCH (:User {userid: $userid})-[r:IS_CONFIG_FOR]-(c:Config)
+          RETURN r.type as id, c.value as value`,
+        {
+          userid: userId,
+        }
+      );
+      await session.close();
+
+      return ok(
+        res.records.map((rec) => {
+          return {
+            id: rec.get("id"),
+            value: JSON.parse(rec.get("value")),
+          } as Configuration;
+        })
+      );
+    } catch (error: any) {
+      await session.close();
+      console.error(error);
+      return err(new SystemError(error.message));
+    }
   },
-  retrieveUserConfiguration: function (
+  retrieveUserConfiguration: async function (
     userId: string,
     configurationId: "metrics" | "summaries"
   ): Promise<Result<Configuration, StorageError>> {
-    throw new Error("Function not implemented.");
+    const session = NEO4J_DRIVER.session();
+    try {
+      const res = await session.run<{ id: string; value: string }>(
+        `MATCH (:User {userid: $userid})-[r:IS_CONFIG_FOR { type: $type }]-(c:Config)
+          RETURN r.type as id, c.value as value
+          LIMIT 1`,
+        {
+          userid: userId,
+          type: configurationId,
+        }
+      );
+      await session.close();
+      if (res.records.length == 0) {
+        return err(new NotFoundError("Not Found"));
+      }
+
+      return ok(
+        res.records.map((rec) => {
+          return {
+            id: rec.get("id"),
+            value: JSON.parse(rec.get("value")),
+          } as Configuration;
+        })[0]
+      );
+    } catch (error: any) {
+      await session.close();
+      console.error(error);
+      return err(new SystemError(error.message));
+    }
   },
-  deleteUserConfiguration: function (
+  deleteUserConfiguration: async function (
     userId: string,
     configurationId: "metrics" | "summaries"
   ): Promise<Result<boolean, StorageError>> {
-    throw new Error("Function not implemented.");
+    const session = NEO4J_DRIVER.session();
+    try {
+      const res = await session.run<{ id: string; value: string }>(
+        `MATCH (:User {userid: $userid})-[:IS_CONFIG_FOR { type: $type }]-(c:Config)
+          DETACH DELETE c`,
+        {
+          userid: userId,
+          type: configurationId,
+        }
+      );
+      await session.close();
+      return ok(true);
+    } catch (error: any) {
+      await session.close();
+      console.error(error);
+      return err(new SystemError(error.message));
+    }
   },
 };
 

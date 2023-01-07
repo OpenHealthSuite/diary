@@ -1,5 +1,9 @@
 import crypto from "node:crypto";
-import { MetricsConfiguration, SummaryConfiguration } from "../types";
+import {
+  Configuration,
+  MetricsConfiguration,
+  SummaryConfiguration,
+} from "../types";
 import { isNotFoundError } from "./types";
 import { configs } from "./_testConfigs";
 
@@ -100,8 +104,10 @@ describe.each(configs)(
         config.storage.configuration.queryUserConfiguration as any
       )(testUserId, testClient);
 
+      let array: Configuration[] = filled._unsafeUnwrap();
+      array.sort((a, b) => a.id.localeCompare(b.id));
       expect(filled.isOk()).toBeTruthy();
-      expect(filled._unsafeUnwrap()).toEqual([metrics, summary]);
+      expect(array).toEqual([metrics, summary]);
     });
   }
 );
