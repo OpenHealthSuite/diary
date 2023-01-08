@@ -114,7 +114,7 @@ describe.each(configs)(
       expect(redeleteResult._unsafeUnwrap()).toBeTruthy();
     });
 
-    test.skip("Queries :: can add some logs, and get expected query results", async () => {
+    test("Queries :: can add some logs, and get expected query results", async () => {
       const testUserId = crypto.randomUUID();
 
       const pastLog: CreateFoodLogEntry = {

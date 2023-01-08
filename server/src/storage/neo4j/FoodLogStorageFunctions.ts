@@ -73,7 +73,7 @@ export const foodLog: FoodLogStorage = {
     try {
       const res = await session.run<any>(
         `MATCH (:User {userid: $userid})-[r:ENTERED]-(fl:FoodLog {id:$logid})
-         MATCH (fl)-[:LABELED_WITH]-(fll: FoodLogLabel)
+         OPTIONAL MATCH (fl)-[:LABELED_WITH]-(fll: FoodLogLabel)
           RETURN fl.id as id, 
             fl.name as name, 
             collect(fll.value) as labels, 
@@ -197,7 +197,7 @@ export const foodLog: FoodLogStorage = {
       return err(new SystemError(error.message));
     }
   },
-  queryFoodLogs: function (
+  queryFoodLogs: async function (
     userId: string,
     dateStart: Date,
     dateEnd: Date
@@ -207,7 +207,46 @@ export const foodLog: FoodLogStorage = {
         err(new ValidationError("startDate is after endDate"))
       );
     }
-    throw new Error("Function not implemented.");
+    const session = NEO4J_DRIVER.session();
+    try {
+      const res = await session.run<any>(
+        `MATCH (:User {userid: $userid})-[r:ENTERED]-(fl:FoodLog)
+          WHERE fl.startTime <= datetime($endTime) AND
+          fl.endTime >= datetime($startTime)
+         OPTIONAL MATCH (fl)-[:LABELED_WITH]-(fll: FoodLogLabel)
+          RETURN fl.id as id, 
+            fl.name as name, 
+            collect(fll.value) as labels, 
+            fl.metrics as metrics,
+            apoc.temporal.format(fl.startTime, "ISO_DATE_TIME") as startTime,
+            apoc.temporal.format(fl.endTime, "ISO_DATE_TIME") as endTime`,
+        {
+          userid: userId,
+          startTime: dateStart.toISOString(),
+          endTime: dateEnd.toISOString()
+        }
+      );
+      await session.close();
+
+      return ok(
+        res.records.map((rec) => {
+          return {
+            id: rec.get("id"),
+            name: rec.get("name"),
+            labels: rec.get("labels"),
+            time: {
+              start: new Date(rec.get("startTime")),
+              end: new Date(rec.get("endTime")),
+            },
+            metrics: JSON.parse(rec.get("metrics")),
+          };
+        })
+      );
+    } catch (error: any) {
+      await session.close();
+      console.error(error);
+      return err(new SystemError(error.message));
+    }
   },
   bulkExportFoodLogs: function (
     userId: string
