@@ -110,20 +110,92 @@ export const foodLog: FoodLogStorage = {
       return err(new SystemError(error.message));
     }
   },
-  editFoodLog: function (
+  editFoodLog: async function (
     userId: string,
     logEntry: EditFoodLogEntry
   ): Promise<Result<FoodLogEntry, StorageError>> {
     if (!isValidEditLogEntry(logEntry)) {
       return Promise.resolve(err(new ValidationError("Invalid Log Entry")));
     }
-    throw new Error("Function not implemented.");
+    const session = NEO4J_DRIVER.session();
+    try {
+      const labels = (logEntry.labels ?? []).reduce((acc, lbl, i) => {
+        return { ...acc, [`fll${i}`]: lbl };
+      }, {});
+      let props: any = {
+        userid: userId,
+        id: logEntry.id,
+        ...labels
+      }
+      if (logEntry.name) {
+        props = {
+          ...props,
+          name: logEntry.name,
+        }
+      }
+      if (logEntry.metrics) {
+        props = {
+          ...props,
+          metrics: JSON.stringify(logEntry.metrics),
+        }
+
+      }
+      if (logEntry.time) {
+        props = {
+          ...props,
+          startDate: logEntry.time!.start.toISOString(),
+          endDate: logEntry.time!.end.toISOString(),
+        }
+      }
+      // probably a smarter way of doing this, but lets just make it work
+      await session.run(
+        `MERGE (u:User {userid: $userid})
+          MERGE (fl:FoodLog { 
+            id: $id
+          })
+          ON MATCH SET 
+            ${logEntry.name ? "fl.name = $name," : ""}
+            ${logEntry.metrics ? "fl.metrics = $metrics," : ""}
+            ${logEntry.time ? "fl.startTime = datetime($startDate)," : ""}
+            ${logEntry.time ? "fl.endTime = datetime($endDate)" : ""}
+          MERGE (u)-[:ENTERED]->(fl)
+          ${Object.keys(labels).map(fll => {
+            return `MERGE (${fll}:FoodLogLabel { value: $${fll} })
+            MERGE (fl)<-[:LABELED_WITH]-(${fll})`;
+          }).join("\n")}
+          RETURN fl.id`,
+          props
+      );
+      
+      return await this.retrieveFoodLog(userId, logEntry.id);
+    } catch (error: any) {
+      console.error(error);
+      return err(new SystemError(error.message));
+    }
   },
-  deleteFoodLog: function (
+  deleteFoodLog: async function (
     userId: string,
     logId: string
   ): Promise<Result<boolean, StorageError>> {
-    throw new Error("Function not implemented.");
+    const session = NEO4J_DRIVER.session();
+    try {
+      const res = await session.run<any>(
+        `MATCH (:User {userid: $userid})-[r:ENTERED]-(fl:FoodLog {id:$logid})
+        DETACH DELETE fl`,
+        {
+          userid: userId,
+          logid: logId,
+        }
+      );
+      await session.close();
+
+      return ok(true
+      );
+    } catch (error: any) {
+      await session.close();
+      console.error(error);
+      return err(new SystemError(error.message));
+    }
   },
   queryFoodLogs: function (
     userId: string,
