@@ -21,6 +21,7 @@
         "typescript": "^4.8.2"
     },
     "dependencies": {
+        "@neo4j/graphql": "^3.14.2",
         "better-sqlite3": "^8.0.1",
         "cassandra-driver": "^4.6.4",
         "csv": "^6.2.5",
