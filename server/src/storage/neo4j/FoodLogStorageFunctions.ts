@@ -19,6 +19,39 @@ import {
 } from "../validation";
 import { randomUUID } from "node:crypto";
 import { NEO4J_DRIVER } from ".";
+import { OGM } from "@neo4j/graphql-ogm";
+
+const typeDefs = `
+  type User {
+    userid: String!
+    foodLogs: [FoodLog!]! @relationship(type: "ENTERED", direction: OUT)
+  }
+
+  type FoodLog {
+    id: String!
+    name: String!
+    metrics: [FoodLogMetric!]! @relationship(type: "LOG_METRIC", direction: IN)
+    labels: [String!]!
+    time: StartAndEndTime! @relationship(type: "LOG_TIME", direction: IN)
+  }
+
+  type FoodLogMetric {
+    key: String!
+    value: Int!
+  }
+
+  type StartAndEndTime {
+    startTime: DateTime!
+    endTime: DateTime!
+  }
+`;
+
+const ogm = new OGM({
+  typeDefs,
+  driver: NEO4J_DRIVER,
+});
+
+const User = ogm.model("User");
 
 export const foodLog: FoodLogStorage = {
   storeFoodLog: async function (
@@ -28,46 +61,52 @@ export const foodLog: FoodLogStorage = {
     if (!isValidCreateLogEntry(logEntry)) {
       return Promise.resolve(err(new ValidationError("Invalid Log Entry")));
     }
-    const session = NEO4J_DRIVER.session();
     try {
-      const labelMap = logEntry.labels.reduce((prev, curr, i) => {
-        return { ...prev, [`fll${i}`]: curr };
-      }, {});
+      const metrics = Object.entries(logEntry.metrics).map(([key, value]) => {
+        return { key, value };
+      });
       const id = randomUUID();
-      await session.run(
-        `MERGE (u:User {userid: $userid})
-          MERGE (fl:Foodlog { 
-            id: $id,
-            name: $name,
-            metrics: $metrics
-          })
-          ${logEntry.labels
-            .map((_, i) => `MERGE (fll${i}: FoodLogLabel { value: $fll${i} })`)
-            .join("\n")}
-          MERGE (st: Time { logTime: datetime($startTime) })
-          MERGE (et: Time { logTime: datetime($endTime) })
-          MERGE (u)-[:ENTERED_LOG]->(fl)
-          MERGE (fl)<-[:START_TIME]-(st)
-          MERGE (fl)<-[:END_TIME]-(et)
-          ${logEntry.labels
-            .map((_, i) => `MERGE (fl)<-[:HAS_LABEL]-(fll${i})\n`)
-            .join("\n")}
-          RETURN fl.id as id`,
-        {
-          userid: userId,
-          name: logEntry.name,
-          id,
-          metrics: JSON.stringify(logEntry.metrics),
-          startTime: logEntry.time.start.toISOString(),
-          endTime: logEntry.time.end.toISOString(),
-          ...labelMap,
-        }
-      );
 
-      await session.close();
+      await ogm.init().then(() => {
+        User.create({
+          input: [
+            {
+              userid: userId,
+              foodLogs: {
+                create: [
+                  {
+                    node: {
+                      id: id,
+                      name: logEntry.name,
+                      labels: logEntry.labels,
+                      metrics: {
+                        create: metrics.map((val) => {
+                          return {
+                            node: val,
+                          };
+                        }),
+                      },
+                      time: {
+                        create: [
+                          {
+                            node: {
+                              startTime: logEntry.time.start,
+                              endTime: logEntry.time.end,
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        });
+      });
+
       return ok(id);
     } catch (error: any) {
-      await session.close();
       console.error(error);
       return err(new SystemError(error.message));
     }
@@ -79,16 +118,15 @@ export const foodLog: FoodLogStorage = {
     const session = NEO4J_DRIVER.session();
     try {
       const res = await session.run<any>(
-        `MATCH (:User {userid: $userid})-[r:ENTERED_LOG]-(fl:FoodLog {id: $logid})
-         MATCH (st: Time)-[:START_TIME]-(fl)
-         MATCH (et: Time)-[:END_TIME]-(fl)
-         MATCH (fl)-[:HAS_LABEL]-(fll)
+        `MATCH (:User {userid: $userid})-[r:ENTERED]-(fl:FoodLog {id: $logid})
+         MATCH (t: StartAndEndTime)-[:LOG_TIME]-(fl)
+         MATCH (m: FoodLogMetric)-[:LOG_METRIC]-(fl)
           RETURN fl.id as id, 
             fl.name as name, 
-            fl.metrics as metrics, 
-            collect(fll.value) as labels,
-            st.logTime as startTime,
-            et.logTime as endTime`,
+            collect(fl.metrics) as raw_metrics, 
+            fl.labels as labels,
+            st.startTime as startTime,
+            et.endTime as endTime`,
         {
           userid: userId,
           logid: logId,
@@ -109,7 +147,11 @@ export const foodLog: FoodLogStorage = {
               start: rec.get("startTime"),
               end: rec.get("endTime"),
             },
-            metrics: JSON.parse(rec.get("metrics")),
+            metrics: rec
+              .get("metrics")
+              .reduce((acc: any, curr: { key: string; value: number }) => {
+                return { ...acc, [curr.key]: curr.value };
+              }, {}),
           };
         })[0]
       );
