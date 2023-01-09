@@ -74,5 +74,6 @@
         width: calc(100% - 2em);
         max-height: 70vh;
         overflow-y: scroll;
+        scrollbar-width: none;
     }
 </style>

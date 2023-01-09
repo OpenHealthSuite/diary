@@ -59,6 +59,7 @@
   .form-wrapper {
     max-height: 70vh;
     overflow-y: scroll;
+    scrollbar-width: none;
   }
 
   .add-log-button {
