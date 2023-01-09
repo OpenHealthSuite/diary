@@ -21,13 +21,10 @@
         "typescript": "^4.8.2"
     },
     "dependencies": {
-        "@neo4j/graphql": "^3.14.2",
-        "@neo4j/graphql-ogm": "^3.14.2",
         "better-sqlite3": "^8.0.1",
         "cassandra-driver": "^4.6.4",
         "csv": "^6.2.5",
         "express": "^4.18.1",
-        "graphql": "^16.6.0",
         "knex": "^2.3.0",
         "neo4j-driver": "^5.3.0",
         "neverthrow": "^5.0.0"
