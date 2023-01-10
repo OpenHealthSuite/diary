@@ -30,6 +30,8 @@ spec:
               value: "3024"
             - name: OPENFOODDIARY_STORAGE_PROVIDER
               value: cassandra
+            - name: OPENFOODDIARY_LOGOUT_ENDPOINT
+              value: {{ .Values.signoutUrl }}
             - name: OPENFOODDIARY_CASSANDRA_CONTACT_POINTS
               value: {{ required "cassandra.contactpoints is required" .Values.cassandra.contactpoints }}
             - name: OPENFOODDIARY_CASSANDRA_USER

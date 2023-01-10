@@ -1,6 +1,7 @@
 image: ghcr.io/leemartin77/openfooddiary
 tag: latest
 replicas: 3
+signoutUrl: /oauth2/sign_out
 cassandra:
   user: cassandra
   password: cassandra
