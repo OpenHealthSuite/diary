@@ -17,6 +17,12 @@ app.get("/api/health", (req, res) => {
   res.send();
 });
 
+app.get("/api/logout-endpoint", (req, res) => {
+  res.send({
+    url: process.env.OPENFOODDIARY_LOGOUT_ENDPOINT ?? "/api/logout",
+  });
+});
+
 app.use(userMiddleware);
 
 app.use("/api", FoodStorageRouter);
