@@ -33,6 +33,9 @@
 </main>
 
 <style lang="scss">
+  main {
+    margin-bottom: 3em;
+  }
   .navigation {
     position: fixed;
     bottom: 0.5em;
