@@ -5,6 +5,10 @@
 
 This application is designed as a FOSS webapp for tracking your food. It doesn't want to do anything fancy with the data, nor try and gamify the process - it's intended to be as neutral as possible.
 
+## Just want to try it out?
+
+I host this app for my own use at [https://app.openfooddiary.com](https://app.openfooddiary.com) - it is behind simple google authentication, and should work fine if you want to try it without setting up your own server.
+
 ## Environment Variables
 
 ### General
