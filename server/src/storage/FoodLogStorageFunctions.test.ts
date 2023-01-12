@@ -7,6 +7,7 @@ import {
   isValidationError,
 } from "./types";
 import { FoodLogStorage } from "./types/FoodLog";
+import { METRIC_MAX } from "../config";
 
 const configs = [
   { name: "sqlite3", config: sqlite3.foodLog },
@@ -37,6 +38,8 @@ describe.each(configs)(
         const { metrics, ...metricless } = structuredClone(GoldInput);
         let weirdMetric: any = structuredClone(GoldInput);
         weirdMetric.metrics.calories = "This is not a number";
+        let oversizeMetric: any = structuredClone(GoldInput);
+        oversizeMetric.metrics.calories = METRIC_MAX + 1;
         const { time, ...timeless } = structuredClone(GoldInput);
         let startTimeLess: any = structuredClone(GoldInput);
         delete startTimeLess.time.start;
@@ -53,6 +56,7 @@ describe.each(configs)(
           ["No Labels", labelless],
           ["No Metrics", metricless],
           ["Non-number Metric", weirdMetric],
+          ["Metric greater than maxint", oversizeMetric],
           ["No Times", timeless],
           ["No Start Time", startTimeLess],
           ["No End Time", endTimeLess],
@@ -105,6 +109,8 @@ describe.each(configs)(
 
         let weirdMetric: any = structuredClone(GoldInput);
         weirdMetric.metrics.calories = "This is not a number";
+        let oversizeMetric: any = structuredClone(GoldInput);
+        oversizeMetric.metrics.calories = METRIC_MAX + 1;
         let startTimeLess: any = structuredClone(GoldInput);
         delete startTimeLess.time.start;
         let endTimeLess: any = structuredClone(GoldInput);
@@ -117,6 +123,7 @@ describe.each(configs)(
           ["Empty", {}],
           ["WithoutId", { ...GoldInput, id: undefined }],
           ["Non-number Metric", weirdMetric],
+          ["Metric greater than maxint", oversizeMetric],
           ["No Start Time", startTimeLess],
           ["No End Time", endTimeLess],
           ["End before start", endBeforeStart],
