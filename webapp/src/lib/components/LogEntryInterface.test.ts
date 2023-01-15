@@ -12,6 +12,7 @@ vi.mock("src/lib/utilities", () => {
     DEFAULT_METRICS: {
       calories: { label: "Calories", priority: 0 },
     },
+    METRIC_MAX: 999999,
   };
 });
 
