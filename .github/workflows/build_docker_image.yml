@@ -27,12 +27,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Publish the Container image
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: "./tests/api/e2e/.nvmrc"
+
+      - name: Build the Container image
         working-directory: .
         run: |
           sudo apt install qemu-user-static
           platarch=linux/arm/v7,linux/arm64/v8,linux/amd64
           podman build --jobs=6 --platform=$platarch --manifest ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }} .
+
+      - name: Test the Image
+        working-directory: tests/api/e2e
+        run: |
+          podman run -d \
+            -e OPENFOODDIARY_PORT=3022 \
+            -e OPENFOODDIARY_USERIDHEADER=x-openfooddiary-userid-test \
+            -p 3022:3022 \
+            ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }}
+          OPENFOODDIARY_API_HOST=http://localhost:3022 OPENFOODDIARY_USERIDHEADER=x-openfooddiary-userid-test npm test
 
       - name: Push Version
         if: ${{ inputs.PUSH }}
