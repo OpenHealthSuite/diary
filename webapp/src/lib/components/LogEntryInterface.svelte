@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
     import type { FoodLogEntry } from '../types/FoodLogEntry';
-    import { apiFetch, DEFAULT_METRICS } from "../utilities";
+    import { apiFetch, DEFAULT_METRICS, METRIC_MAX } from "../utilities";
     export let logTime = new Date();
     export let metricConfig = DEFAULT_METRICS;
     export let log: FoodLogEntry = {
@@ -32,7 +32,14 @@
 
     let loading = false;
 
+    const clampMetrics = () => {
+        log.metrics = Object.entries(log.metrics).reduce((acc, [key, val]) => {
+            return {...acc, [key]: Math.min(METRIC_MAX, val)}
+        },{})
+    }
+
     const submitLog = () => {
+        clampMetrics();
         const logTime = new Date(dateString+'T'+timeString)
         const endTime = new Date(logTime)
         endTime.setMinutes(endTime.getMinutes() + duration)
@@ -109,7 +116,7 @@
     {#each Object.entries(metricConfig) as [key, value] (key)}
         <fieldset class="left-right-field">
             <label for={key}>{value.label}</label>
-            <input type="number" id={key} name={key} bind:value={log.metrics[key]} min={0} />
+            <input type="number" id={key} name={key} bind:value={log.metrics[key]} on:change={clampMetrics} min={0} max={METRIC_MAX}/>
         </fieldset>
         {#if log.metrics[key] < 0}
             <div class="input-error">Must have min zero {value.label}</div>
