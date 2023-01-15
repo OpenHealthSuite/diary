@@ -81,6 +81,11 @@
 </script>
 
 <div class="form-container">
+    {#if loading}
+    <div class="loading-overlay">
+        <span>Loading...</span>
+    </div>
+    {/if}
     <fieldset class="log-datetime-selectors">
         <label for="log-entry-day">Log Day
             <input type="date" id="log-entry-day" name="log-entry-day" 
@@ -143,8 +148,20 @@
         font-size: 0.7em;
     }
     .form-container {
+        position: relative;
         display: flex;
         flex-direction: column;
+        .loading-overlay {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            z-index: 999999;
+            background-color: rgba(255,255,255,0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
     }
     .submit-button {
         margin-top: 2em;
