@@ -38,6 +38,10 @@ jobs:
           platarch=linux/arm/v7,linux/arm64/v8,linux/amd64
           podman build --jobs=6 --platform=$platarch --manifest ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }} .
 
+      - name: Install Test Dependancies
+        working-directory: tests/api/e2e
+        run: npm ci
+
       - name: Test the Image
         working-directory: tests/api/e2e
         run: |
