@@ -3,9 +3,11 @@
 import MetricsConfiguration from "../components/configuration/MetricsConfiguration.svelte";
 import BulkLogUpload from "../components/configuration/BulkLogUpload.svelte";
 import { apiFetch } from "../utilities";
-  import PurgeLogs from "../components/configuration/PurgeLogs.svelte";
+import PurgeLogs from "../components/configuration/PurgeLogs.svelte";
 
 let logoutEndpoint = undefined;
+
+let [uploadOpen, purgeOpen] = [false, false];
 
 apiFetch("/logout-endpoint").then(res => {
   res.json().then(({ url }: { url: string }) => {
@@ -13,50 +15,65 @@ apiFetch("/logout-endpoint").then(res => {
   })
 })
 </script>
+<h1 style="width: 100%; text-align: center;">Config</h1>
 <div class="container">
-  <h1>Config</h1>
   <div class="config-container">
-    <div class="config-item">
-      <h2>Metrics</h2>
+    <h2>Metrics</h2>
+    <div class="config-content">
       <MetricsConfiguration />
     </div>
   </div>
   <div class="config-container">
-    <div class="config-item">
       <h2>Data Management</h2>
-      <a href="/api/logs/export" target="_blank" download><button>Download Logs</button></a>
-      <BulkLogUpload />
-      <PurgeLogs />
-    </div>
+      <div class="config-content button-stack">
+        <a href="/api/logs/export" target="_blank" download><button>Download Logs</button></a>
+        <button on:click={() => {
+          uploadOpen = true;
+          purgeOpen = false;
+        }}>Upload Logs</button>
+        <button on:click={() => {
+          uploadOpen = false;
+          purgeOpen = true;
+        }}>Purge Logs</button>
+      </div>
+
+      <BulkLogUpload bind:modalOpen={uploadOpen}/>
+      <PurgeLogs bind:modalOpen={purgeOpen}/>
   </div>
   <div class="config-container">
-    <div class="config-item">
       <h2>User Actions</h2>
-      {#if logoutEndpoint != undefined}
-      <a href={logoutEndpoint}><button>Logout</button></a>
-      {/if}
-    </div>
+      <div class="config-content button-stack">
+        {#if logoutEndpoint != undefined}
+        <a href={logoutEndpoint}><button>Logout</button></a>
+        {/if}
+      </div>
   </div>
 </div>
 <style lang="scss">
   .container {
     width: 100vw;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
   }
   .config-container {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-evenly;
-    .config-item {
-      margin: 1em;
-      padding: 1em;
-      border-radius: 1em;
-      border: 1px solid #000;
+    max-width: 100vw;
+    width: 350px;
+    margin: 1em;
+    padding: 0 1em 1em 1em;
+    border-radius: 1em;
+    border: 1px solid #000;
+    .config-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      &.button-stack > * {
+        margin: 0.25em 0;
+      }
+      button, a {
+        width: 100%;
+      }
     }
   }
 </style>

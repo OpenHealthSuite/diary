@@ -2,7 +2,7 @@
 import Modal from "../Modal.svelte";
 import { apiFetch } from "src/lib/utilities";
 
-let modalOpen = false;
+export let modalOpen = false;
 
 let purging = false;
 let error: string | undefined = undefined;
@@ -23,8 +23,6 @@ const purgeLogs = () => {
 }
 
 </script>
-
-<button on:click={() => modalOpen = true}>Purge Logs</button>
 
 <Modal bind:open={modalOpen}>
   {#if error !== undefined}

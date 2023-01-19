@@ -47,7 +47,11 @@
       background-color: #fff;
       border: 1px solid #222;
       border-radius: 1em;
-      color: #222;
+      color: #222;      
+      cursor: pointer;
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.3);
+      }
     }
   }
 </style>

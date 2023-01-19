@@ -179,6 +179,10 @@
         background-color: rgba(0,0,0,0.2);
         border: none;
         border-radius: 0.5em;
+        cursor: pointer;
+        &:hover {
+            background-color: rgba(0, 0, 0, 0.3);
+        }
     }
     .left-right-field {
         display: flex;

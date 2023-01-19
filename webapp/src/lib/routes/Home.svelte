@@ -48,7 +48,7 @@
 
 <DailyLog day={logDay} metricConfig={metricConfig} />
 
-<style>
+<style lang="scss">
   .controls-row {
     margin: 1em;
     display: flex;
@@ -70,5 +70,9 @@
       font-size: 1.2em;
       background-color: rgba(0,0,0,0.2);
       color: black;
+      cursor: pointer;
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.3);
+      }
   }
 </style>

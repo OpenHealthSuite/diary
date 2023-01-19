@@ -33,7 +33,7 @@
     </div>
 {/if}
 
-<style>
+<style lang="scss">
     .lightbox {
         position: fixed;
         top: 0;
@@ -67,7 +67,11 @@
         color: black;
         background-color: rgba(0,0,0,0.2);
         border: none;
-        border-radius: 0.5em;
+        border-radius: 0.5em;      
+        cursor: pointer;
+        &:hover {
+            background-color: rgba(0, 0, 0, 0.3);
+        }
     }
     .dialog-content {
         padding: 1em;

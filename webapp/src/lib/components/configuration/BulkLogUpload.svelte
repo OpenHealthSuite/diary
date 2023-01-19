@@ -4,7 +4,7 @@ import Modal from "../Modal.svelte";
 import { parse } from "csv-parse/sync"
 import { apiFetch } from "src/lib/utilities";
 
-let modalOpen = false;
+export let modalOpen = false;
 
 let files: FileList = undefined;
 
@@ -99,8 +99,6 @@ const uploadLogs = async () => {
 }
 
 </script>
-
-<button on:click={() => modalOpen = true}>Upload Logs</button>
 
 <Modal bind:open={modalOpen}>
   <input type="file" id="input" bind:files={files} on:change={filesUpdated}/>

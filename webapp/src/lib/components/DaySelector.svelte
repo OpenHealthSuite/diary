@@ -49,7 +49,11 @@
         font-weight: 700;
         font-size: 1.3em;
         background-color: rgba(0,0,0,0.2);
-        color: black;
+        color: black;      
+        cursor: pointer;
+        &:hover {
+            background-color: rgba(0, 0, 0, 0.3);
+        }
     }
     .day-selector {
         font-size: 1.2em;
