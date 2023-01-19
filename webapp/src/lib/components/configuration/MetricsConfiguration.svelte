@@ -48,6 +48,7 @@
                 priority: Math.max(...Object.values(metrics).map(x => x.priority)) + 1
             }
             saveMetrics();
+            newMetric = undefined;
         }
     }
 
@@ -60,20 +61,21 @@
 
     onMount(() => refreshMetricsConfig());
 </script>
-<div>
+<div style="width: 100%">
     {#if !loading && error}
         <div>Error</div>
     {/if}
     {#if loading}
         <div>Loading...</div>
     {:else}
-        <div>
-            <ol>
-                {#each metrics_list as { key, val: { label }} (key)}
-                <li><input bind:value={label} on:change={saveMetrics}><button on:click={() => deleteMetric(key)}>Delete</button></li>
-                {/each}
-            </ol>
-            <div>
+        <div style="width: 100%">
+            {#each metrics_list as { key, val: { label }} (key)}
+            <div class="input-row">
+                <input bind:value={label} on:change={saveMetrics}/>
+                <button on:click={() => deleteMetric(key)}>Delete</button>
+            </div>
+            {/each}
+            <div class="input-row">
                 <input placeholder="New metric..." bind:value={newMetric}/>
                 <button disabled={!newMetric} on:click={createNewMetric}>Create</button>
             </div>
@@ -81,5 +83,17 @@
     {/if}
 </div>
 <style lang="scss">
-    
+    .input-row {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-evenly;
+        margin: 0.25em 0;
+        input {
+            width: calc(100% - 8em);
+        }
+        button {
+            width: 5em;
+        }
+    }
 </style>
