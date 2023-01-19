@@ -64,6 +64,10 @@ apiFetch("/logout-endpoint").then(res => {
     padding: 0 1em 1em 1em;
     border-radius: 1em;
     border: 1px solid #000;
+    h2 {
+      width: 100%;
+      text-align: center;
+    }
     .config-content {
       width: 100%;
       display: flex;
