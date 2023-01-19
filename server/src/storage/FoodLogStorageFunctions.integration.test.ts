@@ -1,5 +1,9 @@
 import crypto from "node:crypto";
-import { CreateFoodLogEntry, isNotFoundError } from "./types";
+import {
+  CreateFoodLogEntry,
+  StoreFoodLogFunction,
+  isNotFoundError,
+} from "./types";
 import fs from "node:fs";
 import { parse } from "csv-parse/sync";
 import { configs } from "./_testConfigs";
@@ -262,6 +266,124 @@ describe.each(configs)(
       expect(logs.length).toBe(1000);
       expect(records.length).toBe(1000);
       expect(records).toStrictEqual(logs);
+    });
+
+    test("Purge Logs", async () => {
+      const testUserId = crypto.randomUUID();
+
+      const secondUserId = crypto.randomUUID();
+
+      const logsToMake = [
+        ["Some Name", 123],
+        ["Some Other Name", 456],
+        ["Some Extra Name", 134],
+        ["Just One More", 677],
+      ];
+
+      const inputs = logsToMake.map(
+        ([logName, calories]) =>
+          ({
+            name: logName,
+            labels: ["Some Label", "Some other label"],
+            time: {
+              start: new Date(),
+              end: new Date(),
+            },
+            metrics: {
+              calories: calories,
+            },
+          } as CreateFoodLogEntry)
+      );
+
+      const results = await Promise.all(
+        inputs.map(async (input) => {
+          return await (config.storage.foodLog.storeFoodLog as any)(
+            testUserId,
+            input,
+            testClient
+          );
+        })
+      );
+
+      const secondResults = await Promise.all(
+        inputs.map(async (input) => {
+          return await (config.storage.foodLog.storeFoodLog as any)(
+            secondUserId,
+            input,
+            testClient
+          );
+        })
+      );
+
+      expect(results.every((x) => x.isOk())).toBe(true);
+      const ids: string[] = results.map((r) => r._unsafeUnwrap());
+
+      expect(secondResults.every((x) => x.isOk())).toBe(true);
+      const secondIds: string[] = secondResults.map((r) => r._unsafeUnwrap());
+
+      const retrieves: boolean[] = await Promise.all(
+        ids.map(async (testItemId) => {
+          return (
+            await (config.storage.foodLog.retrieveFoodLog as any)(
+              testUserId,
+              testItemId,
+              testClient
+            )
+          ).isOk();
+        })
+      );
+
+      expect(retrieves.every((x) => x === true)).toBeTruthy();
+
+      const secondRetreives: boolean[] = await Promise.all(
+        secondIds.map(async (testItemId) => {
+          return (
+            await (config.storage.foodLog.retrieveFoodLog as any)(
+              secondUserId,
+              testItemId,
+              testClient
+            )
+          ).isOk();
+        })
+      );
+
+      expect(secondRetreives.every((x) => x === true)).toBeTruthy();
+
+      const res = await (config.storage.foodLog.purgeFoodLogs as any)(
+        testUserId,
+        testClient
+      );
+
+      expect(res.isOk()).toBe(true);
+
+      const reretrieves: any[] = await Promise.all(
+        ids.map(async (testItemId) => {
+          return await (config.storage.foodLog.retrieveFoodLog as any)(
+            testUserId,
+            testItemId,
+            testClient
+          );
+        })
+      );
+
+      expect(reretrieves.every((x) => x.isOk() === false)).toBeTruthy();
+      expect(
+        reretrieves.every((x) => isNotFoundError(x._unsafeUnwrapErr()))
+      ).toBeTruthy();
+
+      const secondReRetreives: boolean[] = await Promise.all(
+        secondIds.map(async (testItemId) => {
+          return (
+            await (config.storage.foodLog.retrieveFoodLog as any)(
+              secondUserId,
+              testItemId,
+              testClient
+            )
+          ).isOk();
+        })
+      );
+
+      expect(secondReRetreives.every((x) => x === true)).toBeTruthy();
     });
   }
 );

@@ -48,6 +48,10 @@ export type BulkExportFoodLogs = (
   userId: string
 ) => Promise<Result<string, StorageError>>;
 
+export type PurgeFoodLogs = (
+  userId: string
+) => Promise<Result<boolean, StorageError>>;
+
 export interface FoodLogStorage {
   storeFoodLog: StoreFoodLogFunction;
   retrieveFoodLog: RetrieveFoodLogFunction;
@@ -55,4 +59,5 @@ export interface FoodLogStorage {
   deleteFoodLog: DeleteFoodLogFunction;
   queryFoodLogs: QueryFoodLogFunction;
   bulkExportFoodLogs: BulkExportFoodLogs;
+  purgeFoodLogs: PurgeFoodLogs;
 }

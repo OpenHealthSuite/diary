@@ -46,6 +46,10 @@ type SqliteBulkExportFoodLogsFunction = (
   userId: string,
   client?: Knex
 ) => Promise<Result<string, StorageError>>;
+type SqlitePurgeFoodLogsFunction = (
+  userId: string,
+  client?: Knex
+) => Promise<Result<boolean, StorageError>>;
 
 interface SqliteFoodLogEntry {
   user_id: string;
@@ -246,6 +250,20 @@ export const bulkExportFoodLogs: SqliteBulkExportFoodLogsFunction = async (
     return ok(filename);
   } catch (error: any) {
     console.error(error.message);
+    return err(new SystemError(error.message));
+  }
+};
+
+export const purgeFoodLogs: SqlitePurgeFoodLogsFunction = async (
+  userId: string,
+  client = knexInstance
+): Promise<Result<boolean, StorageError>> => {
+  try {
+    await client<SqliteFoodLogEntry>("user_foodlogentry")
+      .delete()
+      .where("user_id", userId);
+    return ok(true);
+  } catch (error: any) {
     return err(new SystemError(error.message));
   }
 };

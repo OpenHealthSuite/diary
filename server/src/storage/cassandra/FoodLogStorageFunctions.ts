@@ -46,6 +46,10 @@ type CassandraBulkExportFoodLogsFunction = (
   userId: string,
   client?: Client
 ) => Promise<Result<string, StorageError>>;
+type CassandraPurgeFoodLogsFunction = (
+  userId: string,
+  client?: Client
+) => Promise<Result<boolean, StorageError>>;
 
 export const storeFoodLog: CassandraStoreFoodLogFunction = async (
   userId: string,
@@ -252,6 +256,24 @@ export const bulkExportFoodLogs: CassandraBulkExportFoodLogsFunction = async (
       ]);
     fs.appendFileSync(filename, stringify(exportedLogs));
     return ok(filename);
+  } catch (error: any) {
+    console.error(error.message);
+    return err(new SystemError(error.message));
+  }
+};
+
+export const purgeFoodLogs: CassandraPurgeFoodLogsFunction = async (
+  userId: string,
+  cassandraClient = CASSANDRA_CLIENT
+): Promise<Result<boolean, StorageError>> => {
+  try {
+    await cassandraClient.execute(
+      `DELETE FROM openfooddiary.user_foodlogentry
+      WHERE userId = ?;`,
+      [userId],
+      { prepare: true }
+    );
+    return ok(true);
   } catch (error: any) {
     console.error(error.message);
     return err(new SystemError(error.message));
