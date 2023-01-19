@@ -9,6 +9,7 @@ import { OFDLocals } from "../middlewares";
 import {
   DeleteFoodLogFunction,
   EditFoodLogFunction,
+  PurgeFoodLogs,
   QueryFoodLogFunction,
   RetrieveFoodLogFunction,
   StoreFoodLogFunction,
@@ -23,7 +24,8 @@ export function buildRouter(router: Router): Router {
     .get("/logs/export", exportLogsHandler)
     .get("/logs/:itemId", getFoodLogHandler)
     .put("/logs/:itemId", updateFoodLogHandler)
-    .delete("/logs/:itemId", deleteFoodLogHandler);
+    .delete("/logs/:itemId", deleteFoodLogHandler)
+    .delete("/logs", purgeFoodLogHandler);
 }
 
 export const FoodStorageRouter = buildRouter(express.Router());
@@ -169,4 +171,19 @@ async function exportLogsHandler(
   tempFile
     .map((tmpFilePath) => res.download(tmpFilePath))
     .mapErr((err) => res.sendStatus(errorStatusCodeCalculator(err)));
+}
+
+export function purgeFoodLogHandler(
+  _req: Request,
+  res: Response & { locals: OFDLocals },
+  _next: NextFunction,
+  purgeFoodLogs: PurgeFoodLogs = foodStorageProvider.purgeFoodLogs
+) {
+  purgeFoodLogs(res.locals.userId).then((result) =>
+    result
+      .map(() => res.status(204).send())
+      .mapErr((err) =>
+        res.status(errorStatusCodeCalculator(err)).send(err.message)
+      )
+  );
 }
