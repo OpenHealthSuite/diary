@@ -24,7 +24,7 @@ apiFetch("/logout-endpoint").then(res => {
   <div class="config-container">
     <div class="config-item">
       <h2>Data Management</h2>
-      <a href="/api/logs/export" target="_blank" download><button>Download logs</button></a>
+      <a href="/api/logs/export" target="_blank" download><button>Download Logs</button></a>
       <BulkLogUpload />
       <PurgeLogs />
     </div>
