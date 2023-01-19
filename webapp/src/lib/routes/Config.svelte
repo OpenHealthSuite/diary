@@ -3,6 +3,7 @@
 import MetricsConfiguration from "../components/configuration/MetricsConfiguration.svelte";
 import BulkLogUpload from "../components/configuration/BulkLogUpload.svelte";
 import { apiFetch } from "../utilities";
+  import PurgeLogs from "../components/configuration/PurgeLogs.svelte";
 
 let logoutEndpoint = undefined;
 
@@ -25,6 +26,7 @@ apiFetch("/logout-endpoint").then(res => {
       <h2>Data Management</h2>
       <a href="/api/logs/export" target="_blank" download><button>Download logs</button></a>
       <BulkLogUpload />
+      <PurgeLogs />
     </div>
   </div>
   <div class="config-container">
