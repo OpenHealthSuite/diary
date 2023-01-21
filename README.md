@@ -1,4 +1,11 @@
-# OpenFoodDiary
+
+<div align="center">
+    <img width="200" src="/assets/ofd_logo.svg" alt="OFD Logo">
+<h1>OpenFoodDiary</h1>
+<h2>Because Food Should Be Simple</h2>
+<a href="https://www.openfooddiary.com/">Project Website</a>
+<hr/>
+</div>
 
 [![Publish OpenFoodDiary Container](https://github.com/LeeMartin77/openfooddiary/actions/workflows/publish.yml/badge.svg)](https://github.com/LeeMartin77/openfooddiary/actions/workflows/publish.yml)
 [![Server Build and Test](https://github.com/LeeMartin77/openfooddiary/actions/workflows/build_and_test_server.yml/badge.svg)](https://github.com/LeeMartin77/openfooddiary/actions/workflows/build_and_test_server.yml) [![Webapp Build and Test](https://github.com/LeeMartin77/openfooddiary/actions/workflows/build_and_test_webapp.yml/badge.svg)](https://github.com/LeeMartin77/openfooddiary/actions/workflows/build_and_test_webapp.yml)
