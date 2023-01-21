@@ -1,5 +1,9 @@
 import { writable } from 'svelte/store';
-import { DEFAULT_METRICS, apiFetch } from './lib/utilities';
+import { apiFetch } from 'src/lib/utilities';
+
+export const DEFAULT_METRICS = {
+    calories: { label: "Calories", priority: 0 },
+  };
 
 export type MetricsConfig = {[key: string]: { label: string; priority: number }};
 

@@ -1,19 +1,27 @@
-import DailyLog from "./DailyLog.svelte";
 import { vi } from "vitest";
 import type { Mock } from "vitest";
 import { render } from "@testing-library/svelte";
-import { DEFAULT_METRICS, apiFetch } from "src/lib/utilities";
+import { apiFetch } from "src/lib/utilities";
 import type { FoodLogEntry } from "../types/FoodLogEntry";
 import crypto from "node:crypto";
+import { writable } from "svelte/store";
+import type { MetricsConfig } from "src/stores";
+import DailyLog from "./DailyLog.svelte";
 
 vi.mock("src/lib/utilities", () => {
   return {
     apiFetch: vi.fn(),
-    DEFAULT_METRICS: {
+    METRIC_MAX: 999999,
+  }
+})
+
+vi.mock("src/stores", () => {
+  return {
+    metricsConfig: writable({
       calories: { label: "Calories", priority: 0 },
-    },
+    } as MetricsConfig)
   };
-});
+})
 
 describe("Daily Log", () => {
   afterEach(() => {

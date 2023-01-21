@@ -1,20 +1,27 @@
-import LogEntryInterface from "./LogEntryInterface.svelte";
+import { render, fireEvent } from "@testing-library/svelte";
 import { vi } from "vitest";
 import type { Mock } from "vitest";
-import { render, fireEvent } from "@testing-library/svelte";
+import type { MetricsConfig } from "src/stores";
+import { writable } from "svelte/store";
 import { apiFetch } from "src/lib/utilities";
 import type { FoodLogEntry } from "../types/FoodLogEntry";
 import crypto from "node:crypto";
+import LogEntryInterface from "./LogEntryInterface.svelte";
 
 vi.mock("src/lib/utilities", () => {
   return {
     apiFetch: vi.fn(),
-    DEFAULT_METRICS: {
-      calories: { label: "Calories", priority: 0 },
-    },
     METRIC_MAX: 999999,
+  }
+})
+
+vi.mock("src/stores", () => {
+  return {
+    metricsConfig: writable({
+      calories: { label: "Calories", priority: 0 },
+    } as MetricsConfig)
   };
-});
+})
 
 describe("Create Log", () => {
   afterEach(() => {

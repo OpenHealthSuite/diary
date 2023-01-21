@@ -4,7 +4,7 @@
   import DaySelector from "../components/DaySelector.svelte";
   import LogEntryInterface from "../components/LogEntryInterface.svelte";
   import Modal from "../components/Modal.svelte";
-    import { DEFAULT_METRICS } from "../utilities";
+    import { DEFAULT_METRICS } from "src/stores";
 
   let modalOpen = false;
   let logDay = new Date();

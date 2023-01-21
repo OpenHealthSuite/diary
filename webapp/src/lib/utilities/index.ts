@@ -40,9 +40,5 @@ export function apiFetch(
   );
 }
 
-export const DEFAULT_METRICS = {
-  calories: { label: "Calories", priority: 0 },
-};
-
 // If we ever change this value, make it config driven from API
 export const METRIC_MAX = 999999;
