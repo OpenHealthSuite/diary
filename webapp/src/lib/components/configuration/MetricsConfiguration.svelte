@@ -1,8 +1,6 @@
 <script lang="ts">
     import { metricsConfig, type MetricsConfig } from 'src/stores';
 
-    // This is the default metrics if they've not been set
-    // This should be exportable from elsewhere
     let metrics: MetricsConfig;
 
     metricsConfig.subscribe(val => {

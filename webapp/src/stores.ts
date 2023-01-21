@@ -13,12 +13,11 @@ export type MetricsConfig = {
 
 export const metricsConfig = writable({} as MetricsConfig);
 
-apiFetch("/config/metrics").then((res) => {
+apiFetch("/config/metrics").then(async (res) => {
   switch (res.status) {
     case 200:
-      res.json().then((mtrcs) => {
-        metricsConfig.set(mtrcs.value);
-      });
+      let mtrcs = await res.json();
+      metricsConfig.set(mtrcs.value);
       break;
     case 404:
       metricsConfig.set(DEFAULT_METRICS);
