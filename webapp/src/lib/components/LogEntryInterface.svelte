@@ -183,6 +183,11 @@
         &:hover {
             background-color: rgba(0, 0, 0, 0.3);
         }
+        &:disabled {
+            background-color: rgba(0, 0, 0, 0.1);
+            cursor: default;
+            color: rgba(0, 0, 0, 0.2);
+        }
     }
     .left-right-field {
         display: flex;
