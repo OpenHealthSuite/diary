@@ -14,7 +14,29 @@ This application is designed as a FOSS webapp for tracking your food. It doesn't
 
 ## Just want to try it out?
 
-I host this app for my own use at [https://app.openfooddiary.com](https://app.openfooddiary.com) - it is behind simple google authentication, and should work fine if you want to try it without setting up your own server.
+I host this app for my own use at [https://app.openfooddiary.com](https://app.openfooddiary.com) - it is behind simple google authentication, and should work fine if you want to try it or use it without setting up your own server.
+
+## Want to host your own?
+
+If you've got a computer running podman/docker at your disposal, you can quickly and easily run a single-user instance of OpenFoodDiary, using sqlite3 as the datastore:
+
+```bash
+mkdir openfooddiarydata
+# podman is interchangeable with docker for this command
+podman run -d -v $(pwd)/openfooddiarydata:/app/.sqlite \
+  -p 3012:3012 \
+  -e OPENFOODDIARY_USERID="my-ofd-userid" \
+  --name openfooddiary-instance \
+  ghcr.io/leemartin77/openfooddiary:latest
+```
+
+This will start OpenFoodDiary running, on port 3012. You can then access it using your web browser and you're ready to enter your logs - data will be persisted to a sqlite file in the volume mounted directory.
+
+It's entirely possible to run OpenFoodDiary in more complicated configurations - various environment variables for configuration are listed below.
+
+#### Helm?
+
+I keep a trim helm chart in this repository, which with a small amount of manual futzing allows me to deploy updates - can be seen as a starting point to deploying OFD to your own cluster if you have one.
 
 ## Environment Variables
 
