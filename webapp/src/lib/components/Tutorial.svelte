@@ -40,11 +40,11 @@
       <h2>Enter your metrics!</h2>
       <p>Enter the names of metrics you want to track.</p>
       <p class="note">Note: You can choose to track no metrics at all.</p>
-      <MetricsConfiguration bind:metrics={tutorialMetrics}/>
+      <MetricsConfiguration/>
     {:else if stage == 2}
       <h2>Add a Log!</h2>
       <p class="note">Note: You can delete this log later - it's not permanent.</p>
-      <LogEntryInterface metricConfig={tutorialMetrics} on:success={progress}/>
+      <LogEntryInterface on:success={progress}/>
     {:else}
       <h2>You're Ready!</h2>
       <p>You can replay this tutorial at any time from the config page, accessed from the button at the bottom of the screen.</p>

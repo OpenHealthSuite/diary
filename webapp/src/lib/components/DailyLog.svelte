@@ -1,10 +1,15 @@
 <script lang="ts">
     import Modal from './Modal.svelte';
-    import { apiFetch, DEFAULT_METRICS } from 'src/lib/utilities/index';
+    import { apiFetch } from 'src/lib/utilities/index';
     import type { FoodLogEntry } from '../types/FoodLogEntry';
     import LogEntryInterface from './LogEntryInterface.svelte';
+    import { metricsConfig, type MetricsConfig } from 'src/stores';
     export let day: Date;
-    export let metricConfig = DEFAULT_METRICS;
+    let metricConfig: MetricsConfig = {};
+
+    metricsConfig.subscribe(val => {
+        metricConfig = val;
+    })
 
     $: topMetric = Object.entries(metricConfig)
         .sort((a, b) => a[1].priority - b[1].priority)[0]
@@ -88,7 +93,6 @@
         modalOpen = false
         updateData(day)
         }}
-        metricConfig={metricConfig}
         on:error={(event) => console.error(event.detail)}/>
     {/if}
 </Modal>

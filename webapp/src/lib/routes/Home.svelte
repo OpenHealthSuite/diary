@@ -1,24 +1,19 @@
 <script lang="ts">
+    import { metricsConfig, type MetricsConfig } from "src/stores";
   import DailyLog from "../components/DailyLog.svelte";
   import DaySelector from "../components/DaySelector.svelte";
   import LogEntryInterface from "../components/LogEntryInterface.svelte";
   import Modal from "../components/Modal.svelte";
-  import { apiFetch, DEFAULT_METRICS } from "../utilities";
+    import { DEFAULT_METRICS } from "../utilities";
 
   let modalOpen = false;
   let logDay = new Date();
 
-  let metricConfig = DEFAULT_METRICS;
+  let metricConfig: MetricsConfig = DEFAULT_METRICS;
 
-  apiFetch("/config/metrics").then(res => {
-            switch (res.status) {
-                case 200:
-                    res.json().then(mtrcs => {
-                      metricConfig = mtrcs.value;
-                    })
-                    return;
-            }
-        })
+  metricsConfig.subscribe(val => {
+    metricConfig = val;
+  })
 
   const dateChange = (event) => logDay = event.detail;
 
@@ -40,13 +35,12 @@
       modalOpen = false
       logDay = logDay
       }}
-      metricConfig={metricConfig}
       on:error={(event) => console.error(event.detail)}/>
   </div>
   {/if}
 </Modal>
 
-<DailyLog day={logDay} metricConfig={metricConfig} />
+<DailyLog day={logDay} />
 
 <style lang="scss">
   .controls-row {

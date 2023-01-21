@@ -1,9 +1,16 @@
 <script lang="ts">
+    import { metricsConfig, type MetricsConfig } from 'src/stores';
     import { createEventDispatcher } from 'svelte';
     import type { FoodLogEntry } from '../types/FoodLogEntry';
-    import { apiFetch, DEFAULT_METRICS, METRIC_MAX } from "../utilities";
+    import { apiFetch, METRIC_MAX } from "../utilities";
     export let logTime = new Date();
-    export let metricConfig = DEFAULT_METRICS;
+
+    let metricConfig: MetricsConfig = {};
+
+    metricsConfig.subscribe(val => {
+        metricConfig = val;
+    })
+
     export let log: FoodLogEntry = {
         id: undefined,
         name: "",
