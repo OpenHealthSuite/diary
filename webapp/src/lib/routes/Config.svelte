@@ -51,6 +51,13 @@ apiFetch("/logout-endpoint").then(res => {
         <Tutorial bind:modalOpen={tutorialOpen} />
       </div>
   </div>
+  <div class="config-container">
+      <h2>About</h2>
+      <div class="config-content button-stack">
+        <a href="https://www.openfooddiary.com/"><button>Website</button></a>
+        <a href="https://github.com/LeeMartin77/openfooddiary"><button>Source code</button></a>
+      </div>
+  </div>
 </div>
 <style lang="scss">
   .container {
