@@ -29,22 +29,6 @@
       stage = 0;
     }
   }
-
-  // const CURRENT_TUTORIAL_VERSION = "v1.0"
-  // const TUTORIAL_STORAGE_STRING = "tutorial-viewed"
-
-  // const loaded = localStorage.getItem(TUTORIAL_STORAGE_STRING)
-
-  // if (loaded == null) {
-  //   modalOpen = true;
-  // }
-
-  // const modalChanges = (_open: boolean) => {
-  //   localStorage.setItem(TUTORIAL_STORAGE_STRING, CURRENT_TUTORIAL_VERSION)
-  // }
-
-  // $: modalChanges(modalOpen)
-
 </script>
 
 <Modal bind:open={modalOpen}>

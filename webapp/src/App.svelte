@@ -4,11 +4,30 @@
   import Config from "./lib/routes/Config.svelte";
   import NotFound from "./lib/routes/NotFound.svelte";
   import { onMount } from "svelte";
+  import Tutorial from "./lib/components/Tutorial.svelte";
 
   export let url = "";
 
   let pathname = '';
   onMount(() => pathname = window.location.pathname);
+
+  const CURRENT_TUTORIAL_VERSION = "v1.0"
+  const TUTORIAL_STORAGE_STRING = "tutorial-viewed"
+
+  let tutorialOpen = false;
+
+  const loaded = localStorage.getItem(TUTORIAL_STORAGE_STRING)
+
+  if (loaded == null) {
+    tutorialOpen = true;
+  }
+
+  const modalChanges = (_open: boolean) => {
+    localStorage.setItem(TUTORIAL_STORAGE_STRING, CURRENT_TUTORIAL_VERSION)
+  }
+
+  $: modalChanges(tutorialOpen)
+
 </script>
 
 <main>
@@ -30,6 +49,7 @@
         {/if}
       </div>
   </Router>
+  <Tutorial bind:modalOpen={tutorialOpen}/>
 </main>
 
 <style lang="scss">
