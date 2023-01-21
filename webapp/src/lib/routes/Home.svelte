@@ -33,7 +33,6 @@
   <div class="form-wrapper">
     <LogEntryInterface logTime={dateWithCurrentTime(logDay)} on:success={() => {
       modalOpen = false
-      logDay = logDay
       }}
       on:error={(event) => console.error(event.detail)}/>
   </div>

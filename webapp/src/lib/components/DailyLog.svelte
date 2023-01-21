@@ -3,7 +3,7 @@
     import { apiFetch } from 'src/lib/utilities/index';
     import type { FoodLogEntry } from '../types/FoodLogEntry';
     import LogEntryInterface from './LogEntryInterface.svelte';
-    import { metricsConfig, type MetricsConfig } from 'src/stores';
+    import { logUpdated, metricsConfig, type MetricsConfig } from 'src/stores';
     export let day: Date;
     let metricConfig: MetricsConfig = {};
 
@@ -44,6 +44,10 @@
     }
 
     $: updateData(day)
+
+    logUpdated.subscribe(() => {
+        updateData(day);
+    })
 </script>
 <div class="logs-area-container">
     <div class="logs-area">
@@ -91,7 +95,6 @@
     {#if modalOpen}
         <LogEntryInterface log={editingLog} on:success={() => {
         modalOpen = false
-        updateData(day)
         }}
         on:error={(event) => console.error(event.detail)}/>
     {/if}

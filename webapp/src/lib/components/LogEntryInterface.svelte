@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { metricsConfig, type MetricsConfig } from 'src/stores';
+    import { logUpdated, metricsConfig, type MetricsConfig } from 'src/stores';
     import { createEventDispatcher } from 'svelte';
     import type { FoodLogEntry } from '../types/FoodLogEntry';
     import { apiFetch, METRIC_MAX } from "../utilities";
@@ -73,6 +73,7 @@
             .catch(err => dispatch('error', "An unknown error occured"))
             .finally(() => {
                 loading = false;
+                logUpdated.set(new Date().toISOString())
             });
     }
 
@@ -90,6 +91,7 @@
         .catch(() => dispatch('error', "An unknown error occured"))
         .finally(() => {
             loading = false;
+            logUpdated.set(new Date().toISOString())
         });
     }
 </script>

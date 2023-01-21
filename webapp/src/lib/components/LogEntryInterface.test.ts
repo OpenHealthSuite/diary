@@ -12,16 +12,17 @@ vi.mock("src/lib/utilities", () => {
   return {
     apiFetch: vi.fn(),
     METRIC_MAX: 999999,
-  }
-})
+  };
+});
 
 vi.mock("src/stores", () => {
   return {
     metricsConfig: writable({
       calories: { label: "Calories", priority: 0 },
-    } as MetricsConfig)
+    } as MetricsConfig),
+    logUpdated: writable(new Date().toISOString()),
   };
-})
+});
 
 describe("Create Log", () => {
   afterEach(() => {
