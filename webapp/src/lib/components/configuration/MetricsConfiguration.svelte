@@ -6,7 +6,7 @@
     let error = false;
     // This is the default metrics if they've not been set
     // This should be exportable from elsewhere
-    let metrics: {[key: string]: { label: string; priority: number }} = DEFAULT_METRICS
+    export let metrics: {[key: string]: { label: string; priority: number }} = DEFAULT_METRICS
 
     let newMetric: string | undefined = undefined;
 
