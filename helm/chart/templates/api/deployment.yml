@@ -37,10 +37,10 @@ spec:
             - name: OPENFOODDIARY_CASSANDRA_USER
               valueFrom:
                 secretKeyRef:
-                  name: openfooddiary-secrets
+                  name: {{ required "cassandra.credentialssecret is required" .Values.cassandra.credentialssecret }}
                   key: cassandrauser
             - name: OPENFOODDIARY_CASSANDRA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: openfooddiary-secrets
+                  name: {{ required "cassandra.credentialssecret is required" .Values.cassandra.credentialssecret }}
                   key: cassandrapassword

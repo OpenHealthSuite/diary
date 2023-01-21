@@ -3,6 +3,6 @@ tag: latest
 replicas: 3
 signoutUrl: /oauth2/sign_out
 cassandra:
-  user: cassandra
-  password: cassandra
+  # expects a "cassandrauser" and "cassandrapassword" data key
+  credentialssecret: openfooddiary-casscreds
   contactpoints: cassandra.service.svc:9042
