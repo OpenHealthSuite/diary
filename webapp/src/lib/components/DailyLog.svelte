@@ -128,7 +128,8 @@
             line-height: 0;
         }
         h5 {
-            line-height: 0;
+            margin: 0.25em 0;
+            line-height: 1.5em;
         }
         button {
             position: absolute;
