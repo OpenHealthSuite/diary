@@ -54,7 +54,7 @@
         {:else}
         <div>
             {#if topMetric}
-                <h1 class="{topMetric[0]}-total">{dayData.reduce((prev, curr) => prev + (curr.metrics[topMetric[0]] ?? 0), 0).toLocaleString()} {topMetric[1].label} Total</h1>
+                <h1 class="{topMetric[0]}-total topmetric">{dayData.reduce((prev, curr) => prev + (curr.metrics[topMetric[0]] ?? 0), 0).toLocaleString()} {topMetric[1].label} Total</h1>
             {/if}
             {#each dayData as log, i}
             <div class="food-log {i > 0 ? 'top-border' : ''}">
@@ -118,6 +118,10 @@
     .calories-total {
         text-align: center;
         line-height: 1em;
+    }
+    .topmetric {
+        padding-left: 0.75em;
+        padding-right: 0.75em;
     }
     .food-log {
         position: relative;
