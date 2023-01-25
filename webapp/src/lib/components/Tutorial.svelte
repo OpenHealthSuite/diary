@@ -38,7 +38,7 @@
       <p>This brief tutorial will run you through the key concepts of OpenFoodDiary.</p>
     {:else if stage == 1}
       <h2>Enter your metrics!</h2>
-      <p>Enter the names of metrics you want to track.</p>
+      <p>Enter the metrics you want to track, like Calories, Sugar, Satiation or Enjoyment.</p>
       <p class="note">Note: You can choose to track no metrics at all.</p>
       <MetricsConfiguration/>
     {:else if stage == 2}
