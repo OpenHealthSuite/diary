@@ -8,14 +8,16 @@ promclient.collectDefaultMetrics({
 });
 
 const requests = new promclient.Counter({
-  name: `${PROM_PREFIX}_http_requests`,
+  name: `${PROM_PREFIX}http_requests`,
   help: "HTTP Request count with statuses",
   labelNames: ["method", "statusCode"],
 });
 
+const METRICS_ENDPOINT = "/metrics";
+
 export function prometheusSetup(app: Express) {
   app.use(promMiddleware);
-  app.get("/api/metrics", async (req, res) => {
+  app.get(METRICS_ENDPOINT, async (req, res) => {
     res.setHeader("Content-Type", promclient.register.contentType);
     res.send(await promclient.register.metrics());
   });
@@ -25,8 +27,11 @@ export function prometheusSetup(app: Express) {
 export function promMiddleware(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
+  reqcounter = requests
 ) {
-  requests.labels(req.method, res.statusCode.toString()).inc();
+  if (req.path !== METRICS_ENDPOINT) {
+    reqcounter.labels(req.method, res.statusCode.toString()).inc();
+  }
   next();
 }
