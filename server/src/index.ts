@@ -3,12 +3,7 @@ import qs from "qs";
 import { FoodStorageRouter, ConfigurationRouter } from "./handlers";
 import { userMiddleware } from "./middlewares";
 import { STORAGE } from "./storage";
-import promclient from "prom-client";
-import { PROM_PREFIX } from "./config";
-
-promclient.collectDefaultMetrics({
-  prefix: PROM_PREFIX,
-});
+import { prometheusSetup } from "./middlewares/PrometheusMiddleware";
 
 const port = process.env.OPENFOODDIARY_PORT || 3012;
 
@@ -19,10 +14,9 @@ app.settings["query parser"] = qs.parse;
 app.use(express.json());
 app.use(express.static("./public"));
 
-app.get("/api/metrics", async (req, res) => {
-  res.setHeader("Content-Type", promclient.register.contentType);
-  res.send(await promclient.register.metrics());
-});
+if (!process.env.OPENFOODDIARY_DISABLE_PROMETHEUS) {
+  prometheusSetup(app);
+}
 
 app.get("/api/health", (req, res) => {
   res.send();

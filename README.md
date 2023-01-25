@@ -1,4 +1,3 @@
-
 <div align="center">
     <img width="200" src="/assets/ofd_logo.svg" alt="OFD Logo">
 <h1>OpenFoodDiary</h1>
@@ -52,6 +51,8 @@ I keep a trim helm chart in this repository, which with a small amount of manual
   - Value that will be returned when the user calls `/api/logout-endpoint`, allowing for different auth providers
 - `OPENFOODDIARY_TEMP_DIRECTORY`: defaults to "/tmp"
   - Directory where scratch temp files will be written
+- `OPENFOODDIARY_DISABLE_PROMETHEUS`: defaults to undefined
+  - disable prometheus metric collection and endpoint
 
 ### Storage
 
