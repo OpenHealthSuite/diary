@@ -43,7 +43,10 @@
             .finally(() => loading = false)
     }
 
-    $: updateData(day)
+    $: { 
+        dayData = []
+        updateData(day)
+    }
 
     logUpdated.subscribe(() => {
         updateData(day);
@@ -51,9 +54,17 @@
 </script>
 <div class="logs-area-container">
     <div class="logs-area">
-        {#if dayData.length === 0}
+        {#if dayData.length === 0 && !loading && !error}
         <div class="raw-text-message">
             No Logs Entered for this day
+        </div>
+        {:else if loading}
+        <div data-testid="loading-indicator" class="raw-text-message">
+            Loading data
+        </div>
+        {:else if error}
+        <div data-testid="error-indicator" class="raw-text-message">
+            Error loading data
         </div>
         {:else}
         <div>
@@ -75,15 +86,6 @@
                 </button>
             </div>
             {/each}
-        </div>
-        {/if}
-        {#if loading}
-        <div data-testid="loading-indicator" class="raw-text-message">
-            Loading data
-        </div>
-        {:else if error}
-        <div data-testid="error-indicator" class="raw-text-message">
-            Error loading data
         </div>
         {/if}
     </div>
