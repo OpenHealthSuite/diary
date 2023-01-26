@@ -52,6 +52,7 @@ export async function storeConfiguration(
     );
     return ok(insertEntry.id);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 }
@@ -74,6 +75,7 @@ export async function queryUserConfiguration(
     });
     return ok(constructed.map(generalFromSql));
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 }
@@ -98,6 +100,7 @@ export async function retrieveUserConfiguration(
     item.keys().forEach((key) => (constructed[key] = item.get(key)));
     return ok(generalFromSql(constructed));
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 }
@@ -116,6 +119,7 @@ export async function deleteUserConfiguration(
     );
     return ok(true);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 }

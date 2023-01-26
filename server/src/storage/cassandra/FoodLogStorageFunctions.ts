@@ -82,6 +82,7 @@ export const storeFoodLog: CassandraStoreFoodLogFunction = async (
     );
     return ok(insertEntry.id);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };
@@ -107,6 +108,7 @@ export const retrieveFoodLog: CassandraRetrieveFoodLogFunction = async (
     item.keys().forEach((key) => (constructed[key] = item.get(key)));
     return ok(constructed as FoodLogEntry);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };
@@ -138,6 +140,7 @@ export const queryFoodLogs: CassandraQueryFoodLogFunction = async (
     });
     return ok(constructed as FoodLogEntry[]);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };
@@ -181,6 +184,7 @@ export const editFoodLog: CassandraEditFoodLogFunction = async (
     );
     return await retrieveFoodLog(userId, logEntry.id, cassandraClient);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };
@@ -199,6 +203,7 @@ export const deleteFoodLog: CassandraDeleteFoodLogFunction = async (
     );
     return ok(true);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };

@@ -45,12 +45,14 @@ export async function storeConfiguration(
   const insertEntry: SqliteConfig = sqlFromGeneral(userId, configuration);
   try {
     // This is because sqlite knex doesn't support upserts...
-    await client!("user_config").delete()
+    await client!("user_config")
+      .delete()
       .where("user_id", userId)
-      .andWhere("id", configuration.id)
+      .andWhere("id", configuration.id);
     await client!("user_config").insert(sqlFromGeneral(userId, configuration));
     return ok(insertEntry.id);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 }
@@ -65,6 +67,7 @@ export async function queryUserConfiguration(
       .where("user_id", userId);
     return ok(log.map(generalFromSql));
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 }
@@ -85,6 +88,7 @@ export async function retrieveUserConfiguration(
     }
     return ok(generalFromSql(log));
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 }
@@ -101,6 +105,7 @@ export async function deleteUserConfiguration(
       .andWhere("id", configurationId);
     return ok(true);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 }

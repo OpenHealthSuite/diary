@@ -106,6 +106,7 @@ export const storeFoodLog: SqliteStoreFoodLogFunction = async (
     await client!("user_foodlogentry").insert(insertEntry);
     return ok(insertEntry.id);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };
@@ -126,6 +127,7 @@ export const retrieveFoodLog: SqliteRetrieveFoodLogFunction = async (
     }
     return ok(generalFromSql(log));
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };
@@ -149,6 +151,7 @@ export const queryFoodLogs: SqliteQueryFoodLogFunction = async (
       .andWhere("time_end", ">=", startDate.getTime() / 1000);
     return ok(logs.map(generalFromSql));
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };
@@ -183,6 +186,7 @@ export const editFoodLog: SqliteEditFoodLogFunction = async (
       .andWhere("id", logid);
     return await retrieveFoodLog(userId, logEntry.id, client);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };
@@ -199,6 +203,7 @@ export const deleteFoodLog: SqliteDeleteFoodLogFunction = async (
       .andWhere("id", logId);
     return ok(true);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };
@@ -264,6 +269,7 @@ export const purgeFoodLogs: SqlitePurgeFoodLogsFunction = async (
       .where("user_id", userId);
     return ok(true);
   } catch (error: any) {
+    console.error(error.message);
     return err(new SystemError(error.message));
   }
 };
