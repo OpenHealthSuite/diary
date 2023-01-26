@@ -1,3 +1,11 @@
+function unauthorisedCatcher(res: Response) {
+  if (res.status === 403 || res.status === 401) {
+    // We reload the page here so we relog
+    location.reload();
+  }
+  return res;
+}
+
 export function apiFetch(
   input: Partial<RequestInfo>,
   init?: RequestInit,
@@ -18,7 +26,7 @@ export function apiFetch(
             },
           }
         : undefined
-    );
+    ).then(unauthorisedCatcher);
   }
   return fetchFn(
     {
@@ -37,7 +45,7 @@ export function apiFetch(
           },
         }
       : undefined
-  );
+  ).then(unauthorisedCatcher);
 }
 
 // If we ever change this value, make it config driven from API
