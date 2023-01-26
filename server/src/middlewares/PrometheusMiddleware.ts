@@ -10,7 +10,7 @@ promclient.collectDefaultMetrics({
 const requests = new promclient.Counter({
   name: `${PROM_PREFIX}http_requests`,
   help: "HTTP Request count with statuses",
-  labelNames: ["method", "statusCode"],
+  labelNames: ["type", "method", "statusCode"],
 });
 
 const METRICS_ENDPOINT = "/metrics";
@@ -31,7 +31,13 @@ export function promMiddleware(
   reqcounter = requests
 ) {
   if (req.path !== METRICS_ENDPOINT) {
-    reqcounter.labels(req.method, res.statusCode.toString()).inc();
+    reqcounter
+      .labels(
+        req.path.startsWith("/api") ? "api" : "client",
+        req.method,
+        res.statusCode.toString()
+      )
+      .inc();
   }
   next();
 }

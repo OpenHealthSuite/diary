@@ -1,16 +1,16 @@
 import { promMiddleware } from "./PrometheusMiddleware";
 
 describe("promMiddleware", () => {
-  const requests: [string, number][] = [
-    ["GET", 200],
-    ["POST", 200],
-    ["PUT", 204],
-    ["DELETE", 204],
-    ["GET", 500],
+  const requests = [
+    { path: "/somewhere", type: "client", method: "GET", status: 200 },
+    { path: "/api/someendpoint", type: "api", method: "POST", status: 200 },
+    { path: "/api", type: "api", method: "PUT", status: 204 },
+    { path: "/", type: "client", method: "DELETE", status: 204 },
+    { path: "/settings", type: "client", method: "GET", status: 500 },
   ];
   test.each(requests)(
-    "Increments request counter :: %s %s",
-    ([method, status]) => {
+    "Increments request counter",
+    ({ path, type, method, status }) => {
       const fakeCounter = {
         labels: jest.fn().mockReturnThis(),
         inc: jest.fn(),
@@ -18,14 +18,18 @@ describe("promMiddleware", () => {
       const fakeNext = jest.fn();
 
       promMiddleware(
-        { method } as any,
+        { method, path } as any,
         { statusCode: status } as any,
         fakeNext,
         fakeCounter as any
       );
 
       expect(fakeNext).toBeCalled();
-      expect(fakeCounter.labels).toBeCalledWith(method, status.toString());
+      expect(fakeCounter.labels).toBeCalledWith(
+        type,
+        method,
+        status.toString()
+      );
       expect(fakeCounter.inc).toBeCalledTimes(1);
     }
   );
