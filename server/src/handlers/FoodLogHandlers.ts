@@ -14,6 +14,24 @@ import {
   RetrieveFoodLogFunction,
   StoreFoodLogFunction,
 } from "../storage/types/FoodLog";
+import promclient from "prom-client";
+import { PROM_PREFIX } from "../config";
+
+const counters = {
+  foodLogEvent: new promclient.Counter({
+    name: `${PROM_PREFIX}food_log_event`,
+    help: "Counters for Food Log Events",
+    labelNames: ["eventType"],
+  }),
+  foodLogsPurgedCounter: new promclient.Counter({
+    name: `${PROM_PREFIX}food_logs_purged`,
+    help: "Counters for Food Logs being Purged",
+  }),
+  foodLogsDownloaded: new promclient.Counter({
+    name: `${PROM_PREFIX}food_logs_downloaded`,
+    help: "Counters for Food Logs being Downloaded",
+  }),
+};
 
 let foodStorageProvider = STORAGE.foodLog;
 
@@ -55,7 +73,10 @@ export function createFoodLogHandler(
   }
   storeFoodLog(res.locals.userId, item).then((result) =>
     result
-      .map((val) => res.send(val))
+      .map((val) => {
+        counters.foodLogEvent.labels("created").inc();
+        return res.send(val);
+      })
       .mapErr((err) =>
         res.status(errorStatusCodeCalculator(err)).send(err.message)
       )
@@ -139,7 +160,10 @@ export function updateFoodLogHandler(
   editFoodLog(res.locals.userId, { id: req.params.itemId, ...item }).then(
     (result) =>
       result
-        .map((val) => res.send(val))
+        .map((val) => {
+          counters.foodLogEvent.labels("updated").inc();
+          return res.send(val);
+        })
         .mapErr((err) =>
           res.status(errorStatusCodeCalculator(err)).send(err.message)
         )
@@ -154,7 +178,10 @@ export function deleteFoodLogHandler(
 ) {
   deleteFoodLog(res.locals.userId, req.params.itemId).then((result) =>
     result
-      .map(() => res.status(204).send())
+      .map(() => {
+        counters.foodLogEvent.labels("deleted").inc();
+        return res.status(204).send();
+      })
       .mapErr((err) =>
         res.status(errorStatusCodeCalculator(err)).send(err.message)
       )
@@ -169,7 +196,10 @@ async function exportLogsHandler(
     res.locals.userId
   );
   tempFile
-    .map((tmpFilePath) => res.download(tmpFilePath))
+    .map((tmpFilePath) => {
+      counters.foodLogsDownloaded.inc();
+      res.download(tmpFilePath);
+    })
     .mapErr((err) => res.sendStatus(errorStatusCodeCalculator(err)));
 }
 
@@ -181,7 +211,10 @@ export function purgeFoodLogHandler(
 ) {
   purgeFoodLogs(res.locals.userId).then((result) =>
     result
-      .map(() => res.status(204).send())
+      .map(() => {
+        counters.foodLogsPurgedCounter.inc();
+        res.status(204).send();
+      })
       .mapErr((err) =>
         res.status(errorStatusCodeCalculator(err)).send(err.message)
       )
