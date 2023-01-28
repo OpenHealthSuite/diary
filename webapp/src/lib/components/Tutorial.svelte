@@ -5,43 +5,58 @@
 
   export let modalOpen = false;
 
-  // TODO: Really need to elevate this to some global state...
   let tutorialMetrics = undefined;
 
+  enum TutorialStages {
+    Intro,
+    Metrics,
+    Log,
+    Complete
+  }
+
   let stage = 0;
-  const MAX_STAGE = 3;
 
   let icons = [' - ',' - ',' - ',' - ']
 
   $: {
     let newIcons = [];
-    for (let i = 0; i <= MAX_STAGE; i++) {
+    for (let i = 0; i <= TutorialStages.Complete; i++) {
       newIcons.push(i <= stage ? ' * ' : ' - ')
     }
     icons = newIcons;
   }
 
   const progress = () => {
-    if (stage < MAX_STAGE) {
+    if (stage < TutorialStages.Complete) {
       stage = stage + 1
     } else {
       modalOpen = false;
       stage = 0;
     }
   }
+
+  const nextButtonLabelText = (stg: number) => {
+    if (stage === TutorialStages.Complete) {
+      return "Close";
+    }
+    if (stage === TutorialStages.Log) {
+      return "Skip";
+    }
+    return "Next";
+  }
 </script>
 
 <Modal bind:open={modalOpen}>
   <div class="tutorial-content">
-    {#if stage == 0}
+    {#if stage == TutorialStages.Intro}
       <h2>Welcome!</h2>
       <p>This brief tutorial will run you through the key concepts of OpenFoodDiary.</p>
-    {:else if stage == 1}
+    {:else if stage == TutorialStages.Metrics}
       <h2>Enter your metrics!</h2>
       <p>Enter the metrics you want to track, like Calories, Sugar, Satiation or Enjoyment.</p>
       <p class="note">Note: You can choose to track no metrics at all.</p>
       <MetricsConfiguration/>
-    {:else if stage == 2}
+    {:else if stage == TutorialStages.Log}
       <h2>Add a Log!</h2>
       <p class="note">Note: You can delete this log later - it's not permanent.</p>
       <LogEntryInterface on:success={progress}/>
@@ -53,7 +68,7 @@
   <div class="tutorial-step-controls">
     <button disabled={stage == 0} on:click={() => {stage = stage - 1}}>Back</button>
     <div>{#each icons as icon}{icon}{/each}</div>
-    <button on:click={progress}>{#if stage != MAX_STAGE}Next{:else}Close{/if}</button>
+    <button on:click={progress} class={stage == TutorialStages.Log ? "skip-button" : ""}>{nextButtonLabelText(stage)}</button>
   </div>
 </Modal>
 
@@ -75,5 +90,9 @@
   }
   p.note {
     font-style: italic;
+  }
+  .skip-button {
+    background-color: rgba(0,0,0,0);
+    border: 1px solid rgba(0,0,0,1);
   }
 </style>
