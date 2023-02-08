@@ -164,7 +164,7 @@ describe("Daily Log", () => {
 
       await new Promise(process.nextTick);
 
-      expect(getByText("No Logs Entered for this day")).toBeInTheDocument();
+      expect(getByText("No logs entered for this day")).toBeInTheDocument();
     });
 
     it("Shows the user the logs, in start time order, with calories", async () => {

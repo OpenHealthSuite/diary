@@ -56,7 +56,7 @@
     <div class="logs-area">
         {#if dayData.length === 0 && !loading && !error}
         <div class="raw-text-message">
-            No Logs Entered for this day
+            No logs entered for this day
         </div>
         {:else if loading}
         <div data-testid="loading-indicator" class="raw-text-message">
