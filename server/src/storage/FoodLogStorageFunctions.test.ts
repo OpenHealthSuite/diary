@@ -36,6 +36,7 @@ describe.each(configs)(
         const { name, ...nameless } = structuredClone(GoldInput);
         const { labels, ...labelless } = structuredClone(GoldInput);
         const { metrics, ...metricless } = structuredClone(GoldInput);
+        const nullMetrics = { ...structuredClone(GoldInput), metrics: null };
         let weirdMetric: any = structuredClone(GoldInput);
         weirdMetric.metrics.calories = "This is not a number";
         let oversizeMetric: any = structuredClone(GoldInput);
@@ -55,6 +56,7 @@ describe.each(configs)(
           ["No Name", nameless],
           ["No Labels", labelless],
           ["No Metrics", metricless],
+          ["Null Metrics", nullMetrics],
           ["Non-number Metric", weirdMetric],
           ["Metric greater than maxint", oversizeMetric],
           ["No Times", timeless],

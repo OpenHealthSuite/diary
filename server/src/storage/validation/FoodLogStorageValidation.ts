@@ -7,6 +7,7 @@ export function isValidCreateLogEntry(logEntry: CreateFoodLogEntry): boolean {
     logEntry.name !== undefined &&
     logEntry.labels !== undefined && //Check the labels are a set?
     logEntry.metrics !== undefined &&
+    logEntry.metrics !== null &&
     !Object.values(logEntry.metrics).some((m) => isNaN(m) || m > METRIC_MAX) &&
     logEntry.time !== undefined &&
     logEntry.time.start !== undefined &&
