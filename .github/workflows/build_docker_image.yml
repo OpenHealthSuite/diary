@@ -36,7 +36,7 @@ jobs:
         run: |
           sudo apt install qemu-user-static
           platarch=linux/arm/v7,linux/arm64/v8,linux/amd64
-          podman build --jobs=6 --platform=$platarch --manifest ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }} .
+          podman build --jobs=6 --platform=$platarch --manifest ghcr.io/openhealthsuite/fooddiary:${{ inputs.VERSION }} .
 
       - name: Install Test Dependancies
         working-directory: tests/api/e2e
@@ -49,15 +49,15 @@ jobs:
             -e OPENFOODDIARY_PORT=3022 \
             -e OPENFOODDIARY_USERIDHEADER=x-openfooddiary-userid-test \
             -p 3022:3022 \
-            ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }}
+            ghcr.io/openhealthsuite/fooddiary:${{ inputs.VERSION }}
           OPENFOODDIARY_API_HOST=http://localhost:3022 OPENFOODDIARY_USERIDHEADER=x-openfooddiary-userid-test npm test
 
       - name: Push Version
         if: ${{ inputs.PUSH }}
-        run: podman manifest push ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }} ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }}
+        run: podman manifest push ghcr.io/openhealthsuite/fooddiary:${{ inputs.VERSION }} ghcr.io/openhealthsuite/fooddiary:${{ inputs.VERSION }}
 
       - name: Push Latest
         if: ${{ inputs.PUSH && inputs.PUSH_LATEST }}
         run: |
-          podman tag ghcr.io/leemartin77/openfooddiary:${{ inputs.VERSION }} ghcr.io/leemartin77/openfooddiary:latest
-          podman manifest push ghcr.io/leemartin77/openfooddiary:latest ghcr.io/leemartin77/openfooddiary:latest
+          podman tag ghcr.io/openhealthsuite/fooddiary:${{ inputs.VERSION }} ghcr.io/openhealthsuite/fooddiary:latest
+          podman manifest push ghcr.io/openhealthsuite/fooddiary:latest ghcr.io/openhealthsuite/fooddiary:latest

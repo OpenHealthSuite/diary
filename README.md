@@ -6,8 +6,8 @@
 <hr/>
 </div>
 
-[![Publish OpenFoodDiary Container](https://github.com/LeeMartin77/openfooddiary/actions/workflows/publish.yml/badge.svg)](https://github.com/LeeMartin77/openfooddiary/actions/workflows/publish.yml)
-[![Server Build and Test](https://github.com/LeeMartin77/openfooddiary/actions/workflows/build_and_test_server.yml/badge.svg)](https://github.com/LeeMartin77/openfooddiary/actions/workflows/build_and_test_server.yml) [![Webapp Build and Test](https://github.com/LeeMartin77/openfooddiary/actions/workflows/build_and_test_webapp.yml/badge.svg)](https://github.com/LeeMartin77/openfooddiary/actions/workflows/build_and_test_webapp.yml)
+[![Publish OpenFoodDiary Container](https://github.com/OpenHealthSuite/fooddiary/actions/workflows/publish.yml/badge.svg)](https://github.com/OpenHealthSuite/fooddiary/actions/workflows/publish.yml)
+[![Server Build and Test](https://github.com/OpenHealthSuite/fooddiary/actions/workflows/build_and_test_server.yml/badge.svg)](https://github.com/OpenHealthSuite/fooddiary/actions/workflows/build_and_test_server.yml) [![Webapp Build and Test](https://github.com/OpenHealthSuite/fooddiary/actions/workflows/build_and_test_webapp.yml/badge.svg)](https://github.com/OpenHealthSuite/fooddiary/actions/workflows/build_and_test_webapp.yml)
 
 This application is designed as a FOSS webapp for tracking your food. It doesn't want to do anything fancy with the data, nor try and gamify the process - it's intended to be as neutral as possible.
 
@@ -26,7 +26,7 @@ podman run -d -v $(pwd)/openfooddiarydata:/app/.sqlite \
   -p 3012:3012 \
   -e OPENFOODDIARY_USERID="my-ofd-userid" \
   --name openfooddiary-instance \
-  ghcr.io/leemartin77/openfooddiary:latest
+  ghcr.io/openhealthsuite/fooddiary:latest
 ```
 
 This will start OpenFoodDiary running, on port 3012. You can then access it using your web browser and you're ready to enter your logs - data will be persisted to a sqlite file in the volume mounted directory.
