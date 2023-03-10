@@ -19,7 +19,7 @@
             const key = newMetric.replaceAll(" ", "_").toLowerCase().replace(/[a-z]^/g, '');
             metrics[key] = {
                 label: newMetricLabel,
-                priority: Math.max(...Object.values(metrics).map(x => x.priority)) + 1
+                priority: Math.max(...Object.values(metrics).map(x => x.priority), 0) + 1
             }
             saveMetrics();
             newMetric = undefined;
