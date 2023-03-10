@@ -41,7 +41,10 @@
 
     const clampMetrics = () => {
         log.metrics = Object.entries(log.metrics).reduce((acc, [key, val]) => {
-            return {...acc, [key]: Math.min(METRIC_MAX, val)}
+            return {...acc, [key]: Math.min(
+                METRIC_MAX,
+                val === null || val === undefined ? 0 : val
+            )}
         },{})
     }
 

@@ -4,6 +4,7 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 // @ts-ignore ts(1259)
 import path from "node:path";
 import rollupNodePolyFill from "rollup-plugin-node-polyfills";
+import autoPreprocess from 'svelte-preprocess';
 import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
 // yarn add --dev @esbuild-plugins/node-modules-polyfill
 import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
@@ -41,12 +42,17 @@ export default defineConfig({
   optimizeDeps: {
     esbuildOptions: {
       plugins: [
+        // @ts-ignore
         NodeGlobalsPolyfillPlugin({
           buffer: true,
         }),
+        // @ts-ignore
         NodeModulesPolyfillPlugin(),
+        
       ],
     },
   },
-  plugins: [rollupNodePolyFill(), svelte()],
+  plugins: [rollupNodePolyFill(), svelte({
+    preprocess: autoPreprocess()
+  })],
 });
