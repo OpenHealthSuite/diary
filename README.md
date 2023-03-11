@@ -13,7 +13,7 @@ This application is designed as a FOSS webapp for tracking your food. It doesn't
 
 ## Just want to try it out?
 
-I host this app for my own use at [https://app.openfooddiary.com](https://app.openfooddiary.com) - it is behind simple google authentication, and should work fine if you want to try it or use it without setting up your own server.
+I host this app for my own use at [https://diary.openhealthsuite.com](https://diary.openhealthsuite.com) - it is behind simple google authentication, and should work fine if you want to try it or use it without setting up your own server.
 
 ## Want to host your own?
 
