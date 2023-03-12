@@ -55,7 +55,7 @@ apiFetch("/logout-endpoint").then(res => {
       <h2>About</h2>
       <div class="config-content button-stack">
         <a href="https://openhealthsuite.com/diary"><button>Website</button></a>
-        <a href="https://github.com/OpenHealthSuite/fooddiary"><button>Source code</button></a>
+        <a href="https://github.com/OpenHealthSuite/diary"><button>Source code</button></a>
       </div>
   </div>
 </div>

@@ -1,4 +1,4 @@
-image: ghcr.io/openhealthsuite/fooddiary
+image: ghcr.io/openhealthsuite/diary
 tag: latest
 replicas: 3
 signoutUrl: /oauth2/sign_out
