@@ -6,6 +6,7 @@ import {
   buildRouter,
   queryFoodLogHandler,
   purgeFoodLogHandler,
+  exportLogsHandler,
 } from "./FoodLogHandlers";
 import { Request, Response, Router } from "express";
 import crypto from "node:crypto";
@@ -613,5 +614,63 @@ describe("Purge  Log Handler", () => {
     expect(mockStorage).toBeCalledTimes(1);
     expect(fakeRes.status).toBeCalledWith(500);
     expect(fakeRes.send).toBeCalledWith(storageResponse.message);
+  });
+});
+
+describe("Export Log Handler", () => {
+  test("Happy Path :: Returns temp file with download", async () => {
+    const userId = crypto.randomUUID();
+
+    const testPath = "/tmp/my_test_file.csv";
+
+    const mockStorage = jest.fn().mockResolvedValue(ok(testPath));
+
+    const fakeReq: any = {};
+
+    const fakeRes = {
+      send: jest.fn(),
+      download: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      locals: {
+        userId: userId,
+      },
+    };
+
+    await exportLogsHandler(
+      fakeReq as Request,
+      fakeRes as any as Response & { locals: OFDLocals },
+      jest.fn(),
+      mockStorage
+    );
+
+    expect(mockStorage).toBeCalledTimes(1);
+    expect(mockStorage).toBeCalledWith(userId);
+    expect(fakeRes.download).toBeCalledWith(testPath);
+  });
+  test("Generic Error :: returns 500 with message", async () => {
+    const userId = crypto.randomUUID();
+    const storageResponse = new Error("Error something bad");
+
+    const mockStorage = jest.fn().mockResolvedValue(err(storageResponse));
+
+    const fakeReq: any = {};
+
+    const fakeRes = {
+      send: jest.fn(),
+      sendStatus: jest.fn().mockReturnThis(),
+      locals: {
+        userId: userId,
+      },
+    };
+
+    await exportLogsHandler(
+      fakeReq as Request,
+      fakeRes as any as Response & { locals: OFDLocals },
+      jest.fn(),
+      mockStorage
+    );
+
+    expect(mockStorage).toBeCalledTimes(1);
+    expect(fakeRes.sendStatus).toBeCalledWith(500);
   });
 });

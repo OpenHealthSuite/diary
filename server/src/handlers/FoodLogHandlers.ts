@@ -7,6 +7,7 @@ import {
 } from "../storage";
 import { OFDLocals } from "../middlewares";
 import {
+  BulkExportFoodLogs,
   DeleteFoodLogFunction,
   EditFoodLogFunction,
   PurgeFoodLogs,
@@ -188,11 +189,13 @@ export function deleteFoodLogHandler(
   );
 }
 
-async function exportLogsHandler(
+export async function exportLogsHandler(
   req: Request,
-  res: Response & { locals: OFDLocals }
+  res: Response & { locals: OFDLocals },
+  next: NextFunction,
+  bulkExportFoodLogs: BulkExportFoodLogs = foodStorageProvider.bulkExportFoodLogs
 ) {
-  const tempFile = await foodStorageProvider.bulkExportFoodLogs(
+  const tempFile = await bulkExportFoodLogs(
     res.locals.userId
   );
   tempFile
