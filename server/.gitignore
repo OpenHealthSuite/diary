@@ -3,3 +3,4 @@ public/*
 !public/index.html
 dist
 .sqlite
+coverage
