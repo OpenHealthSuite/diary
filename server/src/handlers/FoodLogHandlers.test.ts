@@ -559,6 +559,40 @@ describe("Get Food Log Handler", () => {
     expect(fakeRes.status).toBeCalledWith(204);
     expect(fakeRes.send).toBeCalled();
   });
+
+  test("Generic Error :: returns 500 with message", async () => {
+    const userId = crypto.randomUUID();
+    const itemId = crypto.randomUUID();
+    const storageResponse = new Error("Error something bad");
+
+    const mockStorage = jest.fn().mockResolvedValue(err(storageResponse));
+
+    const fakeReq: any = {
+      params: {
+        itemId: itemId,
+      },
+    };
+
+    const fakeRes = {
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      locals: {
+        userId: userId,
+      },
+    };
+
+    await deleteFoodLogHandler(
+      fakeReq as Request,
+      fakeRes as any as Response & { locals: OFDLocals },
+      jest.fn(),
+      mockStorage
+    );
+
+    expect(mockStorage).toBeCalledTimes(1);
+    expect(mockStorage).toBeCalledWith(userId, itemId);
+    expect(fakeRes.status).toBeCalledWith(500);
+    expect(fakeRes.send).toBeCalledWith(storageResponse.message);
+  });
 });
 
 describe("Purge  Log Handler", () => {
