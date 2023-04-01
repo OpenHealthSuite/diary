@@ -37,6 +37,32 @@ It's entirely possible to run OpenFoodDiary in more complicated configurations -
 
 I keep a trim helm chart in this repository, which with a small amount of manual futzing allows me to deploy updates - can be seen as a starting point to deploying OFD to your own cluster if you have one.
 
+## Running this Repo Locally
+
+Running locally, this repo expects you to run both the server and webapp concurrently.
+
+This repo also expects you to probably be running a node version manager such as [fnm](https://github.com/Schniz/fnm), and has the requisite `.nvmrc` files in the server and client folders.
+
+### Running the server/api
+
+```bash
+cd server
+npm ci
+npm run start:dev
+```
+
+### Running the client
+
+```bash
+cd webapp
+npm ci
+npm run dev
+```
+
+#### Notes
+
+By default, this will run the server with sqlite3 as a backing store, and will set a default userid header from the client for communicating with the server.
+
 ## Environment Variables
 
 ### General

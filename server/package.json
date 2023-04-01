@@ -4,6 +4,7 @@
     "description": "Serverside code for the openfooddiary project",
     "scripts": {
         "start": "node dist/index.js",
+        "prestart:dev": "mkdir -p .sqlite",
         "start:dev": "nodemon src/index.ts",
         "build": "tsc",
         "test": "jest",
