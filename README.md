@@ -2,7 +2,7 @@
     <img width="200" src="/assets/ofd_logo.svg" alt="OFD Logo">
 <h1>OpenFoodDiary</h1>
 <h2>Because Food Should Be Simple</h2>
-<a href="https://www.openfooddiary.com/">Project Website</a>
+<a href="https://openhealthsuite.com/diary">Project Website</a>
 <hr/>
 </div>
 
