@@ -6,14 +6,14 @@ import {
   buildRouter,
   queryFoodLogHandler,
   purgeFoodLogHandler,
-  exportLogsHandler,
+  exportLogsHandler
 } from "./FoodLogHandlers";
 import { Request, Response, Router } from "express";
 import crypto from "node:crypto";
 import { OFDLocals } from "../middlewares";
 import { NotFoundError, ValidationError } from "../storage";
 import { err, ok } from "neverthrow";
-import { CreateFoodLogEntry, EditFoodLogEntry } from "../storage/types/FoodLog";
+import { CreateFoodLogEntry } from "../storage/types/FoodLog";
 import { FoodLogEntry } from "../types";
 
 describe("Handler Registration", () => {
@@ -23,7 +23,7 @@ describe("Handler Registration", () => {
       post: jest.fn().mockReturnThis(),
       get: jest.fn().mockReturnThis(),
       put: jest.fn().mockReturnThis(),
-      delete: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis()
     } as unknown as Router;
 
     buildRouter(fakeRouter);
@@ -53,21 +53,21 @@ describe("Create Food Log Handler", () => {
       labels: [],
       time: {
         start: new Date(),
-        end: new Date(),
+        end: new Date()
       },
-      metrics: {},
+      metrics: {}
     };
 
     const fakeReq = {
-      body: input,
+      body: input
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await createFoodLogHandler(
@@ -95,21 +95,21 @@ describe("Create Food Log Handler", () => {
       labels: [],
       time: {
         start: new Date(),
-        end: new Date(),
+        end: new Date()
       },
-      metrics: {},
+      metrics: {}
     };
 
     const fakeReq = {
-      body: input,
+      body: input
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await createFoodLogHandler(
@@ -138,21 +138,21 @@ describe("Create Food Log Handler", () => {
       labels: [],
       time: {
         start: new Date(),
-        end: new Date(),
+        end: new Date()
       },
-      metrics: {},
+      metrics: {}
     };
 
     const fakeReq = {
-      body: input,
+      body: input
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await createFoodLogHandler(
@@ -183,10 +183,10 @@ describe("Query Food Log Handler", () => {
         labels: [],
         time: {
           start: new Date(),
-          end: new Date(),
+          end: new Date()
         },
-        metrics: {},
-      },
+        metrics: {}
+      }
     ];
 
     const mockStorage = jest.fn().mockResolvedValue(ok(foodLog));
@@ -194,16 +194,16 @@ describe("Query Food Log Handler", () => {
     const fakeReq: any = {
       query: {
         startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-      },
+        endDate: endDate.toISOString()
+      }
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await queryFoodLogHandler(
@@ -224,7 +224,7 @@ describe("Query Food Log Handler", () => {
     [undefined, new Date(1987, 10, 1).toISOString()],
     [new Date(1987, 10, 1).toISOString(), "not a date"],
     ["not a date", new Date(1987, 10, 1).toISOString()],
-    ["not a date", "also not a date"],
+    ["not a date", "also not a date"]
   ];
 
   test.each(BadDateValues)(
@@ -234,9 +234,9 @@ describe("Query Food Log Handler", () => {
 
       const fakeReq: any = {
         query: {
-          startDate: startDate,
-          endDate: endDate,
-        },
+          startDate,
+          endDate
+        }
       };
 
       const mockStorage = jest.fn();
@@ -245,8 +245,8 @@ describe("Query Food Log Handler", () => {
         send: jest.fn(),
         status: jest.fn().mockReturnThis(),
         locals: {
-          userId: userId,
-        },
+          userId
+        }
       };
 
       await queryFoodLogHandler(
@@ -273,25 +273,25 @@ describe("Get Food Log Handler", () => {
       labels: [],
       time: {
         start: new Date(),
-        end: new Date(),
+        end: new Date()
       },
-      metrics: {},
+      metrics: {}
     };
 
     const mockStorage = jest.fn().mockResolvedValue(ok(foodLog));
 
     const fakeReq: any = {
       params: {
-        itemId: itemId,
-      },
+        itemId
+      }
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await getFoodLogHandler(
@@ -318,16 +318,16 @@ describe("Get Food Log Handler", () => {
 
     const fakeReq: any = {
       params: {
-        itemId: itemId,
-      },
+        itemId
+      }
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await getFoodLogHandler(
@@ -353,9 +353,9 @@ describe("Update Food Log Handler", () => {
       labels: new Set<string>(),
       time: {
         start: new Date(),
-        end: new Date(),
+        end: new Date()
       },
-      metrics: {},
+      metrics: {}
     };
 
     const expectedStorageInput = { id: itemId, ...input };
@@ -366,17 +366,17 @@ describe("Update Food Log Handler", () => {
 
     const fakeReq: any = {
       params: {
-        itemId,
+        itemId
       },
-      body: input,
+      body: input
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await updateFoodLogHandler(
@@ -398,7 +398,7 @@ describe("Update Food Log Handler", () => {
     const userId = crypto.randomUUID();
     const input = {
       name: "My Log",
-      labels: new Set<string>(),
+      labels: new Set<string>()
     };
 
     const expectedStorageInput = { id: itemId, ...input };
@@ -409,17 +409,17 @@ describe("Update Food Log Handler", () => {
 
     const fakeReq: any = {
       params: {
-        itemId,
+        itemId
       },
-      body: input,
+      body: input
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await updateFoodLogHandler(
@@ -442,7 +442,7 @@ describe("Update Food Log Handler", () => {
     const userId = crypto.randomUUID();
     const input = {
       name: "My Log",
-      labels: new Set<string>(),
+      labels: new Set<string>()
     };
 
     const expectedStorageInput = { id: itemId, ...input };
@@ -453,17 +453,17 @@ describe("Update Food Log Handler", () => {
 
     const fakeReq: any = {
       params: {
-        itemId,
+        itemId
       },
-      body: input,
+      body: input
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await updateFoodLogHandler(
@@ -486,7 +486,7 @@ describe("Update Food Log Handler", () => {
     const userId = crypto.randomUUID();
     const input = {
       name: "My Log",
-      labels: new Set<string>(),
+      labels: new Set<string>()
     };
 
     const expectedStorageInput = { id: itemId, ...input };
@@ -497,17 +497,17 @@ describe("Update Food Log Handler", () => {
 
     const fakeReq: any = {
       params: {
-        itemId,
+        itemId
       },
-      body: input,
+      body: input
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await updateFoodLogHandler(
@@ -535,16 +535,16 @@ describe("Get Food Log Handler", () => {
 
     const fakeReq: any = {
       params: {
-        itemId: itemId,
-      },
+        itemId
+      }
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await deleteFoodLogHandler(
@@ -569,16 +569,16 @@ describe("Get Food Log Handler", () => {
 
     const fakeReq: any = {
       params: {
-        itemId: itemId,
-      },
+        itemId
+      }
     };
 
     const fakeRes = {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await deleteFoodLogHandler(
@@ -607,8 +607,8 @@ describe("Purge  Log Handler", () => {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await purgeFoodLogHandler(
@@ -634,8 +634,8 @@ describe("Purge  Log Handler", () => {
       send: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await purgeFoodLogHandler(
@@ -666,8 +666,8 @@ describe("Export Log Handler", () => {
       download: jest.fn(),
       status: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await exportLogsHandler(
@@ -693,8 +693,8 @@ describe("Export Log Handler", () => {
       send: jest.fn(),
       sendStatus: jest.fn().mockReturnThis(),
       locals: {
-        userId: userId,
-      },
+        userId
+      }
     };
 
     await exportLogsHandler(

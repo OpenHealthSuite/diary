@@ -2,9 +2,8 @@ import crypto from "node:crypto";
 import {
   CreateFoodLogEntry,
   EditFoodLogEntry,
-  StoreFoodLogFunction,
   isNotFoundError,
-  isValidationError,
+  isValidationError
 } from "./types";
 import fs from "node:fs";
 import { parse } from "csv-parse/sync";
@@ -40,11 +39,11 @@ describe.each(configs)(
         labels: ["Some Label", "Some other label"],
         time: {
           start: new Date(),
-          end: new Date(),
+          end: new Date()
         },
         metrics: {
-          calories: 500,
-        },
+          calories: 500
+        }
       };
 
       const result = await (config.storage.foodLog.storeFoodLog as any)(
@@ -67,7 +66,7 @@ describe.each(configs)(
 
       storedItem.name = "Modified Food Log";
       storedItem.metrics = {
-        calories: 400,
+        calories: 400
       };
 
       const modifiedResult = await (config.storage.foodLog.editFoodLog as any)(
@@ -121,11 +120,11 @@ describe.each(configs)(
         labels: [],
         time: {
           start: new Date(1999, 10, 10),
-          end: new Date(1999, 10, 11),
+          end: new Date(1999, 10, 11)
         },
         metrics: {
-          calories: 500,
-        },
+          calories: 500
+        }
       };
 
       const centerLog: CreateFoodLogEntry = {
@@ -133,11 +132,11 @@ describe.each(configs)(
         labels: [],
         time: {
           start: new Date(1999, 10, 15),
-          end: new Date(1999, 10, 16),
+          end: new Date(1999, 10, 16)
         },
         metrics: {
-          calories: 500,
-        },
+          calories: 500
+        }
       };
 
       const futureLog: CreateFoodLogEntry = {
@@ -145,11 +144,11 @@ describe.each(configs)(
         labels: [],
         time: {
           start: new Date(1999, 10, 20),
-          end: new Date(1999, 10, 21),
+          end: new Date(1999, 10, 21)
         },
         metrics: {
-          calories: 500,
-        },
+          calories: 500
+        }
       };
 
       const past = await (config.storage.foodLog.storeFoodLog as any)(
@@ -215,7 +214,7 @@ describe.each(configs)(
 
     test("Bulk Actions :: Can dump logs to temp file", async () => {
       const testUserId = crypto.randomUUID();
-      let logs: any[] = [];
+      const logs: any[] = [];
 
       for (let i = 0; i < 1000; i++) {
         const pastLog: CreateFoodLogEntry = {
@@ -223,11 +222,11 @@ describe.each(configs)(
           labels: ["some-label-" + i],
           time: {
             start: new Date(1999, 10, 10),
-            end: new Date(1999, 10, 11),
+            end: new Date(1999, 10, 11)
           },
           metrics: {
-            calories: 500 + 1,
-          },
+            calories: 500 + 1
+          }
         };
 
         const past = await (config.storage.foodLog.storeFoodLog as any)(
@@ -242,7 +241,7 @@ describe.each(configs)(
           labels: pastLog.labels,
           timeStart: pastLog.time.start.toISOString(),
           timeEnd: pastLog.time.end.toISOString(),
-          metrics: pastLog.metrics,
+          metrics: pastLog.metrics
         });
       }
 
@@ -254,12 +253,12 @@ describe.each(configs)(
       const filedataString = filedata.toString("utf8");
       const records = parse(filedataString, {
         columns: true,
-        skip_empty_lines: true,
+        skip_empty_lines: true
       }).map((x: any) => {
         return {
           ...x,
           metrics: JSON.parse(x.metrics),
-          labels: JSON.parse(x.labels),
+          labels: JSON.parse(x.labels)
         };
       }) as any[];
       records.sort((a, b) =>
@@ -280,7 +279,7 @@ describe.each(configs)(
         ["Some Name", 123],
         ["Some Other Name", 456],
         ["Some Extra Name", 134],
-        ["Just One More", 677],
+        ["Just One More", 677]
       ];
 
       const inputs = logsToMake.map(
@@ -290,11 +289,11 @@ describe.each(configs)(
             labels: ["Some Label", "Some other label"],
             time: {
               start: new Date(),
-              end: new Date(),
+              end: new Date()
             },
             metrics: {
-              calories: calories,
-            },
+              calories
+            }
           } as CreateFoodLogEntry)
       );
 
@@ -391,10 +390,9 @@ describe.each(configs)(
   }
 );
 
-
 describe.each(configs)(
   "$name FoodLogStorageFunctions",
-  ({ config : { storage: { foodLog: config }}} ) => {
+  ({ config: { storage: { foodLog: config } } }) => {
     describe("CreateFoodLog", () => {
       describe("Validation Errors", () => {
         const GoldInput: CreateFoodLogEntry = {
@@ -402,11 +400,11 @@ describe.each(configs)(
           labels: ["Some Label", "Some other label"],
           time: {
             start: new Date(1999, 10, 10),
-            end: new Date(1999, 10, 11),
+            end: new Date(1999, 10, 11)
           },
           metrics: {
-            calories: 500,
-          },
+            calories: 500
+          }
         };
 
         const testUserId = crypto.randomUUID();
@@ -415,16 +413,16 @@ describe.each(configs)(
         const { labels, ...labelless } = structuredClone(GoldInput);
         const { metrics, ...metricless } = structuredClone(GoldInput);
         const nullMetrics = { ...structuredClone(GoldInput), metrics: null };
-        let weirdMetric: any = structuredClone(GoldInput);
+        const weirdMetric: any = structuredClone(GoldInput);
         weirdMetric.metrics.calories = "This is not a number";
-        let oversizeMetric: any = structuredClone(GoldInput);
+        const oversizeMetric: any = structuredClone(GoldInput);
         oversizeMetric.metrics.calories = METRIC_MAX + 1;
         const { time, ...timeless } = structuredClone(GoldInput);
-        let startTimeLess: any = structuredClone(GoldInput);
+        const startTimeLess: any = structuredClone(GoldInput);
         delete startTimeLess.time.start;
-        let endTimeLess: any = structuredClone(GoldInput);
+        const endTimeLess: any = structuredClone(GoldInput);
         delete endTimeLess.time.end;
-        let endBeforeStart = structuredClone(GoldInput);
+        const endBeforeStart = structuredClone(GoldInput);
         endBeforeStart.time.start = new Date(1999, 10, 10);
         endBeforeStart.time.end = new Date(1999, 8, 10);
 
@@ -440,7 +438,7 @@ describe.each(configs)(
           ["No Times", timeless],
           ["No Start Time", startTimeLess],
           ["No End Time", endTimeLess],
-          ["End before start", endBeforeStart],
+          ["End before start", endBeforeStart]
         ];
 
         it.each(BadValues)(
@@ -478,24 +476,24 @@ describe.each(configs)(
           labels: ["Some Label", "Some other label"],
           time: {
             start: new Date(),
-            end: new Date(),
+            end: new Date()
           },
           metrics: {
-            calories: 500,
-          },
+            calories: 500
+          }
         };
 
         const testUserId = crypto.randomUUID();
 
-        let weirdMetric: any = structuredClone(GoldInput);
+        const weirdMetric: any = structuredClone(GoldInput);
         weirdMetric.metrics.calories = "This is not a number";
-        let oversizeMetric: any = structuredClone(GoldInput);
+        const oversizeMetric: any = structuredClone(GoldInput);
         oversizeMetric.metrics.calories = METRIC_MAX + 1;
-        let startTimeLess: any = structuredClone(GoldInput);
+        const startTimeLess: any = structuredClone(GoldInput);
         delete startTimeLess.time.start;
-        let endTimeLess: any = structuredClone(GoldInput);
+        const endTimeLess: any = structuredClone(GoldInput);
         delete endTimeLess.time.end;
-        let endBeforeStart = structuredClone(GoldInput);
+        const endBeforeStart = structuredClone(GoldInput);
         endBeforeStart.time!.start = new Date(1999, 10, 10);
         endBeforeStart.time!.end = new Date(1999, 8, 10);
 
@@ -506,7 +504,7 @@ describe.each(configs)(
           ["Metric greater than maxint", oversizeMetric],
           ["No Start Time", startTimeLess],
           ["No End Time", endTimeLess],
-          ["End before start", endBeforeStart],
+          ["End before start", endBeforeStart]
         ];
 
         it.each(BadValues)(

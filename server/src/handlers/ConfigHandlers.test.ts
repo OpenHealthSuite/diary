@@ -5,7 +5,7 @@ import {
   NotFoundError,
   StorageError,
   SystemError,
-  ValidationError,
+  ValidationError
 } from "../storage/types/StorageErrors";
 import { err, ok } from "neverthrow";
 import request from "supertest";
@@ -16,16 +16,16 @@ jest.mock("../storage", () => {
     STORAGE: {
       configuration: {
         retrieveUserConfiguration: jest.fn(),
-        storeConfiguration: jest.fn(),
-      },
-    },
+        storeConfiguration: jest.fn()
+      }
+    }
   };
 });
 
 const errors: { error: StorageError; statusCode: number }[] = [
   { error: new ValidationError(), statusCode: 400 },
   { error: new NotFoundError(), statusCode: 404 },
-  { error: new SystemError(), statusCode: 500 },
+  { error: new SystemError(), statusCode: 500 }
 ];
 
 const FAKE_ROOT = "/testapi";
@@ -33,7 +33,6 @@ const FAKE_USER_ID = "some-user-id";
 const fakeUserMiddleware = (req: any, res: any, next: any) => {
   res.locals.userId = FAKE_USER_ID;
   next();
-  return;
 };
 describe("ConfigHandlers", () => {
   let app: Express;
@@ -73,7 +72,7 @@ describe("ConfigHandlers", () => {
           STORAGE.configuration.retrieveUserConfiguration as jest.Mock
         ).mockResolvedValue(err(error));
 
-        const res = await request(app)
+        await request(app)
           .get(FAKE_ROOT + "/config/metrics")
           .expect(statusCode);
 
@@ -113,7 +112,7 @@ describe("ConfigHandlers", () => {
         (
           STORAGE.configuration.storeConfiguration as jest.Mock
         ).mockResolvedValue(err(error));
-        const res = await request(app)
+        await request(app)
           .post(FAKE_ROOT + "/config/metrics")
           .send(fakeConfig)
           .expect(statusCode);

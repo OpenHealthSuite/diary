@@ -8,7 +8,7 @@ import {
   NotFoundError,
   StorageError,
   SystemError,
-  ValidationError,
+  ValidationError
 } from "../types";
 import { stringify } from "csv-stringify/sync";
 import fs from "node:fs";
@@ -61,7 +61,7 @@ interface SqliteFoodLogEntry {
   time_end: number;
 }
 
-function sqlFromGeneral(
+function sqlFromGeneral (
   gen: Pick<FoodLogEntry, "name" | "labels" | "metrics" | "time">
 ): Pick<
   SqliteFoodLogEntry,
@@ -72,20 +72,20 @@ function sqlFromGeneral(
     labels: JSON.stringify(gen.labels),
     metrics: JSON.stringify(gen.metrics),
     time_start: new Date(gen.time.start).getTime() / 1000,
-    time_end: new Date(gen.time.end).getTime() / 1000,
+    time_end: new Date(gen.time.end).getTime() / 1000
   };
 }
 
-function generalFromSql(sql: SqliteFoodLogEntry): FoodLogEntry {
+function generalFromSql (sql: SqliteFoodLogEntry): FoodLogEntry {
   return {
     id: sql.id,
     name: sql.name,
     labels: JSON.parse(sql.labels),
     time: {
       start: new Date(sql.time_start * 1000),
-      end: new Date(sql.time_end * 1000),
+      end: new Date(sql.time_end * 1000)
     },
-    metrics: JSON.parse(sql.metrics),
+    metrics: JSON.parse(sql.metrics)
   };
 }
 
@@ -100,7 +100,7 @@ export const storeFoodLog: SqliteStoreFoodLogFunction = async (
   const insertEntry: SqliteFoodLogEntry = {
     ...sqlFromGeneral(logEntry),
     user_id: userId,
-    id: crypto.randomUUID(),
+    id: crypto.randomUUID()
   };
   try {
     await client!("user_foodlogentry").insert(insertEntry);
@@ -167,17 +167,17 @@ export const editFoodLog: SqliteEditFoodLogFunction = async (
   const logid = logEntry.id;
   const updates: { [key: string]: any } = {};
   if (logEntry.name) {
-    updates["name"] = logEntry.name;
+    updates.name = logEntry.name;
   }
   if (logEntry.time) {
-    updates["time_start"] = new Date(logEntry.time.start).getTime() / 1000;
-    updates["time_end"] = new Date(logEntry.time.end).getTime() / 1000;
+    updates.time_start = new Date(logEntry.time.start).getTime() / 1000;
+    updates.time_end = new Date(logEntry.time.end).getTime() / 1000;
   }
   if (logEntry.metrics) {
-    updates["metrics"] = JSON.stringify(logEntry.metrics);
+    updates.metrics = JSON.stringify(logEntry.metrics);
   }
   if (logEntry.labels) {
-    updates["labels"] = JSON.stringify(logEntry.labels);
+    updates.labels = JSON.stringify(logEntry.labels);
   }
   try {
     await client("user_foodlogentry")
@@ -210,14 +210,14 @@ export const deleteFoodLog: SqliteDeleteFoodLogFunction = async (
 
 const TEMP_DIR = process.env.OPENFOODDIARY_TEMP_DIRECTORY ?? "/tmp";
 
-function bulkFromSql(sql: SqliteFoodLogEntry): BulkExportFoodLogEntry {
+function bulkFromSql (sql: SqliteFoodLogEntry): BulkExportFoodLogEntry {
   return {
     id: sql.id,
     name: sql.name,
     labels: JSON.parse(sql.labels),
     timeStart: new Date(sql.time_start * 1000).toISOString(),
     timeEnd: new Date(sql.time_end * 1000).toISOString(),
-    metrics: JSON.parse(sql.metrics),
+    metrics: JSON.parse(sql.metrics)
   };
 }
 
@@ -231,7 +231,7 @@ export const bulkExportFoodLogs: SqliteBulkExportFoodLogsFunction = async (
       filename,
       stringify([["id", "name", "labels", "timeStart", "timeEnd", "metrics"]]),
       {
-        flag: "w",
+        flag: "w"
       }
     );
 
@@ -247,7 +247,7 @@ export const bulkExportFoodLogs: SqliteBulkExportFoodLogsFunction = async (
           log.labels,
           log.timeStart,
           log.timeEnd,
-          log.metrics,
+          log.metrics
         ];
       });
       fs.appendFileSync(filename, stringify(exportedLogs));

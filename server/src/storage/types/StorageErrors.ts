@@ -1,4 +1,35 @@
-export function isValidationError(
+type ErrorType = "validation" | "notfound" | "system";
+
+export class ValidationError extends Error {
+  constructor (msg: string | undefined = undefined) {
+    super(msg);
+    Object.setPrototypeOf(this, ValidationError.prototype);
+  }
+
+  errorType: ErrorType = "validation";
+}
+
+export class NotFoundError extends Error {
+  constructor (msg: string | undefined = undefined) {
+    super(msg);
+    Object.setPrototypeOf(this, NotFoundError.prototype);
+  }
+
+  errorType: ErrorType = "notfound";
+}
+
+export class SystemError extends Error {
+  constructor (msg: string | undefined = undefined) {
+    super(msg);
+    Object.setPrototypeOf(this, SystemError.prototype);
+  }
+
+  errorType: ErrorType = "system";
+}
+
+export type StorageError = ValidationError | NotFoundError | SystemError;
+
+export function isValidationError (
   error: ValidationError | Error | any
 ): error is ValidationError {
   return (
@@ -7,7 +38,7 @@ export function isValidationError(
   );
 }
 
-export function isNotFoundError(
+export function isNotFoundError (
   error: NotFoundError | Error | any
 ): error is NotFoundError {
   return (
@@ -16,7 +47,7 @@ export function isNotFoundError(
   );
 }
 
-export function isSystemError(
+export function isSystemError (
   error: SystemError | Error | any
 ): error is SystemError {
   return (
@@ -24,37 +55,3 @@ export function isSystemError(
     error.errorType === "system"
   );
 }
-
-export enum ErrorTypes {
-  Validation = "validation",
-  NotFound = "notfound",
-  System = "system",
-}
-
-type ErrorType = "validation" | "notfound" | "system";
-
-export class ValidationError extends Error {
-  constructor(msg: string | undefined = undefined) {
-    super(msg);
-    Object.setPrototypeOf(this, ValidationError.prototype);
-  }
-  errorType: ErrorType = "validation";
-}
-
-export class NotFoundError extends Error {
-  constructor(msg: string | undefined = undefined) {
-    super(msg);
-    Object.setPrototypeOf(this, NotFoundError.prototype);
-  }
-  errorType: ErrorType = "notfound";
-}
-
-export class SystemError extends Error {
-  constructor(msg: string | undefined = undefined) {
-    super(msg);
-    Object.setPrototypeOf(this, SystemError.prototype);
-  }
-  errorType: ErrorType = "system";
-}
-
-export type StorageError = ValidationError | NotFoundError | SystemError;

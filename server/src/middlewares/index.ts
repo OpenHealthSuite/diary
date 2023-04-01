@@ -1,2 +1,2 @@
-export * from './types/Locals'
-export * from './UserMiddleware'
+export * from "./types/Locals";
+export * from "./UserMiddleware";

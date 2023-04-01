@@ -1,10 +1,10 @@
 import {
   Configuration,
   MetricsConfiguration,
-  SummaryConfiguration,
+  SummaryConfiguration
 } from "../../types";
 
-export function isValidConfigurationItem(
+export function isValidConfigurationItem (
   configuration: Configuration
 ): boolean {
   switch (configuration.id) {
@@ -17,10 +17,10 @@ export function isValidConfigurationItem(
   }
 }
 
-function isValidMetrics(configuration: MetricsConfiguration): boolean {
+function isValidMetrics (configuration: MetricsConfiguration): boolean {
   const entries = Object.entries(configuration.value);
-  let labels: Set<string> = new Set();
-  let priorities: Set<number> = new Set();
+  const labels: Set<string> = new Set();
+  const priorities: Set<number> = new Set();
   return (
     entries.findIndex(([key, value]) => {
       if (
@@ -33,11 +33,11 @@ function isValidMetrics(configuration: MetricsConfiguration): boolean {
       labels.add(value.label);
       priorities.add(value.priority);
       return false;
-    }) == -1
+    }) === -1
   );
 }
 
-function isValidSummary(configuration: SummaryConfiguration): boolean {
+function isValidSummary (configuration: SummaryConfiguration): boolean {
   return (
     configuration.value.showMetricSummary.length ===
       new Set(configuration.value.showMetricSummary).size &&

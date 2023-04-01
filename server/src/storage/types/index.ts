@@ -1,2 +1,2 @@
-export * from './FoodLog';
-export * from './StorageErrors';
+export * from "./FoodLog";
+export * from "./StorageErrors";

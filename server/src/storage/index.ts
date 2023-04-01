@@ -1,8 +1,8 @@
-export * from "./types/StorageErrors";
-
 import { cassandra } from "./cassandra";
 import { StorageType } from "./interfaces";
 import { sqlite3 } from "./sqlite3";
+
+export * from "./types/StorageErrors";
 
 export interface StorageDrivers {
   [key: string]: StorageType;
@@ -10,7 +10,7 @@ export interface StorageDrivers {
 
 const AVAILABLE_STORAGES: StorageDrivers = {
   cassandra,
-  sqlite3,
+  sqlite3
 };
 
 let setupStorage = AVAILABLE_STORAGES.sqlite3;

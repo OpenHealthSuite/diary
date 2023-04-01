@@ -3,7 +3,7 @@ import {
   isNotFoundError,
   isValidationError,
   StorageError,
-  STORAGE,
+  STORAGE
 } from "../storage";
 import { OFDLocals } from "../middlewares";
 import {
@@ -13,7 +13,7 @@ import {
   PurgeFoodLogs,
   QueryFoodLogFunction,
   RetrieveFoodLogFunction,
-  StoreFoodLogFunction,
+  StoreFoodLogFunction
 } from "../storage/types/FoodLog";
 import promclient from "prom-client";
 import { PROM_PREFIX } from "../config";
@@ -22,21 +22,21 @@ const counters = {
   foodLogEvent: new promclient.Counter({
     name: `${PROM_PREFIX}food_log_event`,
     help: "Counters for Food Log Events",
-    labelNames: ["eventType"],
+    labelNames: ["eventType"]
   }),
   foodLogsPurgedCounter: new promclient.Counter({
     name: `${PROM_PREFIX}food_logs_purged`,
-    help: "Counters for Food Logs being Purged",
+    help: "Counters for Food Logs being Purged"
   }),
   foodLogsDownloaded: new promclient.Counter({
     name: `${PROM_PREFIX}food_logs_downloaded`,
-    help: "Counters for Food Logs being Downloaded",
-  }),
+    help: "Counters for Food Logs being Downloaded"
+  })
 };
 
-let foodStorageProvider = STORAGE.foodLog;
+const foodStorageProvider = STORAGE.foodLog;
 
-export function buildRouter(router: Router): Router {
+export function buildRouter (router: Router): Router {
   return router
     .post("/logs", createFoodLogHandler)
     .get("/logs", queryFoodLogHandler)
@@ -49,19 +49,19 @@ export function buildRouter(router: Router): Router {
 
 export const FoodStorageRouter = buildRouter(express.Router());
 
-function errorStatusCodeCalculator(err: StorageError): number {
+function errorStatusCodeCalculator (err: StorageError): number {
   if (isValidationError(err)) return 400;
   if (isNotFoundError(err)) return 404;
   return 500;
 }
 
-export function createFoodLogHandler(
+export function createFoodLogHandler (
   req: Request,
   res: Response & { locals: OFDLocals },
   next: NextFunction,
   storeFoodLog: StoreFoodLogFunction = foodStorageProvider.storeFoodLog
 ) {
-  let item = structuredClone(req.body);
+  const item = structuredClone(req.body);
   if (
     item &&
     item.time &&
@@ -84,7 +84,7 @@ export function createFoodLogHandler(
   );
 }
 
-function validStartEndDateStrings(
+function validStartEndDateStrings (
   startDateString: string,
   endDateString: string
 ): boolean {
@@ -96,7 +96,7 @@ function validStartEndDateStrings(
   );
 }
 
-export function queryFoodLogHandler(
+export function queryFoodLogHandler (
   req: Request,
   res: Response & { locals: OFDLocals },
   next: NextFunction,
@@ -124,7 +124,7 @@ export function queryFoodLogHandler(
   res.status(400).send("Invalid startDate or endDate");
 }
 
-export function getFoodLogHandler(
+export function getFoodLogHandler (
   req: Request,
   res: Response & { locals: OFDLocals },
   next: NextFunction,
@@ -139,13 +139,13 @@ export function getFoodLogHandler(
   );
 }
 
-export function updateFoodLogHandler(
+export function updateFoodLogHandler (
   req: Request,
   res: Response & { locals: OFDLocals },
   next: NextFunction,
   editFoodLog: EditFoodLogFunction = foodStorageProvider.editFoodLog
 ) {
-  let item = structuredClone(req.body);
+  const item = structuredClone(req.body);
   if (
     item.time &&
     item.time.start &&
@@ -171,7 +171,7 @@ export function updateFoodLogHandler(
   );
 }
 
-export function deleteFoodLogHandler(
+export function deleteFoodLogHandler (
   req: Request,
   res: Response & { locals: OFDLocals },
   next: NextFunction,
@@ -189,7 +189,7 @@ export function deleteFoodLogHandler(
   );
 }
 
-export async function exportLogsHandler(
+export async function exportLogsHandler (
   req: Request,
   res: Response & { locals: OFDLocals },
   next: NextFunction,
@@ -199,6 +199,7 @@ export async function exportLogsHandler(
     res.locals.userId
   );
   tempFile
+    // eslint-disable-next-line array-callback-return
     .map((tmpFilePath) => {
       counters.foodLogsDownloaded.inc();
       res.download(tmpFilePath);
@@ -206,7 +207,7 @@ export async function exportLogsHandler(
     .mapErr((err) => res.sendStatus(errorStatusCodeCalculator(err)));
 }
 
-export function purgeFoodLogHandler(
+export function purgeFoodLogHandler (
   _req: Request,
   res: Response & { locals: OFDLocals },
   _next: NextFunction,
@@ -214,6 +215,7 @@ export function purgeFoodLogHandler(
 ) {
   purgeFoodLogs(res.locals.userId).then((result) =>
     result
+      // eslint-disable-next-line array-callback-return
       .map(() => {
         counters.foodLogsPurgedCounter.inc();
         res.status(204).send();

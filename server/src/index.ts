@@ -24,7 +24,7 @@ app.get("/api/health", (req, res) => {
 
 app.get("/api/logout-endpoint", (req, res) => {
   res.send({
-    url: process.env.OPENFOODDIARY_LOGOUT_ENDPOINT ?? "/api/logout",
+    url: process.env.OPENFOODDIARY_LOGOUT_ENDPOINT ?? "/api/logout"
   });
 });
 

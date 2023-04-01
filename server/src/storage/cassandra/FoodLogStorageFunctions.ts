@@ -8,7 +8,7 @@ import {
   NotFoundError,
   StorageError,
   SystemError,
-  ValidationError,
+  ValidationError
 } from "../types";
 import fs from "node:fs";
 import { stringify } from "csv-stringify/sync";
@@ -62,7 +62,7 @@ export const storeFoodLog: CassandraStoreFoodLogFunction = async (
   const insertEntry: FoodLogEntry & { userId: string } = {
     ...logEntry,
     id: crypto.randomUUID(),
-    userId,
+    userId
   };
   try {
     await cassandraClient.execute(
@@ -76,7 +76,7 @@ export const storeFoodLog: CassandraStoreFoodLogFunction = async (
         insertEntry.time,
         insertEntry.metrics,
         insertEntry.time.start,
-        insertEntry.time.end,
+        insertEntry.time.end
       ],
       { prepare: true }
     );
@@ -100,7 +100,7 @@ export const retrieveFoodLog: CassandraRetrieveFoodLogFunction = async (
       [userId, logId],
       { prepare: true }
     );
-    if (result.rows.length == 0) {
+    if (result.rows.length === 0) {
       return err(new NotFoundError("No Log with Id"));
     }
     const item = result.first();
@@ -156,11 +156,11 @@ export const editFoodLog: CassandraEditFoodLogFunction = async (
   }
   const updateEntity: any = {
     ...logEntry,
-    userId,
+    userId
   };
 
-  let updatedFields: string[] = [];
-  let updateValues: any[] = [];
+  const updatedFields: string[] = [];
+  const updateValues: any[] = [];
 
   UPDATEABLE_FIELDS.forEach((field) => {
     if (updateEntity[field] !== undefined) {
@@ -169,8 +169,8 @@ export const editFoodLog: CassandraEditFoodLogFunction = async (
       if (field === "time") {
         updatedFields.push("timeStart = ?");
         updatedFields.push("timeEnd = ?");
-        updateValues.push(updateEntity["time"].start);
-        updateValues.push(updateEntity["time"].end);
+        updateValues.push(updateEntity.time.start);
+        updateValues.push(updateEntity.time.end);
       }
     }
   });
@@ -210,14 +210,14 @@ export const deleteFoodLog: CassandraDeleteFoodLogFunction = async (
 
 const TEMP_DIR = process.env.OPENFOODDIARY_TEMP_DIRECTORY ?? "/tmp";
 
-function bulkFromResult(log: FoodLogEntry): BulkExportFoodLogEntry {
+function bulkFromResult (log: FoodLogEntry): BulkExportFoodLogEntry {
   return {
     id: log.id,
     name: log.name,
     labels: log.labels,
     timeStart: log.time.start.toISOString(),
     timeEnd: log.time.end.toISOString(),
-    metrics: log.metrics,
+    metrics: log.metrics
   };
 }
 
@@ -231,7 +231,7 @@ export const bulkExportFoodLogs: CassandraBulkExportFoodLogsFunction = async (
       filename,
       stringify([["id", "name", "labels", "timeStart", "timeEnd", "metrics"]]),
       {
-        flag: "w",
+        flag: "w"
       }
     );
 
@@ -257,7 +257,7 @@ export const bulkExportFoodLogs: CassandraBulkExportFoodLogsFunction = async (
         log.labels,
         log.timeStart,
         log.timeEnd,
-        log.metrics,
+        log.metrics
       ]);
     fs.appendFileSync(filename, stringify(exportedLogs));
     return ok(filename);

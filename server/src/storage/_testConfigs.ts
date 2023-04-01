@@ -10,7 +10,7 @@ export const configs = [
       beforeAllSetup: async () => {
         const testClient = knex({
           ...sqlite3.DEFAULT_CLIENT_CONFIG,
-          connection: { filename: ":memory:" },
+          connection: { filename: ":memory:" }
         });
         await sqlite3.setupDatabase(testClient);
         return testClient;
@@ -18,8 +18,8 @@ export const configs = [
       afterAllTeardown: async (testClient: any) => {
         await testClient.destroy();
       },
-      storage: sqlite3.sqlite3,
-    },
+      storage: sqlite3.sqlite3
+    }
   },
   {
     name: "cassandra",
@@ -33,7 +33,7 @@ export const configs = [
       afterAllTeardown: async (testClient: any) => {
         await testClient.shutdown();
       },
-      storage: cassandra.cassandra,
-    },
-  },
+      storage: cassandra.cassandra
+    }
+  }
 ];

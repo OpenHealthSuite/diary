@@ -1,21 +1,20 @@
-import { NextFunction, Response, Request } from "express";
+import { NextFunction, Response, Request, Express } from "express";
 import { PROM_PREFIX } from "../config";
 import promclient from "prom-client";
-import { Express } from "express";
 
 promclient.collectDefaultMetrics({
-  prefix: PROM_PREFIX,
+  prefix: PROM_PREFIX
 });
 
 const requests = new promclient.Counter({
   name: `${PROM_PREFIX}http_requests`,
   help: "HTTP Request count with statuses",
-  labelNames: ["type", "method", "statusCode"],
+  labelNames: ["type", "method", "statusCode"]
 });
 
 const METRICS_ENDPOINT = "/metrics";
 
-export function prometheusSetup(app: Express) {
+export function prometheusSetup (app: Express) {
   app.use(promMiddleware);
   app.get(METRICS_ENDPOINT, async (req, res) => {
     res.setHeader("Content-Type", promclient.register.contentType);
@@ -24,7 +23,7 @@ export function prometheusSetup(app: Express) {
   return app;
 }
 
-export function promMiddleware(
+export function promMiddleware (
   req: Request,
   res: Response,
   next: NextFunction,

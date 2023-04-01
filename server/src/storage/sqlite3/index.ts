@@ -1,5 +1,4 @@
 import knex, { Knex } from "knex";
-import { StorageType } from "../interfaces";
 import * as sqliteFoodLogStorage from "./FoodLogStorageFunctions";
 import * as sqliteConfigurationStorage from "./ConfigurationStorageFunctions";
 
@@ -8,14 +7,14 @@ export const DEFAULT_CLIENT_CONFIG: Knex.Config = {
   connection: {
     filename:
       process.env.OPENFOODDIARY_SQLITE3_FILENAME ??
-      ".sqlite/openfooddiary.sqlite",
+      ".sqlite/openfooddiary.sqlite"
   },
-  useNullAsDefault: true,
+  useNullAsDefault: true
 };
 
 export const knexInstance = knex(DEFAULT_CLIENT_CONFIG);
 
-export async function setupDatabase(knex: Knex = knexInstance) {
+export async function setupDatabase (knex: Knex = knexInstance) {
   const migrations = [
     `CREATE TABLE IF NOT EXISTS user_foodlogentry 
   (
@@ -32,21 +31,21 @@ export async function setupDatabase(knex: Knex = knexInstance) {
     user_id TEXT, --UUID 
     id TEXT,
     serialised_value TEXT
-  );`,
+  );`
   ];
   for (const migration of migrations) {
     await knex.raw(migration);
   }
 }
 
-export async function shutdownDatabase(knex: Knex = knexInstance) {
+export async function shutdownDatabase (knex: Knex = knexInstance) {
   await knex.destroy();
 }
 
 export const sqlite3 = {
-  //StorageType
+  // StorageType
   setupDatabase,
   shutdownDatabase,
   foodLog: sqliteFoodLogStorage,
-  configuration: sqliteConfigurationStorage,
+  configuration: sqliteConfigurationStorage
 };

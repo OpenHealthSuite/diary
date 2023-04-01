@@ -7,7 +7,7 @@ import {
   NotFoundError,
   StorageError,
   SystemError,
-  ValidationError,
+  ValidationError
 } from "../types";
 
 type SqliteConfig = {
@@ -16,22 +16,22 @@ type SqliteConfig = {
   serialised_value: string;
 };
 
-function sqlFromGeneral(user_id: string, gen: Configuration): SqliteConfig {
+function sqlFromGeneral (userId: string, gen: Configuration): SqliteConfig {
   return {
-    user_id,
+    user_id: userId,
     id: gen.id,
-    serialised_value: JSON.stringify(gen.value),
+    serialised_value: JSON.stringify(gen.value)
   };
 }
 
-function generalFromSql(sql: SqliteConfig): Configuration {
+function generalFromSql (sql: SqliteConfig): Configuration {
   return {
     id: sql.id,
-    value: JSON.parse(sql.serialised_value),
+    value: JSON.parse(sql.serialised_value)
   };
 }
 
-export async function storeConfiguration(
+export async function storeConfiguration (
   userId: string,
   configuration: UpsertConfiguration,
   client = knexInstance
@@ -57,7 +57,7 @@ export async function storeConfiguration(
   }
 }
 
-export async function queryUserConfiguration(
+export async function queryUserConfiguration (
   userId: string,
   client = knexInstance
 ): Promise<Result<Configuration[], StorageError>> {
@@ -72,7 +72,7 @@ export async function queryUserConfiguration(
   }
 }
 
-export async function retrieveUserConfiguration(
+export async function retrieveUserConfiguration (
   userId: string,
   configurationId: string,
   client = knexInstance
@@ -93,7 +93,7 @@ export async function retrieveUserConfiguration(
   }
 }
 
-export async function deleteUserConfiguration(
+export async function deleteUserConfiguration (
   userId: string,
   configurationId: Configuration["id"],
   client = knexInstance

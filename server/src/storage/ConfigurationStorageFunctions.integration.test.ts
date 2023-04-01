@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 import { Configuration, MetricsConfiguration, SummaryConfiguration } from "../types";
 import { isNotFoundError, isValidationError } from "./types";
 import { configs } from "./_testConfigs";
-import { ConfigurationStorage } from "./types/Configuration";
 
 describe.each(configs)(
   "$name Configuration Storage Integration Tests",
@@ -29,9 +28,9 @@ describe.each(configs)(
         value: {
           calories: {
             label: "Calories",
-            priority: 0,
-          },
-        },
+            priority: 0
+          }
+        }
       };
       const response = await (
         config.storage.configuration.storeConfiguration as any
@@ -78,13 +77,13 @@ describe.each(configs)(
         value: {
           calories: {
             label: "Calories",
-            priority: 0,
-          },
-        },
+            priority: 0
+          }
+        }
       };
       const summary: SummaryConfiguration = {
         id: "summaries",
-        value: { showMetricSummary: ["calories"] },
+        value: { showMetricSummary: ["calories"] }
       };
       await (config.storage.configuration.storeConfiguration as any)(
         testUserId,
@@ -107,10 +106,9 @@ describe.each(configs)(
   }
 );
 
-
 describe.each(configs)(
   "$name ConfigurationStorageFunctions Validation",
-  ({ config: { storage: { configuration : storeConfig  } }}) => {
+  ({ config: { storage: { configuration: storeConfig } } }) => {
     describe("UpsertConfiguration", () => {
       const BAD_USER_IDS = [undefined, null, ""];
       const BAD_CONFIGS: { reason: string; config: Configuration }[] = [
@@ -118,8 +116,8 @@ describe.each(configs)(
           reason: "random key",
           config: {
             id: "not-a-real-config-key",
-            value: {},
-          } as any,
+            value: {}
+          } as any
         },
         {
           reason: "duplicate priority",
@@ -128,15 +126,15 @@ describe.each(configs)(
             value: {
               calories: {
                 label: "Calories",
-                priority: 0,
+                priority: 0
               },
               hydration: {
                 label: "Hydrations",
-                priority: 0,
-              },
-            },
-          },
-        },
+                priority: 0
+              }
+            }
+          }
+        }
       ];
       test.each(BAD_USER_IDS)("%s user id rejected", async (userId) => {
         const result = await storeConfig.storeConfiguration(userId as any, {
@@ -144,9 +142,9 @@ describe.each(configs)(
           value: {
             calories: {
               label: "Calories",
-              priority: 0,
-            },
-          },
+              priority: 0
+            }
+          }
         });
         expect(result.isErr()).toBeTruthy();
         expect(isValidationError(result._unsafeUnwrapErr())).toBeTruthy();

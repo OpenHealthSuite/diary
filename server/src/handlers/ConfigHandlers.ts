@@ -7,7 +7,7 @@ const configurationStorage = STORAGE.configuration;
 // TODO: This needs tests, however I'd like
 // to play with making them integration/constract tests rather
 // than testing individual handler functions
-export function buildRouter(router: Router): Router {
+export function buildRouter (router: Router): Router {
   return router
     .get("/config/:configId", getConfigHandler)
     .post("/config/:configId", saveConfigHandler);
@@ -29,12 +29,13 @@ const storageErrorHandler = (err: StorageError, res: Response) => {
   }
 };
 
-function getConfigHandler(req: Request, res: Response & { locals: OFDLocals }) {
+function getConfigHandler (req: Request, res: Response & { locals: OFDLocals }) {
   const { configId } = req.params;
   configurationStorage
     .retrieveUserConfiguration(res.locals.userId, configId as any)
     .then((configRes) => {
       configRes
+        // eslint-disable-next-line array-callback-return
         .map((config) => {
           res.contentType("json").send(config);
         })
@@ -42,19 +43,20 @@ function getConfigHandler(req: Request, res: Response & { locals: OFDLocals }) {
     });
 }
 
-function saveConfigHandler(
+function saveConfigHandler (
   req: Request,
   res: Response & { locals: OFDLocals }
 ) {
   const { configId } = req.params;
   const config: Configuration = {
     id: configId as any,
-    value: req.body,
+    value: req.body
   };
   configurationStorage
     .storeConfiguration(res.locals.userId, config)
     .then((configRes) => {
       configRes
+        // eslint-disable-next-line array-callback-return
         .map(() => {
           res.sendStatus(200);
         })

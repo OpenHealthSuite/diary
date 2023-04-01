@@ -6,14 +6,14 @@ describe("promMiddleware", () => {
     { path: "/api/someendpoint", type: "api", method: "POST", status: 200 },
     { path: "/api", type: "api", method: "PUT", status: 204 },
     { path: "/", type: "client", method: "DELETE", status: 204 },
-    { path: "/settings", type: "client", method: "GET", status: 500 },
+    { path: "/settings", type: "client", method: "GET", status: 500 }
   ];
   test.each(requests)(
     "Increments request counter",
     ({ path, type, method, status }) => {
       const fakeCounter = {
         labels: jest.fn().mockReturnThis(),
-        inc: jest.fn(),
+        inc: jest.fn()
       };
       const fakeNext = jest.fn();
 
@@ -37,7 +37,7 @@ describe("promMiddleware", () => {
   test("Ignores /metrics path", () => {
     const fakeCounter = {
       labels: jest.fn().mockReturnThis(),
-      inc: jest.fn(),
+      inc: jest.fn()
     };
     const fakeNext = jest.fn();
 

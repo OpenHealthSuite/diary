@@ -7,7 +7,7 @@ import {
   NotFoundError,
   StorageError,
   SystemError,
-  ValidationError,
+  ValidationError
 } from "../types";
 
 type CassandraConfig = {
@@ -16,22 +16,22 @@ type CassandraConfig = {
   serialised_value: string;
 };
 
-function sqlFromGeneral(user_id: string, gen: Configuration): CassandraConfig {
+function sqlFromGeneral (userId: string, gen: Configuration): CassandraConfig {
   return {
-    user_id,
+    user_id: userId,
     id: gen.id,
-    serialised_value: JSON.stringify(gen.value),
+    serialised_value: JSON.stringify(gen.value)
   };
 }
 
-function generalFromSql(sql: CassandraConfig): Configuration {
+function generalFromSql (sql: CassandraConfig): Configuration {
   return {
     id: sql.id,
-    value: JSON.parse(sql.serialised_value),
+    value: JSON.parse(sql.serialised_value)
   };
 }
 
-export async function storeConfiguration(
+export async function storeConfiguration (
   userId: string,
   configuration: UpsertConfiguration,
   client = CASSANDRA_CLIENT
@@ -57,7 +57,7 @@ export async function storeConfiguration(
   }
 }
 
-export async function queryUserConfiguration(
+export async function queryUserConfiguration (
   userId: string,
   client = CASSANDRA_CLIENT
 ): Promise<Result<Configuration[], StorageError>> {
@@ -80,7 +80,7 @@ export async function queryUserConfiguration(
   }
 }
 
-export async function retrieveUserConfiguration(
+export async function retrieveUserConfiguration (
   userId: string,
   configurationId: string,
   client = CASSANDRA_CLIENT
@@ -92,7 +92,7 @@ export async function retrieveUserConfiguration(
       [userId, configurationId],
       { prepare: true }
     );
-    if (result.rows.length == 0) {
+    if (result.rows.length === 0) {
       return err(new NotFoundError("No Config Found"));
     }
     const item = result.first();
@@ -105,7 +105,7 @@ export async function retrieveUserConfiguration(
   }
 }
 
-export async function deleteUserConfiguration(
+export async function deleteUserConfiguration (
   userId: string,
   configurationId: Configuration["id"],
   client = CASSANDRA_CLIENT
