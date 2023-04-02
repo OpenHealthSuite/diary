@@ -1,38 +1,38 @@
 <script lang="ts">
     import { metricsConfig, type MetricsConfig } from "src/stores";
-  import DailyLog from "../components/DailyLog.svelte";
-  import DaySelector from "../components/DaySelector.svelte";
-  import LogEntryInterface from "../components/LogEntryInterface.svelte";
-  import Modal from "../components/Modal.svelte";
+import DailyLog from "../components/DailyLog.svelte";
+import DaySelector from "../components/DaySelector.svelte";
+import LogEntryInterface from "../components/LogEntryInterface.svelte";
+import Modal from "../components/Modal.svelte";
     import { DEFAULT_METRICS } from "src/stores";
 
-  let modalOpen = false;
-  let logDay = new Date();
+let modalOpen = false;
+let logDay = new Date();
 
-  let metricConfig: MetricsConfig = DEFAULT_METRICS;
+let metricConfig: MetricsConfig = DEFAULT_METRICS;
 
-  metricsConfig.subscribe(val => {
-    metricConfig = val;
-  })
+metricsConfig.subscribe(val => {
+      metricConfig = val;
+});
 
-  const dateChange = (event) => logDay = event.detail;
+const dateChange = (event) => { logDay = event.detail; };
 
-  const dateWithCurrentTime = (date: Date) => {
-    return new Date(date.toISOString().split('T')[0] + 'T' + (new Date()).toISOString().split('T')[1])
-  }
+const dateWithCurrentTime = (date: Date) => {
+      return new Date(date.toISOString().split("T")[0] + "T" + (new Date()).toISOString().split("T")[1]);
+};
 </script>
 
 <DaySelector day={logDay} on:dateChange={dateChange} />
 <div class="controls-row">
   <button class="add-log-button" 
-    on:click={() => modalOpen = true}>Add Log</button>
+    on:click={() => { modalOpen = true; }}>Add Log</button>
 </div>
 
 <Modal bind:open={modalOpen}>
   {#if modalOpen}
   <div class="form-wrapper">
     <LogEntryInterface logTime={dateWithCurrentTime(logDay)} on:success={() => {
-      modalOpen = false
+      modalOpen = false;
       }}
       on:error={(event) => console.error(event.detail)}/>
   </div>

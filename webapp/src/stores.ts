@@ -4,7 +4,7 @@ import { apiFetch } from "src/lib/utilities";
 export const logUpdated = writable(new Date().toISOString());
 
 export const DEFAULT_METRICS = {
-  calories: { label: "Calories", priority: 0 },
+  calories: { label: "Calories", priority: 0 }
 };
 
 export type MetricsConfig = {
@@ -16,8 +16,7 @@ export const metricsConfig = writable({} as MetricsConfig);
 apiFetch("/config/metrics").then(async (res) => {
   switch (res.status) {
     case 200:
-      let mtrcs = await res.json();
-      metricsConfig.set(mtrcs.value);
+      metricsConfig.set((await res.json()).value);
       break;
     case 404:
       metricsConfig.set(DEFAULT_METRICS);
@@ -30,7 +29,7 @@ apiFetch("/config/metrics").then(async (res) => {
     if (mrtc) {
       apiFetch("/config/metrics", {
         method: "POST",
-        body: JSON.stringify(mrtc),
+        body: JSON.stringify(mrtc)
       });
     }
   });

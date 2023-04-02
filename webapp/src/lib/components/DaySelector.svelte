@@ -1,21 +1,21 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher } from "svelte";
     export let day: Date = new Date();
 
     const dispatch = createEventDispatcher();
 
     const dateUpdater = (event: any) => {
-        day = new Date(event.target.value);
-        dispatch('dateChange', day)
-    }
+      day = new Date(event.target.value);
+      dispatch("dateChange", day);
+    };
 </script>
 <div class="control-row">
     <button data-testid="backward-button"
         class="control-button" 
         on:click={() => {
-            day.setDate(day.getDate() - 1)
-            day = day
-            dispatch('dateChange', day)
+            day.setDate(day.getDate() - 1);
+            day = day;
+            dispatch("dateChange", day);
         }}>&lt;</button>
     <div>
         <label for="day-selected" hidden>Day Selected</label>
@@ -23,15 +23,15 @@
             name="day-selected"
             pattern="\d{4}-\d{2}-\d{2}"
             class="day-selector"
-            value={day.toISOString().split('T')[0]}
+            value={day.toISOString().split("T")[0]}
             on:change={dateUpdater}> 
     </div>
     <button data-testid="forward-button"  
         class="control-button" 
         on:click={() => {
-            day.setDate(day.getDate() + 1)
-            day = day
-            dispatch('dateChange', day)
+            day.setDate(day.getDate() + 1);
+            day = day;
+            dispatch("dateChange", day);
         }}>&gt;</button>
 </div>
 <style lang="scss">

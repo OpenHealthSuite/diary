@@ -11,16 +11,16 @@ import LogEntryInterface from "./LogEntryInterface.svelte";
 vi.mock("src/lib/utilities", () => {
   return {
     apiFetch: vi.fn(),
-    METRIC_MAX: 999999,
+    METRIC_MAX: 999999
   };
 });
 
 vi.mock("src/stores", () => {
   return {
     metricsConfig: writable({
-      calories: { label: "Calories", priority: 0 },
+      calories: { label: "Calories", priority: 0 }
     } as MetricsConfig),
-    logUpdated: writable(new Date().toISOString()),
+    logUpdated: writable(new Date().toISOString())
   };
 });
 
@@ -72,7 +72,7 @@ describe("Create Log", () => {
 
   const testTimes = [
     [15, 0],
-    [6, 5],
+    [6, 5]
   ];
 
   it.each(testTimes)(
@@ -92,18 +92,18 @@ describe("Create Log", () => {
         labels: [],
         time: {
           start: date.toISOString(),
-          end: endDate.toISOString(),
+          end: endDate.toISOString()
         },
         metrics: {
-          calories: caloriesInput,
-        },
+          calories: caloriesInput
+        }
       };
 
       const data = crypto.randomUUID();
 
       const response = {
         status: 200,
-        text: vi.fn().mockResolvedValue(data),
+        text: vi.fn().mockResolvedValue(data)
       };
 
       (apiFetch as Mock<any[], any>).mockResolvedValue(response);
@@ -111,7 +111,7 @@ describe("Create Log", () => {
       const { getByLabelText, getByText, component } =
         render(LogEntryInterface);
 
-      let componentOutput = undefined;
+      let componentOutput;
 
       component.$on("success", (e) => {
         componentOutput = e.detail;
@@ -119,7 +119,7 @@ describe("Create Log", () => {
 
       const name = getByLabelText("Log Name", { exact: false });
       const duration = getByLabelText("Duration (minutes)", {
-        exact: false,
+        exact: false
       });
       const calories = getByLabelText("Calories", { exact: false });
 
@@ -135,7 +135,7 @@ describe("Create Log", () => {
       await fireEvent.click(submitButton);
       expect(apiFetch).toBeCalledWith("/logs", {
         method: "POST",
-        body: JSON.stringify(expectedRequest),
+        body: JSON.stringify(expectedRequest)
       });
 
       await new Promise(process.nextTick);
@@ -163,18 +163,18 @@ describe("Create Log", () => {
         labels: [],
         time: {
           start: date.toISOString(),
-          end: endDate.toISOString(),
+          end: endDate.toISOString()
         },
         metrics: {
-          calories: caloriesInput,
-        },
+          calories: caloriesInput
+        }
       };
 
       const data = "Some error message";
 
       const response = {
         status: errorCode,
-        text: vi.fn().mockResolvedValue(data),
+        text: vi.fn().mockResolvedValue(data)
       };
 
       (apiFetch as Mock<any[], any>).mockResolvedValue(response);
@@ -182,7 +182,7 @@ describe("Create Log", () => {
       const { getByLabelText, getByText, component } =
         render(LogEntryInterface);
 
-      let componentOutput = undefined;
+      let componentOutput;
 
       component.$on("error", (e) => {
         componentOutput = e.detail;
@@ -190,7 +190,7 @@ describe("Create Log", () => {
 
       const name = getByLabelText("Log Name", { exact: false });
       const duration = getByLabelText("Duration (minutes)", {
-        exact: false,
+        exact: false
       });
       const calories = getByLabelText("Calories", { exact: false });
 
@@ -206,7 +206,7 @@ describe("Create Log", () => {
       await fireEvent.click(submitButton);
       expect(apiFetch).toBeCalledWith("/logs", {
         method: "POST",
-        body: JSON.stringify(expectedRequest),
+        body: JSON.stringify(expectedRequest)
       });
 
       await new Promise(process.nextTick);
@@ -230,11 +230,11 @@ describe("Create Log", () => {
       labels: [],
       time: {
         start: date.toISOString(),
-        end: endDate.toISOString(),
+        end: endDate.toISOString()
       },
       metrics: {
-        calories: caloriesInput,
-      },
+        calories: caloriesInput
+      }
     };
 
     const data = "Something went wrong";
@@ -243,7 +243,7 @@ describe("Create Log", () => {
 
     const { getByLabelText, getByText, component } = render(LogEntryInterface);
 
-    let componentOutput = undefined;
+    let componentOutput;
 
     component.$on("error", (e) => {
       componentOutput = e.detail;
@@ -265,7 +265,7 @@ describe("Create Log", () => {
     await fireEvent.click(submitButton);
     expect(apiFetch).toBeCalledWith("/logs", {
       method: "POST",
-      body: JSON.stringify(expectedRequest),
+      body: JSON.stringify(expectedRequest)
     });
 
     await new Promise(process.nextTick);
@@ -294,15 +294,15 @@ describe("Edit Log", () => {
       labels: [],
       time: {
         start: startTime,
-        end: endTime,
+        end: endTime
       },
       metrics: {
-        calories: 345,
-      },
+        calories: 345
+      }
     };
 
     const { getByLabelText } = render(LogEntryInterface, {
-      log: inputLog,
+      log: inputLog
     });
 
     const name = getByLabelText("Log Name", { exact: false });
@@ -310,7 +310,7 @@ describe("Edit Log", () => {
     // const dateInput = getByTestId("date-picker");
     // const time = getByLabelText("Time");
     const durationInput = getByLabelText("Duration (minutes)", {
-      exact: false,
+      exact: false
     });
     const calories = getByLabelText("Calories", { exact: false });
 
@@ -344,11 +344,11 @@ describe("Edit Log", () => {
       labels: [],
       time: {
         start: startTime,
-        end: endDate,
+        end: endDate
       },
       metrics: {
-        calories: 345,
-      },
+        calories: 345
+      }
     };
 
     const expectedRequest = {
@@ -357,27 +357,27 @@ describe("Edit Log", () => {
       labels: [],
       time: {
         start: startTime.toISOString(),
-        end: endTime.toISOString(),
+        end: endTime.toISOString()
       },
       metrics: {
-        calories: caloriesInput,
-      },
+        calories: caloriesInput
+      }
     };
 
     const data = inputLog.id;
 
     const response = {
       status: 200,
-      text: vi.fn().mockResolvedValue(data),
+      text: vi.fn().mockResolvedValue(data)
     };
 
     (apiFetch as Mock<any[], any>).mockResolvedValue(response);
 
     const { getByLabelText, getByText, component } = render(LogEntryInterface, {
-      log: inputLog,
+      log: inputLog
     });
 
-    let componentOutput = undefined;
+    let componentOutput;
 
     component.$on("success", (e) => {
       componentOutput = e.detail;
@@ -385,7 +385,7 @@ describe("Edit Log", () => {
 
     const name = getByLabelText("Log Name", { exact: false });
     const durationInputElm = getByLabelText("Duration (minutes)", {
-      exact: false,
+      exact: false
     });
     const calories = getByLabelText("Calories", { exact: false });
 

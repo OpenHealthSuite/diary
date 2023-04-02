@@ -1,40 +1,39 @@
-import DaySelector from './DaySelector.svelte'
-import { vi } from 'vitest';
-import { render, fireEvent } from '@testing-library/svelte'
+import DaySelector from "./DaySelector.svelte";
+import { vi } from "vitest";
+import { render, fireEvent } from "@testing-library/svelte";
 
 describe("DaySelector", () => {
-    it("without date prop :: uses system time as base", async () => {
-        const date = new Date(2018, 1, 1, 13, 15, 23)
-        vi.setSystemTime(date)
+  it("without date prop :: uses system time as base", async () => {
+    const date = new Date(2018, 1, 1, 13, 15, 23);
+    vi.setSystemTime(date);
 
-        const { getByLabelText, getByText, getByTestId, component } = render(DaySelector)
+    const { getByTestId, component } = render(DaySelector);
 
-        let componentOutput = undefined;
-  
-        component.$on('dateChange', e => { componentOutput = e.detail })
+    let componentOutput;
 
-        const forwardButton = getByTestId('forward-button')
-        const backwardButton = getByTestId('backward-button')
+    component.$on("dateChange", e => { componentOutput = e.detail; });
 
-        const movingDate = new Date(date);
-        movingDate.setDate(movingDate.getDate() + 1)
+    const forwardButton = getByTestId("forward-button");
+    const backwardButton = getByTestId("backward-button");
 
-        await fireEvent.click(forwardButton)
+    const movingDate = new Date(date);
+    movingDate.setDate(movingDate.getDate() + 1);
 
-        // await new Promise(process.nextTick);
+    await fireEvent.click(forwardButton);
 
-        expect((componentOutput as Date).toISOString().split('T')[0])
-            .toBe(movingDate.toISOString().split('T')[0]);
+    // await new Promise(process.nextTick);
 
-        movingDate.setDate(movingDate.getDate() - 2)
+    expect((componentOutput as Date).toISOString().split("T")[0])
+      .toBe(movingDate.toISOString().split("T")[0]);
 
-        await fireEvent.click(backwardButton)
-        await fireEvent.click(backwardButton)
+    movingDate.setDate(movingDate.getDate() - 2);
 
-        // await new Promise(process.nextTick);
+    await fireEvent.click(backwardButton);
+    await fireEvent.click(backwardButton);
 
-        expect((componentOutput as Date).toISOString().split('T')[0])
-            .toBe(movingDate.toISOString().split('T')[0]);
-  
-    })
-})
+    // await new Promise(process.nextTick);
+
+    expect((componentOutput as Date).toISOString().split("T")[0])
+      .toBe(movingDate.toISOString().split("T")[0]);
+  });
+});

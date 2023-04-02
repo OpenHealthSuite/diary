@@ -11,16 +11,16 @@ import DailyLog from "./DailyLog.svelte";
 vi.mock("src/lib/utilities", () => {
   return {
     apiFetch: vi.fn(),
-    METRIC_MAX: 999999,
+    METRIC_MAX: 999999
   };
 });
 
 vi.mock("src/stores", () => {
   return {
     metricsConfig: writable({
-      calories: { label: "Calories", priority: 0 },
+      calories: { label: "Calories", priority: 0 }
     } as MetricsConfig),
-    logUpdated: writable(new Date().toISOString()),
+    logUpdated: writable(new Date().toISOString())
   };
 });
 
@@ -35,13 +35,13 @@ describe("Daily Log", () => {
 
     const response = {
       status: 200,
-      json: vi.fn().mockResolvedValue(data),
+      json: vi.fn().mockResolvedValue(data)
     };
 
     (apiFetch as Mock<any[], any>).mockResolvedValue(response);
 
     render(DailyLog, {
-      day: testDate,
+      day: testDate
     });
 
     const expectedStart = new Date(testDate.toISOString().split("T")[0]);
@@ -65,7 +65,7 @@ describe("Daily Log", () => {
 
       const response = {
         status: 200,
-        json: vi.fn().mockResolvedValue(data),
+        json: vi.fn().mockResolvedValue(data)
       };
 
       let promiseResolve;
@@ -74,7 +74,7 @@ describe("Daily Log", () => {
         new Promise((resolve) => (promiseResolve = resolve))
       );
       const { getByTestId, queryByTestId } = render(DailyLog, {
-        day: testDate,
+        day: testDate
       });
 
       expect(getByTestId("loading-indicator")).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe("Daily Log", () => {
         new Promise((resolve, reject) => (promiseReject = reject))
       );
       const { getByTestId, queryByTestId } = render(DailyLog, {
-        day: testDate,
+        day: testDate
       });
 
       expect(getByTestId("loading-indicator")).toBeInTheDocument();
@@ -116,10 +116,10 @@ describe("Daily Log", () => {
 
       (apiFetch as Mock<any[], any>).mockResolvedValue({
         status,
-        json: vi.fn().mockResolvedValue([]),
+        json: vi.fn().mockResolvedValue([])
       });
       const { getByTestId } = render(DailyLog, {
-        day: testDate,
+        day: testDate
       });
 
       await new Promise(process.nextTick);
@@ -132,7 +132,7 @@ describe("Daily Log", () => {
 
       (apiFetch as Mock<any[], any>).mockRejectedValue({});
       const { getByTestId } = render(DailyLog, {
-        day: testDate,
+        day: testDate
       });
 
       await new Promise(process.nextTick);
@@ -153,13 +153,13 @@ describe("Daily Log", () => {
 
       const response = {
         status: 200,
-        json: vi.fn().mockResolvedValue(data),
+        json: vi.fn().mockResolvedValue(data)
       };
 
       (apiFetch as Mock<any[], any>).mockResolvedValue(response);
 
       const { getByText } = render(DailyLog, {
-        day: testDate,
+        day: testDate
       });
 
       await new Promise(process.nextTick);
@@ -177,11 +177,11 @@ describe("Daily Log", () => {
           labels: ["label one", "label two"],
           time: {
             start: new Date(2017, 8, 10, 11, 0, 0),
-            end: new Date(2017, 8, 10, 11, 30, 0),
+            end: new Date(2017, 8, 10, 11, 30, 0)
           },
           metrics: {
-            calories: 500,
-          },
+            calories: 500
+          }
         },
         {
           id: crypto.randomUUID(),
@@ -189,11 +189,11 @@ describe("Daily Log", () => {
           labels: ["label one", "label two"],
           time: {
             start: new Date(2017, 8, 10, 10, 20, 0),
-            end: new Date(2017, 8, 10, 10, 50, 0),
+            end: new Date(2017, 8, 10, 10, 50, 0)
           },
           metrics: {
-            calories: 500,
-          },
+            calories: 500
+          }
         },
         {
           id: crypto.randomUUID(),
@@ -201,23 +201,23 @@ describe("Daily Log", () => {
           labels: ["label one", "label two"],
           time: {
             start: new Date(2017, 8, 10, 11, 15, 0),
-            end: new Date(2017, 8, 10, 11, 30, 0),
+            end: new Date(2017, 8, 10, 11, 30, 0)
           },
           metrics: {
-            calories: 500,
-          },
-        },
+            calories: 500
+          }
+        }
       ];
 
       const response = {
         status: 200,
-        json: vi.fn().mockResolvedValue(data),
+        json: vi.fn().mockResolvedValue(data)
       };
 
       (apiFetch as Mock<any[], any>).mockResolvedValue(response);
 
       const { getByTestId } = render(DailyLog, {
-        day: testDate,
+        day: testDate
       });
 
       await new Promise(process.nextTick);

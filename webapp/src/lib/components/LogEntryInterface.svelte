@@ -1,102 +1,106 @@
 <script lang="ts">
-    import { logUpdated, metricsConfig, type MetricsConfig } from 'src/stores';
-    import { createEventDispatcher } from 'svelte';
-    import type { FoodLogEntry } from '../types/FoodLogEntry';
+    import { logUpdated, metricsConfig, type MetricsConfig } from "src/stores";
+    import { createEventDispatcher } from "svelte";
+    import type { FoodLogEntry } from "../types/FoodLogEntry";
     import { apiFetch, METRIC_MAX } from "../utilities";
     export let logTime = new Date();
 
     let metricConfig: MetricsConfig = {};
 
     metricsConfig.subscribe(val => {
-        metricConfig = val;
-    })
+      metricConfig = val;
+    });
 
     export let log: FoodLogEntry = {
-        id: undefined,
-        name: "",
-        labels: [],
-        time: {
-            start: undefined,
-            end: undefined
-        },
-        metrics: Object.entries(metricConfig).reduce((acc, [key]) => {
-            acc[key] = 0;
-            return acc;
-        }, {})
-    }
+      id: undefined,
+      name: "",
+      labels: [],
+      time: {
+        start: undefined,
+        end: undefined
+      },
+      metrics: Object.entries(metricConfig).reduce((acc, [key]) => {
+        acc[key] = 0;
+        return acc;
+      }, {})
+    };
 
     const dispatch = createEventDispatcher();
 
     let name = log.name;
-    let startTime = log.time.start ? new Date(log.time.start) : logTime;
+    const startTime = log.time.start ? new Date(log.time.start) : logTime;
 
-    let duration = log.time.end && log.time.start ? 
-        ((new Date(log.time.end).getTime()) - (new Date(log.time.start).getTime())) / 1000 / 60 : 1;
+    let duration = log.time.end && log.time.start
+      ? ((new Date(log.time.end).getTime()) - (new Date(log.time.start).getTime())) / 1000 / 60
+      : 1;
 
-    let [dateString] = startTime.toISOString().split('T')
+    let [dateString] = startTime.toISOString().split("T");
 
-    let timeString = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}`;
+    let timeString = `${String(startTime.getHours()).padStart(2, "0")}:${String(startTime.getMinutes()).padStart(2, "0")}`;
 
     let loading = false;
 
     const clampMetrics = () => {
-        log.metrics = Object.entries(log.metrics).reduce((acc, [key, val]) => {
-            return {...acc, [key]: Math.min(
-                METRIC_MAX,
-                val === null || val === undefined ? 0 : val
-            )}
-        },{})
-    }
+      log.metrics = Object.entries(log.metrics).reduce((acc, [key, val]) => {
+        return {
+          ...acc,
+          [key]: Math.min(
+            METRIC_MAX,
+            val === null || val === undefined ? 0 : val
+          )
+        };
+      }, {});
+    };
 
     const submitLog = () => {
-        clampMetrics();
-        const logTime = new Date(dateString+'T'+timeString)
-        const endTime = new Date(logTime)
-        endTime.setMinutes(endTime.getMinutes() + duration)
-        loading = true;
-        apiFetch(log.id ? '/logs/' + log.id : '/logs', {
-            method: log.id ? 'PUT' : 'POST',
-            body: JSON.stringify({
-                id: log.id,
-                name,
-                labels: [],
-                time: {
-                    start: logTime,
-                    end: endTime.toISOString()
-                },
-                metrics: log.metrics
-            })
-        }).then((response) => { 
-            if (response.status === 200) {
-                return response.text()
-            }
-            throw new Error() 
+      clampMetrics();
+      const logTime = new Date(dateString + "T" + timeString);
+      const endTime = new Date(logTime);
+      endTime.setMinutes(endTime.getMinutes() + duration);
+      loading = true;
+      apiFetch(log.id ? "/logs/" + log.id : "/logs", {
+        method: log.id ? "PUT" : "POST",
+        body: JSON.stringify({
+          id: log.id,
+          name,
+          labels: [],
+          time: {
+            start: logTime,
+            end: endTime.toISOString()
+          },
+          metrics: log.metrics
         })
-            .then(guid => dispatch('success', guid))
-            .catch(err => dispatch('error', "An unknown error occured"))
-            .finally(() => {
-                loading = false;
-                logUpdated.set(new Date().toISOString())
-            });
-    }
+      }).then((response) => {
+        if (response.status === 200) {
+          return response.text();
+        }
+        throw new Error();
+      })
+        .then(guid => dispatch("success", guid))
+        .catch(() => dispatch("error", "An unknown error occured"))
+        .finally(() => {
+          loading = false;
+          logUpdated.set(new Date().toISOString());
+        });
+    };
 
     const deleteLog = (logId: string) => {
-        loading = true;
-        apiFetch('/logs/' + logId , {
-            method: 'DELETE',
-        }).then((response) => { 
-            if (response.status === 204) {
-                return;
-            }
-            throw new Error() 
-        })
-        .then(() => dispatch('success', undefined))
-        .catch(() => dispatch('error', "An unknown error occured"))
+      loading = true;
+      apiFetch("/logs/" + logId, {
+        method: "DELETE"
+      }).then((response) => {
+        if (response.status === 204) {
+          return;
+        }
+        throw new Error();
+      })
+        .then(() => dispatch("success", undefined))
+        .catch(() => dispatch("error", "An unknown error occured"))
         .finally(() => {
-            loading = false;
-            logUpdated.set(new Date().toISOString())
+          loading = false;
+          logUpdated.set(new Date().toISOString());
         });
-    }
+    };
 </script>
 
 <div class="form-container">

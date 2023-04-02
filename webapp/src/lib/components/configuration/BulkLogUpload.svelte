@@ -1,15 +1,16 @@
 <script lang="ts">
 import type { FoodLogEntry } from "src/lib/types/FoodLogEntry";
 import Modal from "../Modal.svelte";
-import { parse } from "csv-parse/sync"
+import { parse } from "csv-parse/sync";
 import { apiFetch } from "src/lib/utilities";
 
 export let modalOpen = false;
 
-let files: FileList = undefined;
+// eslint-disable-next-line no-undef
+let files: FileList;
 
 let preparing = false;
-let parseError = undefined;
+let parseError;
 
 let uploaded = 0;
 let errors = 0;
@@ -28,28 +29,28 @@ const filesUpdated = async () => {
     editLogs = [];
     uploaded = 0;
     errors = 0;
-    for (let file of files) {
-        const filedata = await file.text();
-        const records = parse(filedata, {
-          columns: true,
-          skip_empty_lines: true,
-        }).map((x: any) => {
-          let log = {
-            ...x,
-            time: {
-              start: x.timeStart,
-              end: x.timeEnd
-            },
-            metrics: x.metrics ? JSON.parse(x.metrics) : {},
-            labels: x.labels ? JSON.parse(x.labels) : [],
-          };
-          delete log.timeStart;
-          delete log.timeEnd;
-          return log;
-        }) as FoodLogEntry[];
-        logs = [...logs, ...records];
+    for (const file of files) {
+      const filedata = await file.text();
+      const records = parse(filedata, {
+        columns: true,
+        skip_empty_lines: true
+      }).map((x: any) => {
+        const log = {
+          ...x,
+          time: {
+            start: x.timeStart,
+            end: x.timeEnd
+          },
+          metrics: x.metrics ? JSON.parse(x.metrics) : {},
+          labels: x.labels ? JSON.parse(x.labels) : []
+        };
+        delete log.timeStart;
+        delete log.timeEnd;
+        return log;
+      }) as FoodLogEntry[];
+      logs = [...logs, ...records];
     }
-    for (let log of logs) {
+    for (const log of logs) {
       if (log.id) {
         const existing = await apiFetch("/logs/" + log.id);
         if (existing.status === 200) {
@@ -67,36 +68,36 @@ const filesUpdated = async () => {
     parseError = ex.message;
   }
   preparing = false;
-}
+};
 
 const uploadLogs = async () => {
   uploaded = 0;
   errors = 0;
-  for (let newLog of newLogs) {
-    apiFetch('/logs', {
-            method: 'POST',
-            body: JSON.stringify(newLog)
-        }).then((response) => { 
-            if (response.status === 200) {
-                uploaded += 1;
-            } else {
-                errors += 1;
-            }
-        });
+  for (const newLog of newLogs) {
+    apiFetch("/logs", {
+      method: "POST",
+      body: JSON.stringify(newLog)
+    }).then((response) => {
+      if (response.status === 200) {
+        uploaded += 1;
+      } else {
+        errors += 1;
+      }
+    });
   }
-  for (let editLog of editLogs) {
-    apiFetch('/logs/' + editLog.id , {
-            method: 'PUT',
-            body: JSON.stringify(editLog)
-        }).then((response) => { 
-            if (response.status === 200) {
-                uploaded += 1;
-            } else {
-                errors += 1;
-            }
-        });
+  for (const editLog of editLogs) {
+    apiFetch("/logs/" + editLog.id, {
+      method: "PUT",
+      body: JSON.stringify(editLog)
+    }).then((response) => {
+      if (response.status === 200) {
+        uploaded += 1;
+      } else {
+        errors += 1;
+      }
+    });
   }
-}
+};
 
 </script>
 
@@ -109,7 +110,7 @@ const uploadLogs = async () => {
     <div>Error parsing file!</div>
     <div>{parseError}</div>
   {/if}
-  {#if !preparing && !parseError && uploaded == 0 && logs.length > 0}
+  {#if !preparing && !parseError && uploaded === 0 && logs.length > 0}
     <ul>
       <li>{logs.length} logs to upload</li>
       <li>{newLogs.length} logs are new (these logs will have new ids)</li>

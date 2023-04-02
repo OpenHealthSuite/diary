@@ -1,13 +1,16 @@
-function unauthorisedCatcher(res: Response) {
+function unauthorisedCatcher (res: Response) {
   if (res.status === 403 || res.status === 401) {
     // We reload the page here so we relog
+    // eslint-disable-next-line no-undef
     location.reload();
   }
   return res;
 }
 
-export function apiFetch(
+export function apiFetch (
+  // eslint-disable-next-line no-undef
   input: Partial<RequestInfo>,
+  // eslint-disable-next-line no-undef
   init?: RequestInit,
   fetchFn = fetch
 ): Promise<Response> {
@@ -22,8 +25,8 @@ export function apiFetch(
               "Content-Type":
                 init.headers && init.headers["Content-Type"]
                   ? init.headers["Content-Type"]
-                  : "application/json",
-            },
+                  : "application/json"
+            }
           }
         : undefined
     ).then(unauthorisedCatcher);
@@ -31,7 +34,8 @@ export function apiFetch(
   return fetchFn(
     {
       ...input,
-      url: input.url.startsWith("/api") ? input.url : "/api" + input.url,
+      url: input.url.startsWith("/api") ? input.url : "/api" + input.url
+    // eslint-disable-next-line no-undef
     } as RequestInfo,
     init
       ? {
@@ -41,8 +45,8 @@ export function apiFetch(
             "Content-Type":
               init.headers && init.headers["Content-Type"]
                 ? init.headers["Content-Type"]
-                : "application/json",
-          },
+                : "application/json"
+          }
         }
       : undefined
   ).then(unauthorisedCatcher);

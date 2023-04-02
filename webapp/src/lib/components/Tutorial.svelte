@@ -4,36 +4,34 @@
   import Modal from "./Modal.svelte";
 
   export let modalOpen = false;
-
-  let tutorialMetrics = undefined;
-
+  /* eslint-disable */
   enum TutorialStages {
     Intro,
     Metrics,
     Log,
     Complete
   }
-
+  /* eslint-enable */
   let stage = 0;
 
-  let icons = [' - ',' - ',' - ',' - ']
+  let icons = [" - ", " - ", " - ", " - "];
 
   $: {
-    let newIcons = [];
+    const newIcons = [];
     for (let i = 0; i <= TutorialStages.Complete; i++) {
-      newIcons.push(i <= stage ? ' * ' : ' - ')
+      newIcons.push(i <= stage ? " * " : " - ");
     }
     icons = newIcons;
   }
 
   const progress = () => {
     if (stage < TutorialStages.Complete) {
-      stage = stage + 1
+      stage = stage + 1;
     } else {
       modalOpen = false;
       stage = 0;
     }
-  }
+  };
 
   const nextButtonLabelText = (stg: number) => {
     if (stage === TutorialStages.Complete) {
@@ -43,20 +41,20 @@
       return "Skip";
     }
     return "Next";
-  }
+  };
 </script>
 
 <Modal bind:open={modalOpen}>
   <div class="tutorial-content">
-    {#if stage == TutorialStages.Intro}
+    {#if stage === TutorialStages.Intro}
       <h2>Welcome!</h2>
       <p>This brief tutorial will run you through the key concepts of OpenFoodDiary.</p>
-    {:else if stage == TutorialStages.Metrics}
+    {:else if stage === TutorialStages.Metrics}
       <h2>Enter your metrics!</h2>
       <p>Enter the metrics you want to track, like Calories, Sugar, Satiation or Enjoyment.</p>
       <p class="note">Note: You can choose to track no metrics at all.</p>
       <MetricsConfiguration/>
-    {:else if stage == TutorialStages.Log}
+    {:else if stage === TutorialStages.Log}
       <h2>Add a Log!</h2>
       <p class="note">Note: You can delete this log later - it's not permanent.</p>
       <LogEntryInterface on:success={progress}/>
@@ -66,9 +64,9 @@
     {/if}
   </div>
   <div class="tutorial-step-controls">
-    <button disabled={stage == 0} on:click={() => {stage = stage - 1}}>Back</button>
+    <button disabled={stage === 0} on:click={() => { stage = stage - 1; }}>Back</button>
     <div>{#each icons as icon}{icon}{/each}</div>
-    <button on:click={progress} class={stage == TutorialStages.Log ? "skip-button" : ""}>{nextButtonLabelText(stage)}</button>
+    <button on:click={progress} class={stage === TutorialStages.Log ? "skip-button" : ""}>{nextButtonLabelText(stage)}</button>
   </div>
 </Modal>
 

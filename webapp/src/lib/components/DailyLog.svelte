@@ -1,19 +1,21 @@
 <script lang="ts">
-    import Modal from './Modal.svelte';
-    import { apiFetch } from 'src/lib/utilities/index';
-    import type { FoodLogEntry } from '../types/FoodLogEntry';
-    import LogEntryInterface from './LogEntryInterface.svelte';
-    import { logUpdated, metricsConfig, type MetricsConfig } from 'src/stores';
+    import Modal from "./Modal.svelte";
+    import { apiFetch } from "src/lib/utilities/index";
+    import type { FoodLogEntry } from "../types/FoodLogEntry";
+    import LogEntryInterface from "./LogEntryInterface.svelte";
+    import { logUpdated, metricsConfig, type MetricsConfig } from "src/stores";
+    
+    let topMetric;
     export let day: Date;
     let metricConfig: MetricsConfig = {};
 
     metricsConfig.subscribe(val => {
-        metricConfig = val;
-    })
+      metricConfig = val;
+    });
 
     $: topMetric = Object.entries(metricConfig)
-        .sort((a, b) => a[1].priority - b[1].priority)[0]
-        
+      .sort((a, b) => a[1].priority - b[1].priority)[0];
+    
     let loading = true;
     let error = false;
     let modalOpen = false;
@@ -22,35 +24,35 @@
     let dayData: FoodLogEntry[] = [];
 
     const getStartDate = (inDate: Date) => {
-        return new Date(inDate.toISOString().split("T")[0]);
-    }
+      return new Date(inDate.toISOString().split("T")[0]);
+    };
 
     const getEndDate = (inDate: Date) => {
-        const endDate = new Date(inDate.toISOString().split("T")[0])
-        endDate.setDate(endDate.getDate() + 1);
-        return endDate;
+      const endDate = new Date(inDate.toISOString().split("T")[0]);
+      endDate.setDate(endDate.getDate() + 1);
+      return endDate;
+    };
+
+    function updateData (inputDay: Date) {
+      loading = true;
+      error = false;
+      apiFetch(`/logs?startDate=${getStartDate(inputDay).toISOString()}&endDate=${getEndDate(inputDay).toISOString()}`)
+        .then(res => res.status === 200 ? res.json() : new Error())
+        .then(data => {
+          dayData = data.sort((a, b) => new Date(a.time.start).getTime() - new Date(b.time.start).getTime());
+        })
+        .catch(() => { error = true; })
+        .finally(() => { loading = false; });
     }
 
-    function updateData(inputDay: Date) {
-        loading = true;
-        error = false;
-        apiFetch(`/logs?startDate=${getStartDate(inputDay).toISOString()}&endDate=${getEndDate(inputDay).toISOString()}`)
-            .then(res => res.status === 200 ? res.json() : new Error())
-            .then(data => {
-                dayData = data.sort((a, b) => new Date(a.time.start).getTime() - new Date(b.time.start).getTime())
-            })
-            .catch(() => error = true)
-            .finally(() => loading = false)
-    }
-
-    $: { 
-        dayData = []
-        updateData(day)
+    $: {
+      dayData = [];
+      updateData(day);
     }
 
     logUpdated.subscribe(() => {
-        updateData(day);
-    })
+      updateData(day);
+    });
 </script>
 <div class="logs-area-container">
     <div class="logs-area">
@@ -76,7 +78,7 @@
                 {#if topMetric}
                     <h2 data-testid="foodlog-{i}-{topMetric[0]}">{log.metrics[topMetric[0]]?.toLocaleString() ?? 0} {topMetric[1].label}</h2>
                 {/if}
-                <h5 data-testid="foodlog-{i}">{new Date(log.time.start).toTimeString().split(' ')[0]} - {log.name}</h5>
+                <h5 data-testid="foodlog-{i}">{new Date(log.time.start).toTimeString().split(" ")[0]} - {log.name}</h5>
                 <button class='log-button'
                     on:click={() => {
                         modalOpen = true;
@@ -96,7 +98,7 @@
 <Modal bind:open={modalOpen}>
     {#if modalOpen}
         <LogEntryInterface log={editingLog} on:success={() => {
-        modalOpen = false
+        modalOpen = false;
         }}
         on:error={(event) => console.error(event.detail)}/>
     {/if}

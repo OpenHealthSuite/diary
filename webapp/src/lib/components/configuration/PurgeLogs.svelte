@@ -5,11 +5,11 @@ import { apiFetch } from "src/lib/utilities";
 export let modalOpen = false;
 
 let purging = false;
-let error: string | undefined = undefined;
+let error: string | undefined;
 
 const purgeLogs = () => {
   purging = true;
-  apiFetch("/logs", { method: "DELETE"}).then((res) => {
+  apiFetch("/logs", { method: "DELETE" }).then((res) => {
     if (res.status === 200 || res.status === 204) {
       purging = false;
       modalOpen = false;
@@ -17,10 +17,10 @@ const purgeLogs = () => {
       purging = false;
       res.text().then(err => {
         error = err;
-      })
+      });
     }
-  })
-}
+  });
+};
 
 </script>
 

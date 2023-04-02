@@ -1,12 +1,12 @@
 <script lang="ts">
     export let open: boolean = false;
-    export let complete: { text: string; action: () => void } | undefined =
-        undefined;
+    // eslint-disable-next-line no-undef-init
+    export let complete: { text: string; action: () => void } | undefined = undefined;
     export let hideClose: boolean = false;
     const dismiss = () => (open = false);
     const dismissComplete = (fnr: () => void) => {
-        fnr();
-        open = false;
+      fnr();
+      open = false;
     };
 </script>
 

@@ -1,20 +1,19 @@
 <script lang="ts">
-
 import MetricsConfiguration from "../components/configuration/MetricsConfiguration.svelte";
 import BulkLogUpload from "../components/configuration/BulkLogUpload.svelte";
 import { apiFetch } from "../utilities";
 import PurgeLogs from "../components/configuration/PurgeLogs.svelte";
-  import Tutorial from "../components/Tutorial.svelte";
+import Tutorial from "../components/Tutorial.svelte";
 
-let logoutEndpoint = undefined;
+let logoutEndpoint;
 
 let [uploadOpen, purgeOpen, tutorialOpen] = [false, false, false];
 
 apiFetch("/logout-endpoint").then(res => {
   res.json().then(({ url }: { url: string }) => {
     logoutEndpoint = url;
-  })
-})
+  });
+});
 </script>
 <h1 style="width: 100%; text-align: center;">Config</h1>
 <div class="container">
@@ -44,10 +43,10 @@ apiFetch("/logout-endpoint").then(res => {
   <div class="config-container">
       <h2>User Actions</h2>
       <div class="config-content button-stack">
-        {#if logoutEndpoint != undefined}
+        {#if logoutEndpoint !== undefined}
         <a href={logoutEndpoint}><button>Logout</button></a>
         {/if}
-        <button on:click={() => tutorialOpen = true}>Tutorial</button>
+        <button on:click={() => { tutorialOpen = true; }}>Tutorial</button>
         <Tutorial bind:modalOpen={tutorialOpen} />
       </div>
   </div>
