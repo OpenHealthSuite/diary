@@ -4,9 +4,6 @@ import { OFDLocals } from "../middlewares";
 import { Configuration } from "../types";
 const configurationStorage = STORAGE.configuration;
 
-// TODO: This needs tests, however I'd like
-// to play with making them integration/constract tests rather
-// than testing individual handler functions
 export function buildRouter (router: Router): Router {
   return router
     .get("/config/:configId", getConfigHandler)
