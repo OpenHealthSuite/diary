@@ -1,5 +1,5 @@
 image: ghcr.io/openhealthsuite/diary
-tag: latest
+tag: v0.3.9
 replicas: 3
 signoutUrl: /oauth2/sign_out
 cassandra:

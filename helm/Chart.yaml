@@ -2,5 +2,4 @@ apiVersion: v2
 name: openfooddiary
 description: Application for tracking calories
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.3.9
