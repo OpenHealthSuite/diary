@@ -165,6 +165,13 @@ describe.each(configs)(
       );
       const centerItemId = result._unsafeUnwrap();
 
+      const result2 = await (config.storage.foodLog.storeFoodLog as any)(
+        testUserId + "alt",
+        centerLog,
+        testClient
+      );
+      const altCenterItemId = result2._unsafeUnwrap();
+
       const future = await (config.storage.foodLog.storeFoodLog as any)(
         testUserId,
         futureLog,
@@ -180,6 +187,7 @@ describe.each(configs)(
       const firstTest = startingQueryResult._unsafeUnwrap();
       expect(firstTest.length).toBe(1);
       expect(firstTest[0].id).toBe(centerItemId);
+      expect(firstTest[0].id).not.toBe(altCenterItemId);
 
       const pastQueryResult = await (
         config.storage.foodLog.queryFoodLogs as any

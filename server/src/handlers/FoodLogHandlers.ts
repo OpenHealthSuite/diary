@@ -195,6 +195,7 @@ export async function exportLogsHandler (
   next: NextFunction,
   bulkExportFoodLogs: BulkExportFoodLogs = foodStorageProvider.bulkExportFoodLogs
 ) {
+  console.log("log export :: user id: '" + res.locals.userId + "'");
   const tempFile = await bulkExportFoodLogs(
     res.locals.userId
   );
