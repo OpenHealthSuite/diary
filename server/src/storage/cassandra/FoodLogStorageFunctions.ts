@@ -235,31 +235,39 @@ export const bulkExportFoodLogs: CassandraBulkExportFoodLogsFunction = async (
       }
     );
 
-    let logs: FoodLogEntry[] = [];
-
-    const result = await cassandraClient.execute(
-      `SELECT CAST(id as text) as id, name, labels, time, metrics
-            FROM openfooddiary.user_foodlogentry
-            WHERE userId = ?;`,
-      [userId],
-      { prepare: true }
-    );
-    logs = result.rows.map((row) => {
-      const subCon: any = {};
-      row.keys().forEach((key) => (subCon[key] = row.get(key)));
-      return subCon;
-    }) as FoodLogEntry[];
-    const exportedLogs = logs
-      .map(bulkFromResult)
-      .map((log) => [
-        log.id,
-        log.name,
-        log.labels,
-        log.timeStart,
-        log.timeEnd,
-        log.metrics
-      ]);
-    fs.appendFileSync(filename, stringify(exportedLogs));
+    let morelogs = true;
+    let pageState: string | Buffer | undefined;
+    while (morelogs) {
+      let logs: FoodLogEntry[] = [];
+      const result = await cassandraClient.execute(
+        `SELECT CAST(id as text) as id, name, labels, time, metrics
+              FROM openfooddiary.user_foodlogentry
+              WHERE userId = ?;`,
+        [userId],
+        { prepare: true, pageState, fetchSize: 250 }
+      );
+      logs = result.rows.map((row) => {
+        const subCon: any = {};
+        row.keys().forEach((key) => (subCon[key] = row.get(key)));
+        return subCon;
+      }) as FoodLogEntry[];
+      const exportedLogs = logs
+        .map(bulkFromResult)
+        .map((log) => [
+          log.id,
+          log.name,
+          log.labels,
+          log.timeStart,
+          log.timeEnd,
+          log.metrics
+        ]);
+      fs.appendFileSync(filename, stringify(exportedLogs));
+      if (result.pageState == null) {
+        morelogs = false;
+      } else {
+        pageState = result.pageState;
+      }
+    }
     return ok(filename);
   } catch (error: any) {
     console.error(error.message);

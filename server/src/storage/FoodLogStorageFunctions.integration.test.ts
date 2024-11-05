@@ -224,7 +224,7 @@ describe.each(configs)(
       const testUserId = crypto.randomUUID();
       const logs: any[] = [];
 
-      for (let i = 0; i < 1000; i++) {
+      for (let i = 0; i < 12345; i++) {
         const pastLog: CreateFoodLogEntry = {
           name: "My Food Log " + i,
           labels: ["some-label-" + i],
@@ -273,10 +273,10 @@ describe.each(configs)(
         a.name.normalize().localeCompare(b.name.normalize())
       );
       logs.sort((a, b) => a.name.normalize().localeCompare(b.name.normalize()));
-      expect(logs.length).toBe(1000);
-      expect(records.length).toBe(1000);
+      expect(logs.length).toBe(12345);
+      expect(records.length).toBe(12345);
       expect(records).toStrictEqual(logs);
-    });
+    }, 60_000);
 
     test("Purge Logs", async () => {
       const testUserId = crypto.randomUUID();
