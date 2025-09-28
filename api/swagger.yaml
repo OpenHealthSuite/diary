@@ -1,0 +1,43 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: QuickCategory
+servers:
+  - url: /
+paths:
+  /api/ping:
+    get:
+      summary: Test endpoint
+      operationId: testEndpoint
+      tags:
+        - test
+      responses:
+        "200":
+          description: Successful response
+components:
+  parameters:
+  responses:
+    NotFound:
+      description: not found
+      content:
+        text/html:
+          schema:
+            type: string
+    UnexpectedError:
+      description: unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string

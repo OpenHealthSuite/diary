@@ -5,17 +5,36 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/openhealthsuite/diary/internal/config"
+	"github.com/openhealthsuite/diary/internal/server/generated"
 )
+
+//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=../../tools/oapi_codegen/server.cfg.yaml ../../api/swagger.yaml
+//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=../../tools/oapi_codegen/types.cfg.yaml ../../api/swagger.yaml
 
 type DiaryServer interface {
 	RunServer() error
 }
 
 type DiaryServerState struct {
+	GeneratedInterface generated.ServerInterface
 }
 
 func NewServer(cfg *config.ServerConfiguration) (DiaryServer, error) {
-	return &DiaryServerState{}, nil
+	return &DiaryServerState{
+		GeneratedInterface: NewGeneratedInterface(ServerState{}),
+	}, nil
+}
+
+type ServerState struct {
+}
+
+func NewGeneratedInterface(srvst ServerState) generated.ServerInterface {
+	return &srvst
+}
+
+// TestEndpoint implements generated.ServerInterface.
+func (g *ServerState) TestEndpoint(c *gin.Context) {
+	c.String(200, "OK")
 }
 
 func (sts *DiaryServerState) RunServer() error {
@@ -24,7 +43,9 @@ func (sts *DiaryServerState) RunServer() error {
 	r.Static("/static", "./web/static")
 
 	r.GET("/", serveDatabrowserSPA)
-	r.GET("/*path", serveDatabrowserSPA)
+	r.GET("/assets/*path", serveDatabrowserSPA)
+
+	generated.RegisterHandlers(r, sts.GeneratedInterface)
 
 	r.StaticFile("/favicon.ico", "./web/static/favicon.ico")
 
