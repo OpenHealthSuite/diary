@@ -8,16 +8,45 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"net/url"
 	"path"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
+	"github.com/oapi-codegen/runtime"
 )
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Get user configuration
+	// (GET /api/config/{configId})
+	GetUserConfig(c *gin.Context, configId string)
+	// Store user configuration
+	// (POST /api/config/{configId})
+	StoreUserConfig(c *gin.Context, configId string)
+	// Purge all food logs for user
+	// (DELETE /api/logs)
+	PurgeFoodLogs(c *gin.Context)
+	// Query food logs
+	// (GET /api/logs)
+	QueryFoodLogs(c *gin.Context, params QueryFoodLogsParams)
+	// Create food log entry
+	// (POST /api/logs)
+	CreateFoodLog(c *gin.Context)
+	// Export all food logs for user
+	// (GET /api/logs/export)
+	ExportFoodLogs(c *gin.Context)
+	// Delete food log entry
+	// (DELETE /api/logs/{itemId})
+	DeleteFoodLog(c *gin.Context, itemId string)
+	// Get food log entry
+	// (GET /api/logs/{itemId})
+	GetFoodLog(c *gin.Context, itemId string)
+	// Update food log entry
+	// (PUT /api/logs/{itemId})
+	UpdateFoodLog(c *gin.Context, itemId string)
 	// Test endpoint
 	// (GET /api/ping)
 	TestEndpoint(c *gin.Context)
@@ -31,6 +60,213 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// GetUserConfig operation middleware
+func (siw *ServerInterfaceWrapper) GetUserConfig(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "configId" -------------
+	var configId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "configId", c.Param("configId"), &configId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter configId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetUserConfig(c, configId)
+}
+
+// StoreUserConfig operation middleware
+func (siw *ServerInterfaceWrapper) StoreUserConfig(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "configId" -------------
+	var configId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "configId", c.Param("configId"), &configId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter configId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.StoreUserConfig(c, configId)
+}
+
+// PurgeFoodLogs operation middleware
+func (siw *ServerInterfaceWrapper) PurgeFoodLogs(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PurgeFoodLogs(c)
+}
+
+// QueryFoodLogs operation middleware
+func (siw *ServerInterfaceWrapper) QueryFoodLogs(c *gin.Context) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params QueryFoodLogsParams
+
+	// ------------- Required query parameter "startDate" -------------
+
+	if paramValue := c.Query("startDate"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Query argument startDate is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "startDate", c.Request.URL.Query(), &params.StartDate)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter startDate: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Required query parameter "endDate" -------------
+
+	if paramValue := c.Query("endDate"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Query argument endDate is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "endDate", c.Request.URL.Query(), &params.EndDate)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter endDate: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.QueryFoodLogs(c, params)
+}
+
+// CreateFoodLog operation middleware
+func (siw *ServerInterfaceWrapper) CreateFoodLog(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateFoodLog(c)
+}
+
+// ExportFoodLogs operation middleware
+func (siw *ServerInterfaceWrapper) ExportFoodLogs(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ExportFoodLogs(c)
+}
+
+// DeleteFoodLog operation middleware
+func (siw *ServerInterfaceWrapper) DeleteFoodLog(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", c.Param("itemId"), &itemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter itemId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteFoodLog(c, itemId)
+}
+
+// GetFoodLog operation middleware
+func (siw *ServerInterfaceWrapper) GetFoodLog(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", c.Param("itemId"), &itemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter itemId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetFoodLog(c, itemId)
+}
+
+// UpdateFoodLog operation middleware
+func (siw *ServerInterfaceWrapper) UpdateFoodLog(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", c.Param("itemId"), &itemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter itemId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateFoodLog(c, itemId)
+}
 
 // TestEndpoint operation middleware
 func (siw *ServerInterfaceWrapper) TestEndpoint(c *gin.Context) {
@@ -72,16 +308,41 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
+	router.GET(options.BaseURL+"/api/config/:configId", wrapper.GetUserConfig)
+	router.POST(options.BaseURL+"/api/config/:configId", wrapper.StoreUserConfig)
+	router.DELETE(options.BaseURL+"/api/logs", wrapper.PurgeFoodLogs)
+	router.GET(options.BaseURL+"/api/logs", wrapper.QueryFoodLogs)
+	router.POST(options.BaseURL+"/api/logs", wrapper.CreateFoodLog)
+	router.GET(options.BaseURL+"/api/logs/export", wrapper.ExportFoodLogs)
+	router.DELETE(options.BaseURL+"/api/logs/:itemId", wrapper.DeleteFoodLog)
+	router.GET(options.BaseURL+"/api/logs/:itemId", wrapper.GetFoodLog)
+	router.PUT(options.BaseURL+"/api/logs/:itemId", wrapper.UpdateFoodLog)
 	router.GET(options.BaseURL+"/api/ping", wrapper.TestEndpoint)
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/0SPsWrsQAxFf2W59bD2e+mmDSlShqRbthhsrSNiS2IkBxYz/x7sJKS6SBwdcTcMupgK",
-	"STjy1hJYboq8IThmQsbLysPHYwmatN6R8EnVWQUZ/879uUdLUCMpxsh4OFYJVuJ996Erxp2xTPswUeyh",
-	"RrUEqzyPyHgjjycZTVkCCZXcVJyO6/99v8dIPlS2+H77ug4Dud/W+fQLo7UEX5el1PuP8kR/ziiTI18Q",
-	"5IFrO2CqexHky4a1zsjo0K7tKwAA///2Rrm1DwEAAA==",
+	"H4sIAAAAAAAC/+xYT3Pctg/9Khz+fkclchP3omNqp/VM0qR13EvGB1qEZKYSyZCQ650dffcOyZVWWnL/",
+	"uNnYnk5PtkTy4eEBBKBd0lK1WkmQaGmxpAasVtKCf/hV4VvVSe7+L5VEkOj+RbjH/Bbbxj3Y8hZa5l8v",
+	"NNCCWjRC1rTv+4xysKURGoWStKBSIak8Xp/RKwn3GkoEfm6MMhsmmNaNKJk7mH+x7vTU0v8NVLSg/8vX",
+	"3POwavOAlrDejQYJrPZkK0zv7E9KVqLuDAv7l1QbpcGgCFoInvAxo3es6WAfpxn0H/6EM27gaycMcFp8",
+	"dvAD2HU2mFE3X6BEZyaBUCypkvChosXn3dbfAxpR2rl/fbb70GXXtsws4kMb1K4dOQMM4a1S/J2qzyWa",
+	"RSxfw26gCUIitDap5eoFM4Yt3HMbiPt84Fw4Cqz5OINdHZFdewNmgrFWTrIW0tZEuzdwn0QLvzNZx/Hy",
+	"sNng1prrCjcVw3MucLdIW3Ls36ad4Gl9hjowF6VU3NuqlGkZ0oIKia9f0RFASIQ6ONCCtaxOUd5g4DHX",
+	"+1Ns/ovUUJX+QaqHkhOKxwVCu6UeJBlrI5QRuJgsjiHeoBdAJke2c7FRed8m9v5SOvEr6jLvmdZC1kRV",
+	"JOhE/oSFJaiGx3LGI8E3WXkj/eyt+iuwWe1/SNJtyBhjpXRcZ0lEBsKIMN5QzhBe+OTIYioWmcFDt28y",
+	"9WczbzDm6HYLWSmvgMDGrX3QIH8B1uDtZScQyJlw/mX0DowNEfvh5cnLE0dMaZBMC1rQ1/5VRjXDW+9g",
+	"zrTIQ+TyZfh7wXu3UoP3xanhI3XBaUF/BryyYEIIPY5hLSAY65u1cGYd9nC5Cjpg0qm/aDrIdgxY19l8",
+	"XHt1cnK0MWqj8cfj1GwDEavLcBoozLe+YZw4r8Bi2HO6zfroTj6Onn1Gfwyguw9szpN+uhuuhosI6SyY",
+	"+Pqx2oaOMH3vphqtbCK0l6gMPFpwvWZvFF98n7gOo2i/SaxPZ9auDLBOGP6cc8CH7mFZ0Gfh6jeqtsGn",
+	"BhDirPjYmXoYgC2NxDuN9XCbiYMl2p09lo+eCGFNQ6rRQKWM93rip1tsVO3zPFnBfuvALCYOpZL8q9uz",
+	"znJfm88Yws40P6zopy2A5MfB/9bCOfbZXTdtNkDGLTgqqO+ERTc2jIHbepcu5B1rBCej4kQZMohznDzy",
+	"8Z9QSadOukTOPgfpdypj8Sfn4WXsKAxi2+kLTkpP9eDKeITgBXHG6BHwHFMhnNa3HO61CpNZsiSc++Xt",
+	"RW6XtKpEwBcWDbB2LvF4X2+EDJPZ3p+RAhHgpBLNsfI9YD6kcM6kW7qKsJoIt/WIM/9+fS32zw0B9BtH",
+	"wh29hwSq/KkaclDkkDzNts7Zj67nE1QQGFrIU03OB0VId4kIXWnOHifpj99jot/rnmuH6bzIz3r2Dnnw",
+	"kJakXWy39aJPYPFccq2ERHrIt8plV5ZgbdU1ZNi8wdBBuiFqwByYoVPt2stvwdwNmduZhhY0p/11/3cA",
+	"AAD//w1wSC9DGQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

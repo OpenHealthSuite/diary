@@ -4,6 +4,33 @@
 
 package strggen
 
+import (
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
 type Test struct {
 	Something *string
+}
+
+type UserConfig struct {
+	UserID      uuid.UUID
+	ID          string
+	ConfigValue []byte
+}
+
+type UserFoodlogentry struct {
+	UserID    string
+	ID        uuid.UUID
+	Name      string
+	Labels    []string
+	TimeStart pgtype.Timestamp
+	TimeEnd   pgtype.Timestamp
+}
+
+type UserFoodlogentryMetric struct {
+	UserID         string
+	FoodlogentryID uuid.UUID
+	MetricKey      string
+	MetricValue    int32
 }

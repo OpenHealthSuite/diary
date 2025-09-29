@@ -8,7 +8,7 @@
 all: build
 
 generate:
-	go generate ./... && (cd pkg/storage && sqlc generate) && (cd pkg/portalstorage && sqlc generate) && npx openapi-typescript ./api/swagger.yaml -o ./web/app/databrowser/src/schema.d.ts
+	go generate ./...
 build:
 	go build -o dist/server cmd/server/main.go
 test:
