@@ -1,9 +1,9 @@
 .PHONY: all
 
-# include .env-compose-make
-# include .env
-# export $(shell sed 's/=.*//' .env-compose-make)
-# export $(shell sed 's/=.*//' .env)
+include .env-compose-make
+include .env
+export $(shell sed 's/=.*//' .env-compose-make)
+export $(shell sed 's/=.*//' .env)
 
 all: build
 

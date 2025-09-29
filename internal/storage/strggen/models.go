@@ -14,7 +14,7 @@ type Test struct {
 }
 
 type UserConfig struct {
-	UserID      uuid.UUID
+	UserID      string
 	ID          string
 	ConfigValue []byte
 }

@@ -81,9 +81,9 @@ paths:
         "200":
           description: Food log created
           content:
-            application/json:
+            text/plain:
               schema:
-                $ref: '#/components/schemas/FoodLogEntry'
+                type: string
         "400":
           description: Bad request
         "500":

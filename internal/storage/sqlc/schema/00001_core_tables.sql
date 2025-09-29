@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS user_foodlogentry_metrics (
 );
 
 CREATE TABLE IF NOT EXISTS user_config (
-  user_id UUID NOT NULL,
+  user_id TEXT NOT NULL,
   id TEXT NOT NULL,
   config_value JSONB NOT NULL,
   PRIMARY KEY (user_id, id)

@@ -19,6 +19,7 @@ type DiaryServer interface {
 
 type DiaryServerState struct {
 	GeneratedInterface generated.ServerInterface
+	Config             *config.ServerConfiguration
 }
 
 func NewServer(cfg *config.ServerConfiguration) (DiaryServer, error) {
@@ -30,6 +31,7 @@ func NewServer(cfg *config.ServerConfiguration) (DiaryServer, error) {
 		GeneratedInterface: NewGeneratedInterface(ServerState{
 			storage: strg,
 		}),
+		Config: cfg,
 	}, nil
 }
 
@@ -60,9 +62,22 @@ func (sts *DiaryServerState) RunServer() error {
 	r.GET("/", serveDatabrowserSPA)
 	r.GET("/assets/*path", serveDatabrowserSPA)
 
-	generated.RegisterHandlers(r, sts.GeneratedInterface)
-
 	r.StaticFile("/favicon.ico", "./web/static/favicon.ico")
+
+	r.Use(func(ctx *gin.Context) {
+		if sts.Config.UserId != "" {
+			ctx.Set("userId", sts.Config.UserId)
+			return
+		}
+
+		if ctx.Request.Header.Get(sts.Config.UserIdHeader) != "" {
+			ctx.Set("userId", ctx.Request.Header.Get(sts.Config.UserIdHeader))
+			return
+		}
+		ctx.String(403, "Missing User Identification")
+	})
+
+	generated.RegisterHandlers(r, sts.GeneratedInterface)
 
 	return r.Run()
 }

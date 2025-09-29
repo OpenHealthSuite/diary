@@ -1,0 +1,9 @@
+services:
+  postgres:
+    image: postgres:18
+    restart: always
+    env_file:
+      - .env-compose
+    ports:
+      - 5435:5432
+
