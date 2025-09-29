@@ -15,15 +15,11 @@ test:
 	go test -v ./...
 run:
 	go run cmd/server/main.go
-# runapi:
-# 	PORT=8081 go run cmd/apiserver/main.go
-# watch:
-# 	gow run cmd/server/main.go
-# watchapi:
-# 	PORT=8081 gow run cmd/apiserver/main.go
+watch:
+	gow run cmd/server/main.go
 
-# devdatabrowser:
-# 	(cd web/app/databrowser && npm run dev)
+devclient:
+	(cd web/app && npm run dev)
 
 # docker:
 # 	docker build . -t quickcategory:testimage

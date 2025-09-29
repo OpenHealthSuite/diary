@@ -9,7 +9,7 @@ import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfil
 import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
 const proxy = {
   "/api": {
-    target: "http://localhost:3012",
+    target: "http://localhost:8080",
     changeOrigin: true,
     headers: {
       "X-OpenFoodDiary-UserId":
