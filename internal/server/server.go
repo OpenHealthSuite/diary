@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/openhealthsuite/diary/internal/config"
 	"github.com/openhealthsuite/diary/internal/server/generated"
+	"github.com/openhealthsuite/diary/internal/storage"
+	"github.com/rs/zerolog/log"
 )
 
 //go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=../../tools/oapi_codegen/server.cfg.yaml ../../api/swagger.yaml
@@ -20,12 +22,19 @@ type DiaryServerState struct {
 }
 
 func NewServer(cfg *config.ServerConfiguration) (DiaryServer, error) {
+	strg, err := storage.NewStorage(cfg)
+	if err != nil {
+		return nil, err
+	}
 	return &DiaryServerState{
-		GeneratedInterface: NewGeneratedInterface(ServerState{}),
+		GeneratedInterface: NewGeneratedInterface(ServerState{
+			storage: strg,
+		}),
 	}, nil
 }
 
 type ServerState struct {
+	storage storage.Storage
 }
 
 func NewGeneratedInterface(srvst ServerState) generated.ServerInterface {
@@ -34,6 +43,12 @@ func NewGeneratedInterface(srvst ServerState) generated.ServerInterface {
 
 // TestEndpoint implements generated.ServerInterface.
 func (g *ServerState) TestEndpoint(c *gin.Context) {
+	_, err := g.storage.GetQuerier().GetTestData(c)
+	if err != nil {
+		log.Error().Err(err).Msg("error pinging database")
+		c.String(500, "KO")
+		return
+	}
 	c.String(200, "OK")
 }
 
