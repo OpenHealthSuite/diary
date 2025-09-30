@@ -11,7 +11,7 @@ COPY . .
 RUN GOOS=linux GOARCH=$(echo $TARGETPLATFORM | sed 's/linux\///') \
   go build -o dist/server cmd/server/main.go
 
-FROM --platform=$BUILDPLATFORM docker.io/node:18.7.0 AS databrowser-builder
+FROM --platform=$BUILDPLATFORM docker.io/node:24.9.0 AS databrowser-builder
 ARG TARGETPLATFORM
 WORKDIR /usr/src/app
 
