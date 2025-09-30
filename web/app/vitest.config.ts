@@ -5,12 +5,13 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 import path from "node:path";
 
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [svelte({ hot: !process.env.VITEST })],
   resolve: {
     alias: {
       src: path.resolve("./src")
-    }
+    },
+    conditions: mode === 'test' ? ['browser'] : [],
   },
   test: {
     include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
@@ -19,4 +20,4 @@ export default defineConfig({
     setupFiles: "vitest-setup.ts",
     mockReset: true
   }
-});
+}));

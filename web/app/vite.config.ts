@@ -3,10 +3,7 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 // This is annoying, we can just ignore it though
 // @ts-ignore ts(1259)
 import path from "node:path";
-import rollupNodePolyFill from "rollup-plugin-node-polyfills";
 import autoPreprocess from "svelte-preprocess";
-import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
-import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
 const proxy = {
   "/api": {
     target: "http://localhost:8080",
@@ -41,17 +38,10 @@ export default defineConfig({
   optimizeDeps: {
     esbuildOptions: {
       plugins: [
-        // @ts-ignore
-        NodeGlobalsPolyfillPlugin({
-          buffer: true
-        }),
-        // @ts-ignore
-        NodeModulesPolyfillPlugin()
-
       ]
     }
   },
-  plugins: [rollupNodePolyFill(), svelte({
+  plugins: [svelte({
     preprocess: autoPreprocess()
   })]
 });

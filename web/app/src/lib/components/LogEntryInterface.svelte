@@ -1,44 +1,54 @@
 <script lang="ts">
     import { logUpdated, metricsConfig, type MetricsConfig } from "src/stores";
-    import { createEventDispatcher } from "svelte";
     import type { FoodLogEntry } from "../types/FoodLogEntry";
     import { apiFetch, METRIC_MAX } from "../utilities";
-    export let logTime = new Date();
 
-    let metricConfig: MetricsConfig = {};
+    let { onSuccess, onError, logTime, log } =  $props();
 
-    metricsConfig.subscribe(val => {
+    if (!logTime) {
+      logTime = new Date();
+    }
+
+    if (!log) {
+      log = {
+        id: undefined,
+        name: "",
+        labels: [],
+        time: {
+          start: undefined,
+          end: undefined
+        },
+        metrics: {}
+      };
+    }
+
+    let metricConfig: MetricsConfig = $state({});
+
+    metricsConfig.subscribe((val: any) => {
       metricConfig = val;
+      if (log) {
+        log.metrics = Object.entries(metricConfig).reduce((acc, [key]) => {
+          // @ts-ignore
+          acc[key] = log.metrics && log.metrics[key] ? log.metrics[key] : 0;
+          return acc;
+        }, {});
+      }
     });
 
-    export let log: FoodLogEntry = {
-      id: undefined,
-      name: "",
-      labels: [],
-      time: {
-        start: undefined,
-        end: undefined
-      },
-      metrics: Object.entries(metricConfig).reduce((acc, [key]) => {
-        acc[key] = 0;
-        return acc;
-      }, {})
-    };
 
-    const dispatch = createEventDispatcher();
 
-    let name = log.name;
+    let name = $state(log.name);
     const startTime = log.time.start ? new Date(log.time.start) : logTime;
 
-    let duration = log.time.end && log.time.start
+    let duration = $state(log.time.end && log.time.start
       ? ((new Date(log.time.end).getTime()) - (new Date(log.time.start).getTime())) / 1000 / 60
-      : 1;
+      : 1);
 
-    let [dateString] = startTime.toISOString().split("T");
+    let [dateString] = $state(startTime.toISOString().split("T"));
 
-    let timeString = `${String(startTime.getHours()).padStart(2, "0")}:${String(startTime.getMinutes()).padStart(2, "0")}`;
+    let timeString = $state(`${String(startTime.getHours()).padStart(2, "0")}:${String(startTime.getMinutes()).padStart(2, "0")}`);
 
-    let loading = false;
+    let loading = $state(false);
 
     const clampMetrics = () => {
       log.metrics = Object.entries(log.metrics).reduce((acc, [key, val]) => {
@@ -46,6 +56,7 @@
           ...acc,
           [key]: Math.min(
             METRIC_MAX,
+            // @ts-ignore
             val === null || val === undefined ? 0 : val
           )
         };
@@ -76,8 +87,8 @@
         }
         throw new Error();
       })
-        .then(guid => dispatch("success", guid))
-        .catch(() => dispatch("error", "An unknown error occured"))
+        .then(guid => onSuccess(guid))
+        .catch(() => onError("An unknown error occured"))
         .finally(() => {
           loading = false;
           logUpdated.set(new Date().toISOString());
@@ -94,8 +105,8 @@
         }
         throw new Error();
       })
-        .then(() => dispatch("success", undefined))
-        .catch(() => dispatch("error", "An unknown error occured"))
+        .then(() => onSuccess(undefined))
+        .catch(() => onError("An unknown error occured"))
         .finally(() => {
           loading = false;
           logUpdated.set(new Date().toISOString());
@@ -132,7 +143,8 @@
     {#each Object.entries(metricConfig) as [key, value] (key)}
         <fieldset class="left-right-field">
             <label for={key}>{value.label}</label>
-            <input type="number" id={key} name={key} bind:value={log.metrics[key]} on:change={clampMetrics} min={0} max={METRIC_MAX}/>
+            <!-- svelte-ignore binding_property_non_reactive -->
+            <input type="number" id={key} name={key} bind:value={log.metrics[key]} onchange={clampMetrics} min={0} max={METRIC_MAX}/>
         </fieldset>
         {#if log.metrics[key] < 0}
             <div class="input-error">Must have min zero {value.label}</div>
@@ -145,9 +157,9 @@
     {#if duration < 1}
         <div class="input-error">Must have a positive duration</div>
     {/if}
-    <button class="submit-button" disabled={!name || loading} on:click={() => name && submitLog()}>Submit</button>
+    <button class="submit-button" disabled={!name || loading} onclick={() => name && submitLog()}>Submit</button>
     {#if log.id}
-        <button class="submit-button" disabled={loading} on:click={() => deleteLog(log.id)}>Delete</button>
+        <button class="submit-button" disabled={loading} onclick={() => deleteLog(log.id)}>Delete</button>
     {/if}
 </div>
 

@@ -36,15 +36,10 @@ describe("Create Log", () => {
     const { getByLabelText } = render(LogEntryInterface);
 
     const name = getByLabelText("Log Name", { exact: false });
-    // Really just ended up fighting the custom date/time pickers here
-    // const dateInput = getByTestId("date-picker");
-    // const time = getByLabelText("Time");
     const duration = getByLabelText("Duration (minutes)", { exact: false });
     const calories = getByLabelText("Calories", { exact: false });
 
     expect(name).toBeInTheDocument();
-    // expect(dateInput).toBeInTheDocument();
-    // expect(time).toBeInTheDocument();
     expect(duration).toBeInTheDocument();
     expect(calories).toBeInTheDocument();
 
@@ -57,7 +52,12 @@ describe("Create Log", () => {
     const date = new Date(2018, 1, 1, 13, 15, 23);
     vi.setSystemTime(date);
 
-    const { getByLabelText, getByText } = render(LogEntryInterface);
+    const onSuccess = vi.fn();
+    const onError = vi.fn();
+
+    const { getByLabelText, getByText } = render(LogEntryInterface, {
+      props: { onSuccess, onError }
+    });
 
     const name = getByLabelText("Log Name", { exact: false });
     expect(name).toBeInTheDocument();
@@ -68,6 +68,8 @@ describe("Create Log", () => {
     expect(submitButton).toBeDisabled();
     await fireEvent.click(submitButton);
     expect(apiFetch).not.toBeCalled();
+    expect(onSuccess).not.toBeCalled();
+    expect(onError).not.toBeCalled();
   });
 
   const testTimes = [
@@ -108,14 +110,14 @@ describe("Create Log", () => {
 
       (apiFetch as Mock<any[], any>).mockResolvedValue(response);
 
-      const { getByLabelText, getByText, component } =
-        render(LogEntryInterface);
+      let successOutput = null;
+      let errorOutput = null;
 
-      let componentOutput;
+      const onSuccess = (d: any) => { successOutput = d; };
+      const onError = (e: any) => { errorOutput = e; };
 
-      component.$on("success", (e) => {
-        componentOutput = e.detail;
-      });
+      const { getByLabelText, getByText } =
+        render(LogEntryInterface, { props: { onSuccess, onError } });
 
       const name = getByLabelText("Log Name", { exact: false });
       const duration = getByLabelText("Duration (minutes)", {
@@ -140,7 +142,8 @@ describe("Create Log", () => {
 
       await new Promise(process.nextTick);
 
-      expect(componentOutput).toBe(data);
+      expect(successOutput).toBe(data);
+      expect(errorOutput).toBeNull();
     }
   );
 
@@ -179,14 +182,14 @@ describe("Create Log", () => {
 
       (apiFetch as Mock<any[], any>).mockResolvedValue(response);
 
-      const { getByLabelText, getByText, component } =
-        render(LogEntryInterface);
+      let successOutput = null;
+      let errorOutput = null;
 
-      let componentOutput;
+      const onSuccess = (d: any) => { successOutput = d; };
+      const onError = (e: any) => { errorOutput = e; };
 
-      component.$on("error", (e) => {
-        componentOutput = e.detail;
-      });
+      const { getByLabelText, getByText } =
+        render(LogEntryInterface, { props: { onSuccess, onError } });
 
       const name = getByLabelText("Log Name", { exact: false });
       const duration = getByLabelText("Duration (minutes)", {
@@ -211,7 +214,8 @@ describe("Create Log", () => {
 
       await new Promise(process.nextTick);
 
-      expect(componentOutput).toBe("An unknown error occured");
+      expect(successOutput).toBeNull();
+      expect(errorOutput).toBe("An unknown error occured");
     }
   );
 
@@ -241,13 +245,13 @@ describe("Create Log", () => {
 
     (apiFetch as Mock<any[], any>).mockRejectedValue(data);
 
-    const { getByLabelText, getByText, component } = render(LogEntryInterface);
+    let successOutput = null;
+    let errorOutput = null;
 
-    let componentOutput;
+    const onSuccess = (d: any) => { successOutput = d; };
+    const onError = (e: any) => { errorOutput = e; };
 
-    component.$on("error", (e) => {
-      componentOutput = e.detail;
-    });
+    const { getByLabelText, getByText } = render(LogEntryInterface, { props: { onSuccess, onError } });
 
     const name = getByLabelText("Log Name", { exact: false });
     const duration = getByLabelText("Duration (minutes)", { exact: false });
@@ -270,7 +274,8 @@ describe("Create Log", () => {
 
     await new Promise(process.nextTick);
 
-    expect(componentOutput).toBe("An unknown error occured");
+    expect(successOutput).toBeNull();
+    expect(errorOutput).toBe("An unknown error occured");
   });
 });
 
@@ -302,21 +307,16 @@ describe("Edit Log", () => {
     };
 
     const { getByLabelText } = render(LogEntryInterface, {
-      log: inputLog
+      props: { log: inputLog }
     });
 
     const name = getByLabelText("Log Name", { exact: false });
-    // Really just ended up fighting the custom date/time pickers here
-    // const dateInput = getByTestId("date-picker");
-    // const time = getByLabelText("Time");
     const durationInput = getByLabelText("Duration (minutes)", {
       exact: false
     });
     const calories = getByLabelText("Calories", { exact: false });
 
     expect(name).toBeInTheDocument();
-    // expect(dateInput).toBeInTheDocument();
-    // expect(time).toBeInTheDocument();
     expect(durationInput).toBeInTheDocument();
     expect(calories).toBeInTheDocument();
 
@@ -373,14 +373,14 @@ describe("Edit Log", () => {
 
     (apiFetch as Mock<any[], any>).mockResolvedValue(response);
 
-    const { getByLabelText, getByText, component } = render(LogEntryInterface, {
-      log: inputLog
-    });
+    let successOutput = null;
+    let errorOutput = null;
 
-    let componentOutput;
+    const onSuccess = (d: any) => { successOutput = d; };
+    const onError = (e: any) => { errorOutput = e; };
 
-    component.$on("success", (e) => {
-      componentOutput = e.detail;
+    const { getByLabelText, getByText } = render(LogEntryInterface, {
+      props: { log: inputLog, onSuccess, onError }
     });
 
     const name = getByLabelText("Log Name", { exact: false });
@@ -407,6 +407,7 @@ describe("Edit Log", () => {
     expect(JSON.parse(body)).toEqual(expectedRequest);
     await new Promise(process.nextTick);
 
-    expect(componentOutput).toBe(data);
+    expect(successOutput).toBe(data);
+    expect(errorOutput).toBeNull();
   });
 });

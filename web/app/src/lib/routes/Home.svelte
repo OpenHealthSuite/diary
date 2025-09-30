@@ -22,7 +22,7 @@ const dateWithCurrentTime = (date: Date) => {
 };
 </script>
 
-<DaySelector day={logDay} on:dateChange={dateChange} />
+<DaySelector day={logDay} ondateChange={dateChange} />
 <div class="controls-row">
   <button class="add-log-button" 
     on:click={() => { modalOpen = true; }}>Add Log</button>
@@ -31,10 +31,14 @@ const dateWithCurrentTime = (date: Date) => {
 <Modal bind:open={modalOpen}>
   {#if modalOpen}
   <div class="form-wrapper">
-    <LogEntryInterface logTime={dateWithCurrentTime(logDay)} on:success={() => {
-      modalOpen = false;
-      }}
-      on:error={(event) => console.error(event.detail)}/>
+      <LogEntryInterface
+        onSuccess={() => {
+          modalOpen = false;
+        }}
+        onError={(event: any) => console.error(event.detail)}
+        logTime={dateWithCurrentTime(logDay)}
+        log={null}
+      />
   </div>
   {/if}
 </Modal>

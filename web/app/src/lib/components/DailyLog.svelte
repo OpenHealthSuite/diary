@@ -97,10 +97,11 @@
 
 <Modal bind:open={modalOpen}>
     {#if modalOpen}
-        <LogEntryInterface log={editingLog} on:success={() => {
+        <LogEntryInterface log={editingLog} onSuccess={() => {
         modalOpen = false;
         }}
-        on:error={(event) => console.error(event.detail)}/>
+        logTime={new Date(editingLog.time.start)}
+        onError={(event) => console.error(event.detail)}/>
     {/if}
 </Modal>
 

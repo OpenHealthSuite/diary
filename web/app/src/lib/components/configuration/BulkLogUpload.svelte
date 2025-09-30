@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { FoodLogEntry } from "src/lib/types/FoodLogEntry";
 import Modal from "../Modal.svelte";
-import { parse } from "csv-parse/sync";
+import { parse } from "papaparse";
 import { apiFetch } from "src/lib/utilities";
 
 export let modalOpen = false;
@@ -31,6 +31,7 @@ const filesUpdated = async () => {
     errors = 0;
     for (const file of files) {
       const filedata = await file.text();
+      // @ts-ignore
       const records = parse(filedata, {
         columns: true,
         skip_empty_lines: true

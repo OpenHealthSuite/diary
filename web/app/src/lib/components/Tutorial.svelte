@@ -57,7 +57,12 @@
     {:else if stage === TutorialStages.Log}
       <h2>Add a Log!</h2>
       <p class="note">Note: You can delete this log later - it's not permanent.</p>
-      <LogEntryInterface on:success={progress}/>
+      <LogEntryInterface
+        onSuccess={progress}
+        onError={() => {}}
+        logTime={new Date()}
+        log={null}
+      />
     {:else}
       <h2>You're Ready!</h2>
       <p>You can replay this tutorial at any time from the config page, accessed from the button at the bottom of the screen.</p>
