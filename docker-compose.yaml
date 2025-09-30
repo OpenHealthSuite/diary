@@ -7,3 +7,14 @@ services:
     ports:
       - 5435:5432
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3022:8080
+    env_file:
+      - .env-compose
+    depends_on:
+      - postgres
+

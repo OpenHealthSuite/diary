@@ -24,6 +24,6 @@ describe("Authentication", () => {
     it("Static root :: returns 200", async () => {
         const response = await fetch(TEST_CONFIGURATION.API_HOST + '/')
 
-        expect(response.status).not.toBe(403)
+        expect(response.status).toBe(200)
     })
 })

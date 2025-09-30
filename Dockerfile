@@ -21,7 +21,6 @@ RUN npm run build
 
 FROM docker.io/debian:stable-slim AS runner
 
-RUN apt update -y && apt install ffmpeg -y
 WORKDIR /app
 COPY api api
 COPY --from=server-builder /usr/src/app/dist/server /app

@@ -19,7 +19,7 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Login to GHCR
         uses: redhat-actions/podman-login@v1
         with:
@@ -27,7 +27,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v5
         with:
           node-version-file: "./tests/api/e2e/.nvmrc"
 
