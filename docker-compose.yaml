@@ -17,4 +17,8 @@ services:
       - .env-compose
     depends_on:
       - postgres
+    develop:
+      watch:
+        - action: rebuild
+          path: .
 
