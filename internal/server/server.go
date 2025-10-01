@@ -58,11 +58,19 @@ func (sts *DiaryServerState) RunServer() error {
 	r := gin.Default()
 
 	r.Static("/static", "./web/static")
+	r.StaticFile("/favicon.ico", "./web/static/favicon.ico")
 
 	r.GET("/", serveDatabrowserSPA)
 	r.GET("/assets/*path", serveDatabrowserSPA)
 
-	r.StaticFile("/favicon.ico", "./web/static/favicon.ico")
+	r.Use(func(ctx *gin.Context) {
+		if !strings.HasPrefix(ctx.Request.URL.Path, "/api/") {
+			serveDatabrowserSPA(ctx)
+			ctx.Abort()
+			return
+		}
+		ctx.Next()
+	})
 
 	r.Use(func(ctx *gin.Context) {
 		if sts.Config.UserId != "" {
