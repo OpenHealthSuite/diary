@@ -1,6 +1,6 @@
 <script lang="ts">
 
-	let { dateChange, day } = $props();
+	let { ondateChange, day } = $props();
 
     if (!day) {
       day = new Date();
@@ -8,7 +8,7 @@
 
     const dateUpdater = (event: any) => {
       day = new Date(event.target.value);
-      dateChange(day);
+      ondateChange(day);
     };
 </script>
 <div class="control-row">
@@ -17,7 +17,7 @@
         onclick={() => {
             day.setDate(day.getDate() - 1);
             day = day;
-            dateChange(day);
+            ondateChange(day);
         }}>&lt;</button>
     <div>
         <label for="day-selected" hidden>Day Selected</label>
@@ -33,7 +33,7 @@
         onclick={() => {
             day.setDate(day.getDate() + 1);
             day = day;
-            dateChange(day);
+            ondateChange(day);
         }}>&gt;</button>
 </div>
 <style lang="scss">

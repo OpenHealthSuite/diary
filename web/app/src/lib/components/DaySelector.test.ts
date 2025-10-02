@@ -10,7 +10,7 @@ describe("DaySelector", () => {
     let componentOutput: Date | null = null;
 
     const { getByTestId } = render(DaySelector, { props: {
-      dateChange: (d: Date) => { componentOutput = d; } } 
+      ondateChange: (d: Date) => { componentOutput = d; } } 
     });
 
 

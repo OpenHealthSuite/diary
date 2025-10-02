@@ -15,7 +15,7 @@ metricsConfig.subscribe(val => {
       metricConfig = val;
 });
 
-const dateChange = (event) => { logDay = event.detail; };
+const dateChange = (event) => { logDay = event; };
 
 const dateWithCurrentTime = (date: Date) => {
       return new Date(date.toISOString().split("T")[0] + "T" + (new Date()).toISOString().split("T")[1]);
