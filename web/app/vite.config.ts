@@ -6,7 +6,7 @@ import path from "node:path";
 import autoPreprocess from "svelte-preprocess";
 const proxy = {
   "/api": {
-    target: "http://localhost:8080",
+    target: process.env.OFD_API ?? "http://localhost:8080",
     changeOrigin: true,
     headers: {
       "X-OpenFoodDiary-UserId":
