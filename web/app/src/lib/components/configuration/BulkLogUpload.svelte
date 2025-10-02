@@ -30,12 +30,11 @@ const filesUpdated = async () => {
     uploaded = 0;
     errors = 0;
     for (const file of files) {
-      const filedata = await file.text();
-      // @ts-ignore
-      const records = parse(filedata, {
-        columns: true,
-        skip_empty_lines: true
-      }).map((x: any) => {
+      const strdata = await file.text();
+      const records = parse(strdata as any, {
+        header: true,
+        skipEmptyLines: true,
+      }).data.map((x: any) => {
         const log = {
           ...x,
           time: {
@@ -49,6 +48,7 @@ const filesUpdated = async () => {
         delete log.timeEnd;
         return log;
       }) as FoodLogEntry[];
+
       logs = [...logs, ...records];
     }
     for (const log of logs) {
