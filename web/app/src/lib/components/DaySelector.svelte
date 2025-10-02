@@ -1,6 +1,6 @@
 <script lang="ts">
-
-	let { ondateChange, day } = $props();
+    export let day: Date;
+    export let ondateChange: (d: Date) => void;
 
     if (!day) {
       day = new Date();
