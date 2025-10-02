@@ -30,8 +30,6 @@ export default defineConfig({
   resolve: {
     alias: {
       src: path.resolve("./src"),
-      stream: "rollup-plugin-node-polyfills/polyfills/stream",
-      buffer: "rollup-plugin-node-polyfills/polyfills/buffer-es6"
     }
   },
 
