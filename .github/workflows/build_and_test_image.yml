@@ -1,4 +1,4 @@
-name: Server Build and Test
+name: Container Build and Test
 
 on:
   workflow_call:

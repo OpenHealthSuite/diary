@@ -44,7 +44,7 @@ jobs:
       - name: Bring up stack
         working-directory: tests/api/e2e
         run: |
-          OPENFOODDIARY_USERIDHEADER=x-openfooddiary-userid-test docker compose up -d
+          docker compose up -d
 
       - name: Wait for Stack
         timeout-minutes: 1
@@ -57,7 +57,7 @@ jobs:
       - name: Test the Image
         working-directory: tests/api/e2e
         run: |
-          OPENFOODDIARY_API_HOST=http://localhost:3022 OPENFOODDIARY_USERIDHEADER=x-openfooddiary-userid-test npm test
+          OPENFOODDIARY_API_HOST=http://localhost:3022 npm test
 
       - name: Push Version
         if: ${{ inputs.PUSH }}
