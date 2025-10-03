@@ -34,7 +34,7 @@ jobs:
       - name: Build the Container image
         working-directory: .
         run: |
-          platarch=linux/arm/v7,linux/arm64/v8,linux/amd64
+          platarch=linux/arm64/v8,linux/amd64
           docker buildx build --platform=$platarch --tag ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} .
 
       - name: Install Test Dependancies
