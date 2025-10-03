@@ -34,22 +34,29 @@ jobs:
       - name: Build the Container image
         working-directory: .
         run: |
-          sudo apt install qemu-user-static
           platarch=linux/arm/v7,linux/arm64/v8,linux/amd64
-          podman build --jobs=6 --platform=$platarch --manifest ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} .
+          docker build --platform=$platarch --manifest ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} .
 
       - name: Install Test Dependancies
         working-directory: tests/api/e2e
         run: npm ci
 
+      - name: Bring up stack
+        working-directory: tests/api/e2e
+        run: |
+          OPENFOODDIARY_USERIDHEADER=x-openfooddiary-userid-test docker compose up -d
+
+      - name: Wait for Stack
+        timeout-minutes: 1
+        run: |
+          while curl --output /dev/null --silent --head --fail http://localhost:3022/api/ping;
+          do
+            echo "Waiting"
+          done
+
       - name: Test the Image
         working-directory: tests/api/e2e
         run: |
-          podman run -d \
-            -e OPENFOODDIARY_PORT=3022 \
-            -e OPENFOODDIARY_USERIDHEADER=x-openfooddiary-userid-test \
-            -p 3022:3022 \
-            ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }}
           OPENFOODDIARY_API_HOST=http://localhost:3022 OPENFOODDIARY_USERIDHEADER=x-openfooddiary-userid-test npm test
 
       - name: Push Version

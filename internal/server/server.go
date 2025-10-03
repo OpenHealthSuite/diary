@@ -73,6 +73,10 @@ func (sts *DiaryServerState) RunServer() error {
 	})
 
 	r.Use(func(ctx *gin.Context) {
+		if ctx.Request.URL.Path == "/api/ping" {
+			ctx.Next()
+			return
+		}
 		if sts.Config.UserId != "" {
 			ctx.Set("userId", sts.Config.UserId)
 			return
