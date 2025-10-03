@@ -35,7 +35,7 @@ jobs:
         working-directory: .
         run: |
           platarch=linux/arm/v7,linux/arm64/v8,linux/amd64
-          docker build --platform=$platarch --manifest ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} .
+          docker buildx build --platform=$platarch --tag ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} .
 
       - name: Install Test Dependancies
         working-directory: tests/api/e2e
