@@ -3,7 +3,7 @@ import crypto from 'node:crypto'
 
 describe("Authentication", () => {
     const testPaths = [
-        '/api',
+        '/api/config',
         '/api/logs'
     ]
     it.each(testPaths)("No userid header :: returns 403", async (path) => {
@@ -23,6 +23,11 @@ describe("Authentication", () => {
 
     it("Static root :: returns 200", async () => {
         const response = await fetch(TEST_CONFIGURATION.API_HOST + '/')
+
+        expect(response.status).toBe(200)
+    })
+    it("API ping :: returns 200", async () => {
+        const response = await fetch(TEST_CONFIGURATION.API_HOST + '/api/ping')
 
         expect(response.status).toBe(200)
     })
