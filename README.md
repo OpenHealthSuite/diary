@@ -17,12 +17,11 @@ I host this app for my own use at [https://diary.openhealthsuite.com](https://di
 
 ## Want to host your own?
 
-If you've got a computer running podman/docker at your disposal, you can quickly and easily run a single-user instance of OpenFoodDiary, using sqlite3 as the datastore:
+If you've got a computer running docker at your disposal, you can quickly and easily run a single-user instance of OpenFoodDiary, using sqlite3 as the datastore:
 
 ```bash
 mkdir openfooddiarydata
-# podman is interchangeable with docker for this command
-podman run -d -v $(pwd)/openfooddiarydata:/app/.sqlite \
+docker run -d -v $(pwd)/openfooddiarydata:/app/.sqlite \
   -p 3012:3012 \
   -e OPENFOODDIARY_USERID="my-ofd-userid" \
   --name openfooddiary-instance \
@@ -41,14 +40,12 @@ I keep a trim helm chart in this repository, which with a small amount of manual
 
 Running locally, this repo expects you to run both the server and webapp concurrently.
 
-This repo also expects you to probably be running a node version manager such as [fnm](https://github.com/Schniz/fnm), and has the requisite `.nvmrc` files in the server and client folders.
+This repo also expects you to probably be running a node version manager such as [fnm](https://github.com/Schniz/fnm), and has the requisite `.nvmrc` files in the client folder.
 
 ### Running the server/api
 
 ```bash
-cd server
-npm ci
-npm run start:dev
+make run
 ```
 
 ### Running the client
@@ -67,7 +64,7 @@ By default, this will run the server with sqlite3 as a backing store, and will s
 
 ### General
 
-- `OPENFOODDIARY_PORT`: defaults to 3012
+- `PORT`: defaults to 8080
   - sets the port OFD will run on
 - `OPENFOODDIARY_USERIDHEADER`: defaults to "x-openfooddiary-userid"
   - Denotes the header that will be populated with a user id
@@ -75,22 +72,13 @@ By default, this will run the server with sqlite3 as a backing store, and will s
   - Denotes userid that will _always_ be populated - intended for dev and single-user modes
 - `OPENFOODDIARY_LOGOUT_ENDPOINT`: defaults to `/api/logout`
   - Value that will be returned when the user calls `/api/logout-endpoint`, allowing for different auth providers
-- `OPENFOODDIARY_TEMP_DIRECTORY`: defaults to "/tmp"
-  - Directory where scratch temp files will be written
-- `OPENFOODDIARY_DISABLE_PROMETHEUS`: defaults to undefined
-  - disable prometheus metric collection and endpoint
 
 ### Storage
 
 - `OPENFOODDIARY_STORAGE_PROVIDER`: defaults to undefined
   - Sets the storage provider, OFD falls back to sqlite3 if none is defined
-  - options: `cassandra`
+  - options: `postgres`
 - `OPENFOODDIARY_SQLITE3_FILENAME`: defaults to ".sqlite/openfooddiary.sqlite"
   - Sets the filename/path the sqlite3 database will be stored to
   - note: this location equates to `/app/.sqlite/openfooddiary.sqlite` in the container
-- `OPENFOODDIARY_CASSANDRA_`...
-  - ...`CONTACT_POINTS`: defaults to "localhost:9042"
-  - ...`LOCALDATACENTER`: defaults to "datacenter1"
-  - ...`USER`: defaults to "cassandra"
-  - ...`PASSWORD`: defaults to "cassandra"
-  - note: Defaults designed to work with setup script in `.development`
+- `OPENFOODDIARY_POSTGRES_CONNECTION_STRING`: Connection string for usage if provider is `postgres`

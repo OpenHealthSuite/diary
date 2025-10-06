@@ -25,4 +25,4 @@ docker:
 	docker build . -t openhealthsuite/diary:testimage
 
 docker-run:
-	docker run -it --net=host --rm -p 3333:3333 -e OPENFOODDIARY_USERID="f1750ac3-d6cc-4981-9466-f1de2ebbad33" -e PORT=3333 -e POSTGRES_CONNECTION_STRING=$$POSTGRES_CONNECTION_STRING openhealthsuite/diary:testimage
+	docker run -it --net=host --rm -p 3333:3333 -e OPENFOODDIARY_USERID="f1750ac3-d6cc-4981-9466-f1de2ebbad33" -e PORT=3333 -e OPENFOODDIARY_POSTGRES_CONNECTION_STRING=$$OPENFOODDIARY_POSTGRES_CONNECTION_STRING openhealthsuite/diary:testimage
