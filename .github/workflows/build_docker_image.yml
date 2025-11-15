@@ -114,7 +114,7 @@ jobs:
       #     echo "API is responding"
 
       - name: Test the Image
-        working-directory: tests/api/e2e
+        working-directory: .
         # pull and run the run-specific image (outside compose) attached to the compose network so it can reach postgres
         run: |
           set -euo pipefail
@@ -156,6 +156,7 @@ jobs:
           done
 
           echo "API is responding; running tests"
+          cd tests/api/e2e
           OPENFOODDIARY_API_HOST=http://localhost:3022 npm test
           rc=$?
 
