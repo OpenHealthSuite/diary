@@ -42,16 +42,16 @@ jobs:
         run: npm ci
 
       - name: Bring up stack
-        working-directory: tests/api/e2e
+        working-directory: .
         run: |
           docker compose up -d
 
       - name: Wait for Stack
-        timeout-minutes: 1
+        timeout-minutes: 2
         run: |
-          while curl --output /dev/null --silent --head --fail http://localhost:3022/api/ping;
-          do
-            echo "Waiting"
+          until curl --output /dev/null --silent --head --fail http://localhost:3022/api/ping; do
+            echo "Waiting for API at http://localhost:3022/api/ping"
+            sleep 1
           done
 
       - name: Test the Image
