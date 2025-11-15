@@ -18,6 +18,8 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    env:
+      RUN_TAG: ghcr.io/openhealthsuite/diary:${{ github.run_id }}
     steps:
       - uses: actions/checkout@v5
       - name: Login to GHCR
@@ -31,16 +33,13 @@ jobs:
         with:
           node-version-file: "./tests/api/e2e/.nvmrc"
 
-      - name: Build the Container image
+      - name: Build local image for testing (single-platform, load)
         working-directory: .
+        # buildx --load produces a single-platform image loaded into the local docker engine for fast testing
         run: |
-          platarch=linux/arm64/v8,linux/amd64
-          docker buildx build --platform=$platarch --tag ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} .
-
-      # - name: Build local image for testing
-      #   # build a local single-platform image so we can run it with `docker run` for tests
-      #   run: |
-      #     docker build -t ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} .
+          PLATFORM=linux/amd64
+          echo "Building local image ${RUN_TAG} for testing (platform=${PLATFORM})"
+          docker buildx build --platform=${PLATFORM} --load --tag ${RUN_TAG} .
 
       - name: Install Test Dependancies
         working-directory: tests/api/e2e
@@ -116,16 +115,11 @@ jobs:
 
       - name: Test the Image
         working-directory: tests/api/e2e
-        # start the built image (outside compose) attached to the compose network so it can reach postgres
+        # pull and run the run-specific image (outside compose) attached to the compose network so it can reach postgres
         run: |
           set -euo pipefail
 
-          echo "Checking local image is present"
-          if ! docker image inspect ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} > /dev/null 2>&1; then
-            echo "Local image ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} not found"
-            docker images --no-trunc | sed -n '1,200p'
-            exit 1
-          fi
+          echo "Using local test image ${RUN_TAG}"
 
           echo "Determining docker network used by compose postgres"
           cid=$(docker compose ps -q postgres)
@@ -137,8 +131,8 @@ jobs:
           network=$(docker inspect --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' "$cid")
           echo "Using network: $network"
 
-          echo "Starting app container from image ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }}"
-          docker run --name diary-test -d --network "$network" -p 3022:8080 --env-file .env-compose -e GIN_MODE=release ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }}
+          echo "Starting app container from image ${RUN_TAG}"
+          docker run --name diary-test -d --network "$network" -p 3022:8080 --env-file .env-compose -e GIN_MODE=release ${RUN_TAG}
 
           echo "Waiting for API to respond"
           MAX_WAIT=120
@@ -167,14 +161,23 @@ jobs:
 
           echo "Stopping diary-test container"
           docker stop diary-test || true
+          docker rm diary-test || true
           exit $rc
 
-      - name: Push Version
+      - name: Push Version (multi-arch build and push)
         if: ${{ inputs.PUSH }}
-        run: docker push ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }}
-
-      - name: Push Latest
-        if: ${{ inputs.PUSH && inputs.PUSH_LATEST }}
+        working-directory: .
         run: |
-          docker tag ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} ghcr.io/openhealthsuite/diary:latest
-          docker push ghcr.io/openhealthsuite/diary:latest ghcr.io/openhealthsuite/diary:latest
+          set -euo pipefail
+          platarch=linux/arm64/v8,linux/amd64
+          echo "Building and pushing multi-arch image for tag: ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }}"
+          docker buildx build --platform=$platarch --push --tag ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} .
+
+      - name: Push Latest (multi-arch)
+        if: ${{ inputs.PUSH && inputs.PUSH_LATEST }}
+        working-directory: .
+        run: |
+          set -euo pipefail
+          platarch=linux/arm64/v8,linux/amd64
+          echo "Building and pushing multi-arch image for tag: ghcr.io/openhealthsuite/diary:latest"
+          docker buildx build --platform=$platarch --push --tag ghcr.io/openhealthsuite/diary:latest .
