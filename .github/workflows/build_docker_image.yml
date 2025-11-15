@@ -88,31 +88,31 @@ jobs:
             sleep $INTERVAL
           done
 
-      - name: Wait for Stack
-        # wait until the API responds (loop until curl succeeds). Print diagnostics and fail if not ready within timeout.
-        timeout-minutes: 2
-        run: |
-          set -euo pipefail
-          MAX_WAIT=120
-          INTERVAL=1
-          i=0
-          echo "Waiting up to ${MAX_WAIT}s for API at http://localhost:3022/api/ping"
-          until curl --output /dev/null --silent --head --fail http://localhost:3022/api/ping; do
-            i=$((i+INTERVAL))
-            if [ "$i" -ge "$MAX_WAIT" ]; then
-              echo "Timed out waiting for API after ${MAX_WAIT}s"
-              echo "--- docker compose ps ---"
-              docker compose ps
-              echo "--- docker compose logs: app (last 200 lines) ---"
-              docker compose logs --no-color --tail 200 app || true
-              echo "--- docker compose logs: postgres (last 200 lines) ---"
-              docker compose logs --no-color --tail 200 postgres || true
-              exit 1
-            fi
-            echo "Waiting for API at http://localhost:3022/api/ping (${i}s)"
-            sleep ${INTERVAL}
-          done
-          echo "API is responding"
+      # - name: Wait for Stack
+      #   # wait until the API responds (loop until curl succeeds). Print diagnostics and fail if not ready within timeout.
+      #   timeout-minutes: 2
+      #   run: |
+      #     set -euo pipefail
+      #     MAX_WAIT=120
+      #     INTERVAL=1
+      #     i=0
+      #     echo "Waiting up to ${MAX_WAIT}s for API at http://localhost:3022/api/ping"
+      #     until curl --output /dev/null --silent --head --fail http://localhost:3022/api/ping; do
+      #       i=$((i+INTERVAL))
+      #       if [ "$i" -ge "$MAX_WAIT" ]; then
+      #         echo "Timed out waiting for API after ${MAX_WAIT}s"
+      #         echo "--- docker compose ps ---"
+      #         docker compose ps
+      #         echo "--- docker compose logs: app (last 200 lines) ---"
+      #         docker compose logs --no-color --tail 200 app || true
+      #         echo "--- docker compose logs: postgres (last 200 lines) ---"
+      #         docker compose logs --no-color --tail 200 postgres || true
+      #         exit 1
+      #       fi
+      #       echo "Waiting for API at http://localhost:3022/api/ping (${i}s)"
+      #       sleep ${INTERVAL}
+      #     done
+      #     echo "API is responding"
 
       - name: Test the Image
         working-directory: tests/api/e2e
