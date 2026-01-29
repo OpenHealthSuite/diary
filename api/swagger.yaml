@@ -1,0 +1,358 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: OpenHealthSuite Diary
+servers:
+  - url: /
+paths:
+  /api/ping:
+    get:
+      summary: Test endpoint
+      operationId: testEndpoint
+      tags:
+        - test
+      responses:
+        "200":
+          description: Successful response
+  /api/config/{configId}:
+    get:
+      summary: Get user configuration
+      operationId: getUserConfig
+      tags:
+        - configuration
+      parameters:
+        - name: configId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Configuration item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "400":
+          description: Bad request
+        "500":
+          $ref: '#/components/responses/UnexpectedError'
+    post:
+      summary: Store user configuration
+      operationId: storeUserConfig
+      tags:
+        - configuration
+      parameters:
+        - name: configId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigurationValue'
+      responses:
+        "200":
+          description: Configuration stored
+        "400":
+          description: Bad request
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/UnexpectedError'
+  /api/logs:
+    post:
+      summary: Create food log entry
+      operationId: createFoodLog
+      tags:
+        - foodlog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFoodLogEntry'
+      responses:
+        "200":
+          description: Food log created
+          content:
+            text/plain:
+              schema:
+                type: string
+        "400":
+          description: Bad request
+        "500":
+          $ref: '#/components/responses/UnexpectedError'
+    get:
+      summary: Query food logs
+      operationId: queryFoodLogs
+      tags:
+        - foodlog
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: List of food logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FoodLogEntry'
+        "400":
+          description: Invalid startDate or endDate
+        "500":
+          $ref: '#/components/responses/UnexpectedError'
+    delete:
+      summary: Purge all food logs for user
+      operationId: purgeFoodLogs
+      tags:
+        - foodlog
+      responses:
+        "204":
+          description: Food logs purged
+        "500":
+          $ref: '#/components/responses/UnexpectedError'
+  /api/logs/export:
+    get:
+      summary: Export all food logs for user
+      operationId: exportFoodLogs
+      tags:
+        - foodlog
+      responses:
+        "200":
+          description: Exported file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "500":
+          $ref: '#/components/responses/UnexpectedError'
+  /api/logs/{itemId}:
+    get:
+      summary: Get food log entry
+      operationId: getFoodLog
+      tags:
+        - foodlog
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Food log entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodLogEntry'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/UnexpectedError'
+    put:
+      summary: Update food log entry
+      operationId: updateFoodLog
+      tags:
+        - foodlog
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditFoodLogEntry'
+      responses:
+        "200":
+          description: Food log updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodLogEntry'
+        "400":
+          description: Bad request
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/UnexpectedError'
+    delete:
+      summary: Delete food log entry
+      operationId: deleteFoodLog
+      tags:
+        - foodlog
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Food log deleted
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/UnexpectedError'
+components:
+  parameters:
+  responses:
+    NotFound:
+      description: not found
+      content:
+        text/html:
+          schema:
+            type: string
+    UnexpectedError:
+      description: unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+    Configuration:
+      type: object
+      required:
+        - id
+        - value
+      properties:
+        id:
+          type: string
+        value:
+          $ref: '#/components/schemas/ConfigurationValue'
+    ConfigurationValue:
+      oneOf:
+        - $ref: '#/components/schemas/MetricsConfiguration'
+        - $ref: '#/components/schemas/SummaryConfiguration'
+        - type: object
+    MetricsConfiguration:
+      type: object
+      description: Mapping of metric keys to metric configuration
+      additionalProperties:
+        $ref: '#/components/schemas/MetricConfigItem'
+    MetricConfigItem:
+      type: object
+      required:
+        - label
+        - priority
+      properties:
+        label:
+          type: string
+        priority:
+          type: integer
+    SummaryConfiguration:
+      type: object
+      required:
+        - showMetricSummary
+      properties:
+        showMetricSummary:
+          type: array
+          items:
+            type: string
+    FoodLogEntry:
+      type: object
+      required:
+        - id
+        - name
+        - labels
+        - metrics
+        - time
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        labels:
+          type: array
+          items:
+            type: string
+        metrics:
+          type: object
+          additionalProperties:
+            type: number
+        time:
+          $ref: '#/components/schemas/TimeRange'
+    CreateFoodLogEntry:
+      type: object
+      required:
+        - name
+        - labels
+        - metrics
+        - time
+      properties:
+        name:
+          type: string
+        labels:
+          type: array
+          items:
+            type: string
+        metrics:
+          type: object
+          additionalProperties:
+            type: number
+        time:
+          $ref: '#/components/schemas/TimeRange'
+    EditFoodLogEntry:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        labels:
+          type: array
+          items:
+            type: string
+        metrics:
+          type: object
+          additionalProperties:
+            type: number
+        time:
+          $ref: '#/components/schemas/TimeRange'
+    TimeRange:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time

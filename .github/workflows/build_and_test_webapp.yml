@@ -8,12 +8,11 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "webapp/**"
+      - "web/app/**"
       - .github/workflows/build_and_test_webapp.yml
   pull_request:
-    branches: ["main"]
     paths:
-      - "webapp/**"
+      - "web/app/**"
       - .github/workflows/build_and_test_webapp.yml
 
 jobs:
@@ -21,19 +20,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version-file: "./webapp/.nvmrc"
       - name: Restore dependencies
-        working-directory: ./webapp
+        working-directory: ./web/app
         run: npm ci
       - name: Lint
-        working-directory: ./webapp
+        working-directory: ./web/app
         run: npm run lint
       - name: Test
-        working-directory: ./webapp
+        working-directory: ./web/app
         run: npm test
       - name: Build
-        working-directory: ./webapp
+        working-directory: ./web/app
         run: npm run build

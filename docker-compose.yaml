@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: postgres
+    restart: always
+    env_file:
+      - .env-compose
+    ports:
+      - 5435:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+      start_period: 5s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3022:8080
+    env_file:
+      - .env-compose
+    depends_on:
+      - postgres
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+

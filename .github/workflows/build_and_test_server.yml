@@ -7,66 +7,25 @@ on:
     - cron: "0 2 * * *" # run at 2 AM UTC
   push:
     branches: ["main"]
-    paths:
-      - "server/**"
-      - .github/workflows/build_and_test_server.yml
   pull_request:
-    branches: ["main"]
-    paths:
-      - "server/**"
-      - .github/workflows/build_and_test_server.yml
 
 jobs:
-  unit-test-server:
+  test-server:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
-          node-version-file: "./server/.nvmrc"
-      - name: Restore dependencies
-        working-directory: ./server
-        run: npm ci
-      - name: lint
-        working-directory: ./server
-        run: npm run lint
+          go-version: "1.25"
       - name: Test
-        working-directory: ./server
-        run: npm test
-
-  integration-test-server:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Integrations
-        run: .development/cassandra_setup.sh
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: "./server/.nvmrc"
-      - name: Restore dependencies
-        working-directory: ./server
-        run: npm ci
-      - name: Wait for Dependancies
-        timeout-minutes: 2
-        run: |
-          while ! podman exec openfooddiary-cassandra nodetool info | grep --line-buffered "Native Transport active" | grep true
-          do
-            echo "Waiting"
-          done
-      - name: Test
-        working-directory: ./server
-        run: npm run test:integration
+        run: make test
 
   build-server:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
-          node-version-file: "./server/.nvmrc"
-      - name: Restore dependencies
-        working-directory: ./server
-        run: npm ci
+          go-version: "1.25"
       - name: Build
-        working-directory: ./server
-        run: npm run build
+        run: make build

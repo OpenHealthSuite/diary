@@ -1,0 +1,17 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "sqlc/queries"
+    schema: "sqlc/schema"
+    gen:
+      go:
+        package: "strggen"
+        sql_package: "pgx/v5"
+        out: "strggen"
+        emit_interface: true
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"

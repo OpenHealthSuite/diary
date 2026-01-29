@@ -1,1 +1,0 @@
-docker stop openfooddiary-cassandra || true && docker rm openfooddiary-cassandra || true
