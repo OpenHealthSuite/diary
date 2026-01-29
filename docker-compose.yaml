@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:18
+    container_name: postgres
     restart: always
     env_file:
       - .env-compose

@@ -128,7 +128,13 @@ jobs:
             docker compose ps
             exit 1
           fi
-          network=$(docker inspect --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' "$cid")
+          # Get the first network (handles multiple networks safely)
+          network=$(docker inspect -f '{{range $net, $_ := .NetworkSettings.Networks}}{{println $net}}{{end}}' "$cid" | head -1)
+          if [ -z "$network" ]; then
+            echo "Could not determine network for postgres container"
+            docker inspect "$cid"
+            exit 1
+          fi
           echo "Using network: $network"
 
           echo "Starting app container from image ${RUN_TAG}"
@@ -164,6 +170,13 @@ jobs:
           docker stop diary-test || true
           docker rm diary-test || true
           exit $rc
+
+      - name: Cleanup test containers
+        if: always()
+        run: |
+          docker stop diary-test 2>/dev/null || true
+          docker rm diary-test 2>/dev/null || true
+          docker compose down 2>/dev/null || true
 
       - name: Push Version (multi-arch build and push)
         if: ${{ inputs.PUSH }}
