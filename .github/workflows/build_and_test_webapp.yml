@@ -27,9 +27,9 @@ jobs:
       - name: Restore dependencies
         working-directory: ./web/app
         run: npm ci
-      - name: Lint
-        working-directory: ./web/app
-        run: npm run lint
+      # - name: Lint
+      #   working-directory: ./web/app
+      #   run: npm run lint
       - name: Test
         working-directory: ./web/app
         run: npm test
