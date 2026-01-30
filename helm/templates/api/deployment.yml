@@ -36,6 +36,8 @@ spec:
               value: cassandra
             - name: OPENFOODDIARY_LOGOUT_ENDPOINT
               value: {{ .Values.signoutUrl }}
+            - name: OPENFOODDIARY_POSTGRES_CONNECTION_STRING
+              value: {{ .Values.postgres.url }}
             - name: OPENFOODDIARY_CASSANDRA_CONTACT_POINTS
               value: {{ required "cassandra.contactpoints is required" .Values.cassandra.contactpoints }}
             - name: OPENFOODDIARY_CASSANDRA_USER

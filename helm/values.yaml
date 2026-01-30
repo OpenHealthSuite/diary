@@ -6,3 +6,5 @@ cassandra:
   # expects a "cassandrauser" and "cassandrapassword" data key
   credentialssecret: openfooddiary-casscreds
   contactpoints: cassandra.service.svc:9042
+postgres:
+  url: postgres//postgres:postgres@localhost:5432/postgres
