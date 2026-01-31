@@ -32,6 +32,8 @@ spec:
               value: x-auth-request-user
             - name: OPENFOODDIARY_PORT
               value: "3024"
+            - name: PORT
+              value: "3024"
             - name: OPENFOODDIARY_STORAGE_PROVIDER
               value: cassandra
             - name: OPENFOODDIARY_LOGOUT_ENDPOINT
