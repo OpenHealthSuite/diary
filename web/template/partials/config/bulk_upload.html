@@ -1,0 +1,15 @@
+{{ define "partials/config/bulk_upload" }}
+<div class="modal__lightbox" onclick="closeModal(event)">
+  <div class="modal__dialog">
+    <div class="modal__bar">
+      <button class="modal__close-btn" onclick="closeModal()">Close</button>
+    </div>
+    <div class="modal__content">
+      <h2>Upload Logs</h2>
+      <input type="file" id="upload-input" accept=".csv,.json" onchange="handleBulkUpload(this)">
+      <div id="upload-status"></div>
+      <button type="button" id="upload-btn" disabled onclick="executeBulkUpload()">Upload Logs</button>
+    </div>
+  </div>
+</div>
+{{ end }}

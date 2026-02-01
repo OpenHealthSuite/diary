@@ -1,0 +1,29 @@
+{{ define "layouts/base" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>OpenFoodDiary</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <style>
+    body { margin: 0; font-family: Roboto, sans-serif; }
+  </style>
+  <link rel="stylesheet" href="/static/main.css">
+  <script src="/static/htmx.min.js"></script>
+  <script src="/static/papaparse.min.js"></script>
+  <script src="/static/main.js" defer></script>
+</head>
+<body>
+  <main>
+    {{ template "content" . }}
+
+    {{ template "components/navigation" . }}
+  </main>
+
+  <!-- Modal container for HTMX-loaded modals -->
+  <div id="modal-container"></div>
+</body>
+</html>
+{{ end }}

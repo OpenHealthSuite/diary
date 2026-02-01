@@ -1,0 +1,20 @@
+{{ define "pages/home" }}
+{{ template "layouts/base" . }}
+{{ end }}
+
+{{ define "content" }}
+<div id="logs-page">
+  {{ template "components/day_selector" . }}
+
+  <div class="controls-row">
+    <button class="add-log-button"
+            hx-get="/logs/new?date={{ .CurrentDay }}"
+            hx-target="#modal-container"
+            hx-swap="innerHTML">Add Log</button>
+  </div>
+
+  <div id="logs-container">
+    {{ template "components/daily_log" . }}
+  </div>
+</div>
+{{ end }}

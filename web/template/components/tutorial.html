@@ -1,0 +1,103 @@
+{{ define "components/tutorial" }}
+<div class="modal__lightbox" onclick="closeModal(event)">
+  <div class="modal__dialog">
+    <div class="modal__bar">
+      <button class="modal__close-btn" onclick="markTutorialSeen(); closeModal();">Close</button>
+    </div>
+    <div class="modal__content">
+      <div class="tutorial-content">
+        {{ if eq .Step 0 }}
+          <h2>Welcome!</h2>
+          <p>This brief tutorial will run you through the key concepts of OpenFoodDiary.</p>
+        {{ else if eq .Step 1 }}
+          <h2>Enter your metrics!</h2>
+          <p>Enter the metrics you want to track, like Calories, Sugar, Satiation or Enjoyment.</p>
+          <p class="note">Note: You can choose to track no metrics at all.</p>
+          <div id="tutorial-metrics-config">
+            {{ template "partials/config/metrics" . }}
+          </div>
+        {{ else if eq .Step 2 }}
+          <h2>Add a Log!</h2>
+          <p class="note">Note: You can delete this log later - it's not permanent.</p>
+          <div class="log-form">
+            <form class="log-form__container"
+                  hx-post="/htmx/logs"
+                  hx-target="#logs-container"
+                  hx-swap="innerHTML"
+                  hx-on::after-request="htmx.ajax('GET', '/tutorial/3', {target: '#modal-container'})">
+
+              <fieldset class="log-datetime-selectors">
+                <label for="tutorial-log-day">Log Day
+                  <input type="date" id="tutorial-log-day" name="date"
+                         pattern="\d{4}-\d{2}-\d{2}"
+                         value="{{ (now).Format "2006-01-02" }}">
+                </label>
+                <label for="tutorial-log-time">Log Time
+                  <input type="time" id="tutorial-log-time" name="time"
+                         value="{{ (now).Format "15:04" }}">
+                </label>
+              </fieldset>
+
+              <fieldset>
+                <label for="tutorial-name" hidden>Log Name</label>
+                <input style="width: 95%" id="tutorial-name" name="name" placeholder="Log Name" required>
+              </fieldset>
+
+              {{ range $key, $metric := .Metrics }}
+              <fieldset class="left-right-field">
+                <label for="tutorial_metric_{{ $key }}">{{ $metric.Label }}</label>
+                <input type="number"
+                       id="tutorial_metric_{{ $key }}"
+                       name="metric_{{ $key }}"
+                       min="0"
+                       max="999999"
+                       value="0">
+              </fieldset>
+              {{ end }}
+
+              <fieldset class="left-right-field">
+                <label for="tutorial-duration">Duration (minutes)</label>
+                <input type="number" id="tutorial-duration" name="duration" min="1" value="1">
+              </fieldset>
+
+              <button type="submit" class="submit-button">Submit</button>
+            </form>
+          </div>
+        {{ else }}
+          <h2>You're Ready!</h2>
+          <p>You can replay this tutorial at any time from the config page, accessed from the button at the bottom of the screen.</p>
+        {{ end }}
+      </div>
+
+      <div class="tutorial-step-controls">
+        <button type="button"
+                {{ if eq .Step 0 }}disabled{{ end }}
+                hx-get="/tutorial/{{ sub .Step 1 }}"
+                hx-target="#modal-container"
+                hx-swap="innerHTML">Back</button>
+
+        <div>
+          {{ range $i := seq 4 }}
+            {{ if le $i $.Step }} * {{ else }} - {{ end }}
+          {{ end }}
+        </div>
+
+        {{ if eq .Step 2 }}
+          <button type="button" class="skip-button"
+                  hx-get="/tutorial/3"
+                  hx-target="#modal-container"
+                  hx-swap="innerHTML">Skip</button>
+        {{ else if ge .Step 3 }}
+          <button type="button"
+                  onclick="markTutorialSeen(); closeModal();">Close</button>
+        {{ else }}
+          <button type="button"
+                  hx-get="/tutorial/{{ add .Step 1 }}"
+                  hx-target="#modal-container"
+                  hx-swap="innerHTML">Next</button>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+</div>
+{{ end }}

@@ -1,0 +1,16 @@
+{{ define "partials/config/purge_logs" }}
+<div class="modal__lightbox" onclick="closeModal(event)">
+  <div class="modal__dialog">
+    <div class="modal__bar">
+      <button class="modal__close-btn" onclick="closeModal()">Close</button>
+    </div>
+    <div class="modal__content">
+      <h1>Warning!</h1>
+      <p>This will <em>irretrievably</em> purge your food logs from the system.</p>
+      <button type="button"
+              hx-delete="/htmx/logs/purge"
+              hx-on::after-request="closeModal(); alert('Logs purged successfully');">Purge Logs</button>
+    </div>
+  </div>
+</div>
+{{ end }}

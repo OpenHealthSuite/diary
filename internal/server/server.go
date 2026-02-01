@@ -1,6 +1,9 @@
 package server
 
 import (
+	"html/template"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -54,51 +57,92 @@ func (g *ServerState) TestEndpoint(c *gin.Context) {
 	c.String(200, "OK")
 }
 
+func loadTemplates(templatesDir string) (*template.Template, error) {
+	tmpl := template.New("").Funcs(templateFuncs())
+
+	err := filepath.Walk(templatesDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(path, ".html") {
+			_, err = tmpl.ParseFiles(path)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	return tmpl, err
+}
+
 func (sts *DiaryServerState) RunServer() error {
 	r := gin.Default()
 
-	r.Static("/static", "./web/static")
+	// Load templates
+	r.SetFuncMap(templateFuncs())
+	tmpl, err := loadTemplates("web/template")
+	if err != nil {
+		return err
+	}
+	r.SetHTMLTemplate(tmpl)
+
+	// Static files
 	r.StaticFile("/favicon.ico", "./web/static/favicon.ico")
+	r.Static("/static", "./web/static")
 
-	r.GET("/", serveDatabrowserSPA)
-	r.GET("/assets/*path", serveDatabrowserSPA)
-
-	r.Use(func(ctx *gin.Context) {
-		if !strings.HasPrefix(ctx.Request.URL.Path, "/api/") {
-			serveDatabrowserSPA(ctx)
-			ctx.Abort()
-			return
-		}
-		ctx.Next()
-	})
-
+	// User identification middleware
 	r.Use(func(ctx *gin.Context) {
 		if ctx.Request.URL.Path == "/api/ping" {
 			ctx.Next()
 			return
 		}
+		// Skip auth for static files
+		if strings.HasPrefix(ctx.Request.URL.Path, "/static/") {
+			ctx.Next()
+			return
+		}
 		if sts.Config.UserId != "" {
 			ctx.Set("userId", sts.Config.UserId)
+			ctx.Next()
 			return
 		}
 
 		if ctx.Request.Header.Get(sts.Config.UserIdHeader) != "" {
 			ctx.Set("userId", ctx.Request.Header.Get(sts.Config.UserIdHeader))
+			ctx.Next()
 			return
 		}
 		ctx.String(403, "Missing User Identification")
 	})
 
+	// Page routes
+	r.GET("/", sts.handleHome)
+	r.GET("/config", sts.handleConfig)
+
+	// HTMX partial routes
+	r.GET("/logs", sts.handleLogsPartial)
+	r.GET("/logs/new", sts.handleNewLogForm)
+	r.GET("/logs/:id/edit", sts.handleEditLogForm)
+	r.POST("/htmx/logs", sts.handleCreateLog)
+	r.PUT("/htmx/logs/:id", sts.handleUpdateLog)
+	r.DELETE("/htmx/logs/:id", sts.handleDeleteLog)
+
+	// Config partials
+	r.GET("/config/metrics", sts.handleMetricsPartial)
+	r.POST("/htmx/config/metrics", sts.handleSaveMetrics)
+	r.POST("/htmx/config/metrics/new", sts.handleCreateMetric)
+	r.DELETE("/htmx/config/metrics/:key", sts.handleDeleteMetric)
+	r.GET("/config/purge", sts.handlePurgeModal)
+	r.DELETE("/htmx/logs/purge", sts.handlePurgeLogs)
+	r.GET("/config/upload", sts.handleUploadModal)
+
+	// Tutorial
+	r.GET("/tutorial", sts.handleTutorial)
+	r.GET("/tutorial/:step", sts.handleTutorialStep)
+
+	// API routes (existing)
 	generated.RegisterHandlers(r, sts.GeneratedInterface)
 
 	return r.Run()
-}
-
-// Serve the React SPA index.html
-func serveDatabrowserSPA(c *gin.Context) {
-	if strings.HasPrefix(c.Request.URL.Path, "/assets") {
-		c.File(strings.Replace(c.Request.URL.Path, "/assets", "./web/dist/assets", 1))
-		return
-	}
-	c.File("./web/dist/index.html")
 }

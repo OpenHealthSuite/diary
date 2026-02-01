@@ -1,0 +1,55 @@
+{{ define "pages/config" }}
+{{ template "layouts/base" . }}
+{{ end }}
+
+{{ define "content" }}
+<div class="config-page">
+  <h1>Config</h1>
+  <div class="config-container-wrapper">
+
+    <div class="config-container">
+      <h2>Metrics</h2>
+      <div class="config-content" id="metrics-config-container">
+        {{ template "partials/config/metrics" . }}
+      </div>
+    </div>
+
+    <div class="config-container">
+      <h2>Data Management</h2>
+      <div class="config-content button-stack">
+        <a href="/api/logs/export" target="_blank" download><button type="button">Download Logs</button></a>
+        <button type="button"
+                hx-get="/config/upload"
+                hx-target="#modal-container"
+                hx-swap="innerHTML">Upload Logs</button>
+        <button type="button"
+                hx-get="/config/purge"
+                hx-target="#modal-container"
+                hx-swap="innerHTML">Purge Logs</button>
+      </div>
+    </div>
+
+    <div class="config-container">
+      <h2>User Actions</h2>
+      <div class="config-content button-stack">
+        {{ if .LogoutEndpoint }}
+        <a href="{{ .LogoutEndpoint }}"><button type="button">Logout</button></a>
+        {{ end }}
+        <button type="button"
+                hx-get="/tutorial"
+                hx-target="#modal-container"
+                hx-swap="innerHTML">Tutorial</button>
+      </div>
+    </div>
+
+    <div class="config-container">
+      <h2>About</h2>
+      <div class="config-content button-stack">
+        <a href="https://openhealthsuite.com/diary"><button type="button">Website</button></a>
+        <a href="https://github.com/OpenHealthSuite/diary"><button type="button">Source code</button></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{{ end }}

@@ -35,7 +35,7 @@ spec:
             - name: PORT
               value: "3024"
             - name: OPENFOODDIARY_STORAGE_PROVIDER
-              value: cassandra
+              value: postgres
             - name: OPENFOODDIARY_LOGOUT_ENDPOINT
               value: {{ .Values.signoutUrl }}
             - name: OPENFOODDIARY_POSTGRES_CONNECTION_STRING

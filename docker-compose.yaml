@@ -13,19 +13,3 @@ services:
       timeout: 2s
       retries: 10
       start_period: 5s
-
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - 3022:8080
-    env_file:
-      - .env-compose
-    depends_on:
-      - postgres
-    develop:
-      watch:
-        - action: rebuild
-          path: .
-

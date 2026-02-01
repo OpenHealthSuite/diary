@@ -1,0 +1,27 @@
+{{ define "partials/config/metrics" }}
+<div class="metrics-config" id="metrics-config">
+  {{ range $key, $metric := .Metrics }}
+  <div class="input-row">
+    <input name="{{ $key }}"
+           value="{{ $metric.Label }}"
+           hx-post="/htmx/config/metrics"
+           hx-trigger="change"
+           hx-target="#metrics-config-container"
+           hx-swap="innerHTML"
+           hx-include="#metrics-config input[name]">
+    <button type="button"
+            hx-delete="/htmx/config/metrics/{{ $key }}"
+            hx-target="#metrics-config-container"
+            hx-swap="innerHTML">Delete</button>
+  </div>
+  {{ end }}
+  <div class="input-row">
+    <input name="new_metric" placeholder="New metric...">
+    <button type="button"
+            hx-post="/htmx/config/metrics/new"
+            hx-include="[name='new_metric']"
+            hx-target="#metrics-config-container"
+            hx-swap="innerHTML">Create</button>
+  </div>
+</div>
+{{ end }}
