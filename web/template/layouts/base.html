@@ -1,4 +1,4 @@
-{{ define "layouts/base" }}
+{{ define "layouts/base/header" }}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,13 +17,10 @@
 </head>
 <body>
   <main>
-    {{ template "content" . }}
+{{ end }}
 
-    {{ template "components/navigation" . }}
+{{ define "layouts/base/footer" }}
   </main>
-
-  <!-- Modal container for HTMX-loaded modals -->
-  <div id="modal-container"></div>
 </body>
 </html>
 {{ end }}

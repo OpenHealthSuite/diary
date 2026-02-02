@@ -1,8 +1,6 @@
 {{ define "pages/config" }}
-{{ template "layouts/base" . }}
-{{ end }}
+{{ template "layouts/base/header" . }}
 
-{{ define "content" }}
 <div class="config-page">
   <h1>Config</h1>
   <div class="config-container-wrapper">
@@ -52,4 +50,8 @@
 
   </div>
 </div>
+
+{{ template "components/navigation" . }}
+{{ template "layouts/base/footer" . }}
 {{ end }}
+

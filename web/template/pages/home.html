@@ -1,8 +1,6 @@
 {{ define "pages/home" }}
-{{ template "layouts/base" . }}
-{{ end }}
+{{ template "layouts/base/header" . }}
 
-{{ define "content" }}
 <div id="logs-page">
   {{ template "components/day_selector" . }}
 
@@ -17,4 +15,8 @@
     {{ template "components/daily_log" . }}
   </div>
 </div>
+
+{{ template "components/navigation" . }}
+{{ template "layouts/base/footer" . }}
 {{ end }}
+
