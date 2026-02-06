@@ -1,28 +1,26 @@
 {{ define "components/day_selector" }}
 <div class="day-selector" id="day-selector">
-  <button class="day-selector__button"
-          hx-get="/logs?date={{ .PrevDay }}"
-          hx-target="#logs-container"
-          hx-swap="innerHTML">&lt;</button>
+  <a class="day-selector__button"
+          href="/logs?date={{ .PrevDay }}"
+          >&lt;</a>
 
   <div>
-    <label for="day-selected" hidden>Day Selected</label>
+    <label for="date" hidden>Day Selected</label>
     <input type="date"
-           id="day-selected"
-           name="day-selected"
+           id="date"
+           name="date"
            class="day-selector__input"
            pattern="\d{4}-\d{2}-\d{2}"
            value="{{ .CurrentDay }}"
            hx-get="/logs"
            hx-trigger="change"
-           hx-target="#logs-container"
-           hx-swap="innerHTML"
-           hx-vals='js:{"date": document.getElementById("day-selected").value}'>
+           hx-target="body"
+           hx-swap="outerHTML"
+           hx-vals='js:{"date": document.getElementById("date").value}'>
   </div>
 
-  <button class="day-selector__button"
-          hx-get="/logs?date={{ .NextDay }}"
-          hx-target="#logs-container"
-          hx-swap="innerHTML">&gt;</button>
+  <a class="day-selector__button"
+          href="/logs?date={{ .NextDay }}"
+         >&gt;</a>
 </div>
 {{ end }}

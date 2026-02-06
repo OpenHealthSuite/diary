@@ -183,7 +183,7 @@ func (sts *DiaryServerState) fetchLogsForDate(c *gin.Context, date time.Time) []
 
 // Page Handlers
 
-func (sts *DiaryServerState) handleHome(c *gin.Context) {
+func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 	date := parseDateParam(c, "date", time.Now())
 	logs := sts.fetchLogsForDate(c, date)
 	metrics := sts.fetchMetricsConfig(c)
@@ -226,34 +226,6 @@ func (sts *DiaryServerState) handleConfig(c *gin.Context) {
 }
 
 // HTMX Partial Handlers
-
-func (sts *DiaryServerState) handleLogsPartial(c *gin.Context) {
-	date := parseDateParam(c, "date", time.Now())
-	logs := sts.fetchLogsForDate(c, date)
-	metrics := sts.fetchMetricsConfig(c)
-	topMetric := getTopMetric(metrics)
-
-	var topMetricTotal float32 = 0
-	if topMetric != nil {
-		for _, log := range logs {
-			if val, ok := log.Metrics[topMetric.Key]; ok {
-				topMetricTotal += val
-			}
-		}
-	}
-
-	data := gin.H{
-		"CurrentDay":     date.Format("2006-01-02"),
-		"PrevDay":        date.AddDate(0, 0, -1).Format("2006-01-02"),
-		"NextDay":        date.AddDate(0, 0, 1).Format("2006-01-02"),
-		"Logs":           logs,
-		"Metrics":        metrics,
-		"TopMetric":      topMetric,
-		"TopMetricTotal": topMetricTotal,
-	}
-
-	c.HTML(http.StatusOK, "partials/htmx/logs_list", data)
-}
 
 func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
 	dateStr := c.Query("date")
@@ -397,7 +369,7 @@ func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
 	c.Request.URL.RawQuery = "date=" + dateStr
 
 	// Return updated logs list
-	sts.handleLogsPartial(c)
+	sts.handleLogs(c)
 }
 
 func (sts *DiaryServerState) handleUpdateLog(c *gin.Context) {
@@ -471,7 +443,7 @@ func (sts *DiaryServerState) handleUpdateLog(c *gin.Context) {
 	c.Request.URL.RawQuery = "date=" + dateStr
 
 	// Return updated logs list
-	sts.handleLogsPartial(c)
+	sts.handleLogs(c)
 }
 
 func (sts *DiaryServerState) handleDeleteLog(c *gin.Context) {
@@ -512,7 +484,7 @@ func (sts *DiaryServerState) handleDeleteLog(c *gin.Context) {
 	}
 
 	// Return updated logs list
-	sts.handleLogsPartial(c)
+	sts.handleLogs(c)
 }
 
 // Metrics Config Handlers

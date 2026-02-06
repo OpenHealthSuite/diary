@@ -2,6 +2,7 @@ package server
 
 import (
 	"html/template"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -117,16 +118,17 @@ func (sts *DiaryServerState) RunServer() error {
 	})
 
 	// Page routes
-	r.GET("/", sts.handleHome)
+	r.GET("/", func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusSeeOther, "/logs")
+	})
 	r.GET("/config", sts.handleConfig)
 
-	// HTMX partial routes
-	r.GET("/logs", sts.handleLogsPartial)
+	r.GET("/logs", sts.handleLogs)
 	r.GET("/logs/new", sts.handleNewLogForm)
-	r.GET("/logs/:id/edit", sts.handleEditLogForm)
-	r.POST("/htmx/logs", sts.handleCreateLog)
-	r.PUT("/htmx/logs/:id", sts.handleUpdateLog)
-	r.DELETE("/htmx/logs/:id", sts.handleDeleteLog)
+	r.GET("/logs/:id", sts.handleEditLogForm)
+	r.POST("/logs", sts.handleCreateLog)
+	r.PUT("/logs/:id", sts.handleUpdateLog)
+	r.DELETE("/logs/:id", sts.handleDeleteLog)
 
 	// Config partials
 	r.GET("/config/metrics", sts.handleMetricsPartial)
