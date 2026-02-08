@@ -380,17 +380,22 @@ main {
   width: 100%;
 }
 
-/* === Metrics Configuration (from MetricsConfiguration.svelte) === */
+/* === Metrics Configuration === */
 .metrics-config .input-row {
   width: 100%;
   display: flex;
   flex-direction: row;
-  justify-content: space-evenly;
+  align-items: center;
+  gap: 0.5em;
   margin: 0.25em 0;
 }
 
+.metrics-config .input-row form {
+  display: contents;
+}
+
 .metrics-config .input-row input {
-  width: calc(100% - 8em);
+  flex: 1;
 }
 
 .metrics-config .input-row button {
