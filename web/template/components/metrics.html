@@ -4,7 +4,8 @@
   <div class="input-row">
     <form hx-post="/config/metrics" hx-swap="none">
       <input type="hidden" name="key" value="{{ $key }}">
-      <input name="label" value="{{ $metric.Label }}" onchange="this.form.requestSubmit()">
+      <input name="label" value="{{ $metric.Label }}">
+      <button type="submit">Update</button>
     </form>
     <form hx-delete="/config/metrics/{{ $key }}" hx-swap="none">
       <button type="submit">Delete</button>
