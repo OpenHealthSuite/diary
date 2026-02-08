@@ -2,18 +2,21 @@
 <div class="metrics-config" id="metrics-config">
   {{ range $key, $metric := .Metrics }}
   <div class="input-row">
-    <form hx-post="/config/metrics" hx-swap="none">
+    <form hx-post="/config/metrics{{ if $.TutorialMode }}?tutorial=1{{ end }}"
+          {{ if $.TutorialMode }}hx-target="#tutorial-metrics-config" hx-select="#metrics-config" hx-swap="innerHTML"{{ else }}hx-swap="none"{{ end }}>
       <input type="hidden" name="key" value="{{ $key }}">
       <input name="label" value="{{ $metric.Label }}">
       <button type="submit">Update</button>
     </form>
-    <form hx-delete="/config/metrics/{{ $key }}" hx-swap="none">
+    <form hx-delete="/config/metrics/{{ $key }}{{ if $.TutorialMode }}?tutorial=1{{ end }}"
+          {{ if $.TutorialMode }}hx-target="#tutorial-metrics-config" hx-select="#metrics-config" hx-swap="innerHTML"{{ else }}hx-swap="none"{{ end }}>
       <button type="submit">Delete</button>
     </form>
   </div>
   {{ end }}
   <div class="input-row">
-    <form hx-post="/config/metrics/new" hx-swap="none">
+    <form hx-post="/config/metrics/new{{ if $.TutorialMode }}?tutorial=1{{ end }}"
+          {{ if $.TutorialMode }}hx-target="#tutorial-metrics-config" hx-select="#metrics-config" hx-swap="innerHTML"{{ else }}hx-swap="none"{{ end }}>
       <input name="new_metric" placeholder="New metric...">
       <button type="submit">Create</button>
     </form>

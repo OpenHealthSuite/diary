@@ -15,7 +15,7 @@
           <p>Enter the metrics you want to track, like Calories, Sugar, Satiation or Enjoyment.</p>
           <p class="note">Note: You can choose to track no metrics at all.</p>
           <div id="tutorial-metrics-config">
-            {{ template "components/config/metrics" . }}
+            {{ template "components/config/metrics" (dict "Metrics" .Metrics "TutorialMode" true) }}
           </div>
         {{ else if eq $step 2 }}
           <h2>Add a Log!</h2>

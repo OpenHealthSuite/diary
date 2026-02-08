@@ -342,11 +342,13 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 
 func (sts *DiaryServerState) handleConfig(c *gin.Context) {
 	metrics := sts.fetchMetricsConfig(c)
+	tutorialMode := c.Query("tutorial") == "1"
 
 	data := gin.H{
 		"CurrentPath":    "/config",
 		"Metrics":        metrics,
 		"LogoutEndpoint": sts.Config.SingoutEndpoint,
+		"TutorialMode":   tutorialMode,
 	}
 
 	c.HTML(http.StatusOK, "pages/config", data)
@@ -540,9 +542,12 @@ func (sts *DiaryServerState) handleDeleteLog(c *gin.Context) {
 func (sts *DiaryServerState) handleSaveMetrics(c *gin.Context) {
 	key := c.PostForm("key")
 	label := c.PostForm("label")
+	tutorialMode := c.Query("tutorial") == "1"
 
 	if key == "" || label == "" {
-		c.Header("HX-Redirect", "/config")
+		if !tutorialMode {
+			c.Header("HX-Redirect", "/config")
+		}
 		sts.handleConfig(c)
 		return
 	}
@@ -555,14 +560,20 @@ func (sts *DiaryServerState) handleSaveMetrics(c *gin.Context) {
 	}
 
 	sts.saveMetricsConfig(c, metrics)
-	c.Header("HX-Redirect", "/config")
+	if !tutorialMode {
+		c.Header("HX-Redirect", "/config")
+	}
 	sts.handleConfig(c)
 }
 
 func (sts *DiaryServerState) handleCreateMetric(c *gin.Context) {
 	newMetricLabel := c.PostForm("new_metric")
+	tutorialMode := c.Query("tutorial") == "1"
+
 	if newMetricLabel == "" {
-		c.Header("HX-Redirect", "/config")
+		if !tutorialMode {
+			c.Header("HX-Redirect", "/config")
+		}
 		sts.handleConfig(c)
 		return
 	}
@@ -586,18 +597,23 @@ func (sts *DiaryServerState) handleCreateMetric(c *gin.Context) {
 	}
 
 	sts.saveMetricsConfig(c, metrics)
-	c.Header("HX-Redirect", "/config")
+	if !tutorialMode {
+		c.Header("HX-Redirect", "/config")
+	}
 	sts.handleConfig(c)
 }
 
 func (sts *DiaryServerState) handleDeleteMetric(c *gin.Context) {
 	key := c.Param("key")
+	tutorialMode := c.Query("tutorial") == "1"
 
 	metrics := sts.fetchMetricsConfig(c)
 	delete(metrics, key)
 
 	sts.saveMetricsConfig(c, metrics)
-	c.Header("HX-Redirect", "/config")
+	if !tutorialMode {
+		c.Header("HX-Redirect", "/config")
+	}
 	sts.handleConfig(c)
 }
 
