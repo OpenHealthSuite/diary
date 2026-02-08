@@ -1,6 +1,9 @@
 package server
 
 import (
+	"encoding/csv"
+	"encoding/json"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -89,7 +92,6 @@ func (g *ServerState) DeleteFoodLog(c *gin.Context, itemId string) {
 	c.Status(204)
 }
 
-// TODO: Convert to returning the CSV format...
 // ExportFoodLogs implements generated.ServerInterface.
 func (g *ServerState) ExportFoodLogs(c *gin.Context) {
 	userId, ok := c.Get("userId")
@@ -118,22 +120,31 @@ func (g *ServerState) ExportFoodLogs(c *gin.Context) {
 		}
 		metricsMap[m.FoodlogentryID][m.MetricKey] = float32(m.MetricValue)
 	}
-	// Compose response
-	resp := make([]generated.FoodLogEntry, 0, len(entries))
+
+	// Write CSV response
+	c.Header("Content-Disposition", "attachment; filename=food_logs.csv")
+	c.Header("Content-Type", "text/csv")
+
+	writer := csv.NewWriter(c.Writer)
+	defer writer.Flush()
+
+	// Write header
+	writer.Write([]string{"id", "name", "timeStart", "timeEnd", "metrics", "labels"})
+
+	// Write rows
 	for _, e := range entries {
-		resp = append(resp, generated.FoodLogEntry{
-			Id:     e.ID.String(),
-			Name:   e.Name,
-			Labels: e.Labels,
-			Time: generated.TimeRange{
-				Start: e.TimeStart.Time,
-				End:   e.TimeEnd.Time,
-			},
-			Metrics: metricsMap[e.ID],
+		metricsJSON, _ := json.Marshal(metricsMap[e.ID])
+		labelsJSON, _ := json.Marshal(e.Labels)
+
+		writer.Write([]string{
+			e.ID.String(),
+			e.Name,
+			e.TimeStart.Time.Format("2006-01-02T15:04:05Z"),
+			e.TimeEnd.Time.Format("2006-01-02T15:04:05Z"),
+			string(metricsJSON),
+			string(labelsJSON),
 		})
 	}
-	c.Header("Content-Disposition", "attachment; filename=food_logs.json")
-	c.JSON(200, resp)
 }
 
 // GetFoodLog implements generated.ServerInterface.
