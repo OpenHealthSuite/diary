@@ -528,37 +528,33 @@ func (sts *DiaryServerState) handleDeleteLog(c *gin.Context) {
 
 // Metrics Config Handlers
 
-func (sts *DiaryServerState) handleMetricsPartial(c *gin.Context) {
-	metrics := sts.fetchMetricsConfig(c)
+func (sts *DiaryServerState) handleSaveMetrics(c *gin.Context) {
+	key := c.PostForm("key")
+	label := c.PostForm("label")
 
-	data := gin.H{
-		"Metrics": metrics,
+	if key == "" || label == "" {
+		c.Header("HX-Redirect", "/config")
+		sts.handleConfig(c)
+		return
 	}
 
-	c.HTML(http.StatusOK, "partials/config/metrics", data)
-}
-
-func (sts *DiaryServerState) handleSaveMetrics(c *gin.Context) {
-	// This handles inline edits to metric labels
 	metrics := sts.fetchMetricsConfig(c)
 
-	// Update from form data
-	for key := range metrics {
-		if label := c.PostForm(key); label != "" {
-			cfg := metrics[key]
-			cfg.Label = label
-			metrics[key] = cfg
-		}
+	if cfg, exists := metrics[key]; exists {
+		cfg.Label = label
+		metrics[key] = cfg
 	}
 
 	sts.saveMetricsConfig(c, metrics)
-	sts.handleMetricsPartial(c)
+	c.Header("HX-Redirect", "/config")
+	sts.handleConfig(c)
 }
 
 func (sts *DiaryServerState) handleCreateMetric(c *gin.Context) {
 	newMetricLabel := c.PostForm("new_metric")
 	if newMetricLabel == "" {
-		sts.handleMetricsPartial(c)
+		c.Header("HX-Redirect", "/config")
+		sts.handleConfig(c)
 		return
 	}
 
@@ -581,7 +577,8 @@ func (sts *DiaryServerState) handleCreateMetric(c *gin.Context) {
 	}
 
 	sts.saveMetricsConfig(c, metrics)
-	sts.handleMetricsPartial(c)
+	c.Header("HX-Redirect", "/config")
+	sts.handleConfig(c)
 }
 
 func (sts *DiaryServerState) handleDeleteMetric(c *gin.Context) {
@@ -591,13 +588,23 @@ func (sts *DiaryServerState) handleDeleteMetric(c *gin.Context) {
 	delete(metrics, key)
 
 	sts.saveMetricsConfig(c, metrics)
-	sts.handleMetricsPartial(c)
+	c.Header("HX-Redirect", "/config")
+	sts.handleConfig(c)
 }
 
-// Purge and Upload Modals
+// Purge and Upload Pages
 
-func (sts *DiaryServerState) handlePurgeModal(c *gin.Context) {
-	c.HTML(http.StatusOK, "partials/config/purge_logs", nil)
+func (sts *DiaryServerState) handlePurgePage(c *gin.Context) {
+	metrics := sts.fetchMetricsConfig(c)
+
+	data := gin.H{
+		"CurrentPath":    "/config",
+		"Metrics":        metrics,
+		"LogoutEndpoint": sts.Config.SingoutEndpoint,
+		"PurgeModal":     true,
+	}
+
+	c.HTML(http.StatusOK, "pages/config", data)
 }
 
 func (sts *DiaryServerState) handlePurgeLogs(c *gin.Context) {
@@ -609,11 +616,21 @@ func (sts *DiaryServerState) handlePurgeLogs(c *gin.Context) {
 		return
 	}
 
-	c.String(http.StatusOK, "")
+	c.Header("HX-Redirect", "/config")
+	sts.handleConfig(c)
 }
 
-func (sts *DiaryServerState) handleUploadModal(c *gin.Context) {
-	c.HTML(http.StatusOK, "partials/config/bulk_upload", nil)
+func (sts *DiaryServerState) handleUploadPage(c *gin.Context) {
+	metrics := sts.fetchMetricsConfig(c)
+
+	data := gin.H{
+		"CurrentPath":    "/config",
+		"Metrics":        metrics,
+		"LogoutEndpoint": sts.Config.SingoutEndpoint,
+		"UploadModal":    true,
+	}
+
+	c.HTML(http.StatusOK, "pages/config", data)
 }
 
 // Tutorial Handlers

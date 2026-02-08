@@ -132,14 +132,13 @@ func (sts *DiaryServerState) RunServer() error {
 	r.PUT("/logs/:id", sts.handleUpdateLog)
 	r.DELETE("/logs/:id", sts.handleDeleteLog)
 
-	// Config partials
-	r.GET("/config/metrics", sts.handleMetricsPartial)
-	r.POST("/htmx/config/metrics", sts.handleSaveMetrics)
-	r.POST("/htmx/config/metrics/new", sts.handleCreateMetric)
-	r.DELETE("/htmx/config/metrics/:key", sts.handleDeleteMetric)
-	r.GET("/config/purge", sts.handlePurgeModal)
-	r.DELETE("/htmx/logs/purge", sts.handlePurgeLogs)
-	r.GET("/config/upload", sts.handleUploadModal)
+	// Config routes
+	r.POST("/config/metrics", sts.handleSaveMetrics)
+	r.POST("/config/metrics/new", sts.handleCreateMetric)
+	r.DELETE("/config/metrics/:key", sts.handleDeleteMetric)
+	r.GET("/config/purge", sts.handlePurgePage)
+	r.DELETE("/config/purge", sts.handlePurgeLogs)
+	r.GET("/config/upload", sts.handleUploadPage)
 
 	// Tutorial
 	r.GET("/tutorial", sts.handleTutorial)

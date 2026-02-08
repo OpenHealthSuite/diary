@@ -1,0 +1,21 @@
+{{ define "components/config/metrics" }}
+<div class="metrics-config" id="metrics-config">
+  {{ range $key, $metric := .Metrics }}
+  <div class="input-row">
+    <form hx-post="/config/metrics" hx-swap="none">
+      <input type="hidden" name="key" value="{{ $key }}">
+      <input name="label" value="{{ $metric.Label }}" onchange="this.form.requestSubmit()">
+    </form>
+    <form hx-delete="/config/metrics/{{ $key }}" hx-swap="none">
+      <button type="submit">Delete</button>
+    </form>
+  </div>
+  {{ end }}
+  <div class="input-row">
+    <form hx-post="/config/metrics/new" hx-swap="none">
+      <input name="new_metric" placeholder="New metric...">
+      <button type="submit">Create</button>
+    </form>
+  </div>
+</div>
+{{ end }}

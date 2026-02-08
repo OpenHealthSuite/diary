@@ -8,7 +8,7 @@
     <div class="config-container">
       <h2>Metrics</h2>
       <div class="config-content" id="metrics-config-container">
-        {{ template "partials/config/metrics" . }}
+        {{ template "components/config/metrics" . }}
       </div>
     </div>
 
@@ -16,14 +16,8 @@
       <h2>Data Management</h2>
       <div class="config-content button-stack">
         <a href="/api/logs/export" target="_blank" download><button type="button">Download Logs</button></a>
-        <button type="button"
-                hx-get="/config/upload"
-                hx-target="#modal-container"
-                hx-swap="innerHTML">Upload Logs</button>
-        <button type="button"
-                hx-get="/config/purge"
-                hx-target="#modal-container"
-                hx-swap="innerHTML">Purge Logs</button>
+        <a type="button" href="/config/upload">Upload Logs</a>
+        <a type="button" href="/config/purge">Purge Logs</a>
       </div>
     </div>
 
@@ -50,6 +44,14 @@
 
   </div>
 </div>
+
+{{ if .PurgeModal }}
+{{ template "components/purge_modal" . }}
+{{ end }}
+
+{{ if .UploadModal }}
+{{ template "components/upload_modal" . }}
+{{ end }}
 
 {{ template "components/navigation" . }}
 {{ template "layouts/base/footer" . }}
