@@ -199,6 +199,14 @@ func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 		}
 	}
 
+	// Check for tutorial step
+	var tutorialStep *int
+	if stepStr := c.Query("tutorialStep"); stepStr != "" {
+		step := 0
+		fmt.Sscanf(stepStr, "%d", &step)
+		tutorialStep = &step
+	}
+
 	data := gin.H{
 		"CurrentPath":    "/",
 		"CurrentDay":     date.Format("2006-01-02"),
@@ -208,6 +216,7 @@ func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 		"Metrics":        metrics,
 		"TopMetric":      topMetric,
 		"TopMetricTotal": topMetricTotal,
+		"TutorialStep":   tutorialStep,
 	}
 
 	c.HTML(http.StatusOK, "pages/home", data)
@@ -633,30 +642,66 @@ func (sts *DiaryServerState) handleUploadPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/config", data)
 }
 
-// Tutorial Handlers
+// Tutorial Handler
 
-func (sts *DiaryServerState) handleTutorial(c *gin.Context) {
-	metrics := sts.fetchMetricsConfig(c)
+func (sts *DiaryServerState) handleTutorialLog(c *gin.Context) {
+	// Create the log entry and redirect to tutorial step 3
+	userId := sts.getUserId(c)
 
-	data := gin.H{
-		"Step":    0,
-		"Metrics": metrics,
+	name := c.PostForm("name")
+	dateStr := c.PostForm("date")
+	timeStr := c.PostForm("time")
+	durationStr := c.PostForm("duration")
+
+	if name == "" {
+		c.Redirect(http.StatusSeeOther, "/logs?tutorialStep=2")
+		return
 	}
 
-	c.HTML(http.StatusOK, "components/tutorial", data)
-}
+	startTime, _ := time.Parse("2006-01-02T15:04", dateStr+"T"+timeStr)
+	duration := 1
+	if d, err := strconv.Atoi(durationStr); err == nil {
+		duration = d
+	}
+	endTime := startTime.Add(time.Duration(duration) * time.Minute)
 
-func (sts *DiaryServerState) handleTutorialStep(c *gin.Context) {
-	stepStr := c.Param("step")
-	step := 0
-	fmt.Sscanf(stepStr, "%d", &step)
-
-	metrics := sts.fetchMetricsConfig(c)
-
-	data := gin.H{
-		"Step":    step,
-		"Metrics": metrics,
+	// Parse metrics from form
+	metricsConfig := sts.fetchMetricsConfig(c)
+	metrics := make(map[string]float32)
+	for key := range metricsConfig {
+		if val := c.PostForm("metric_" + key); val != "" {
+			var f float64
+			if _, err := fmt.Sscanf(val, "%f", &f); err == nil {
+				metrics[key] = float32(f)
+			}
+		}
 	}
 
-	c.HTML(http.StatusOK, "components/tutorial", data)
+	id := uuid.New()
+
+	// Create the entry
+	_, err := sts.getStorage().storage.GetQuerier().CreateFoodLogEntry(c, strggen.CreateFoodLogEntryParams{
+		UserID:    userId,
+		ID:        id,
+		Name:      name,
+		Labels:    []string{},
+		TimeStart: pgtype.Timestamp{Time: startTime, Valid: true},
+		TimeEnd:   pgtype.Timestamp{Time: endTime, Valid: true},
+	})
+	if err != nil {
+		c.Redirect(http.StatusSeeOther, "/logs?tutorialStep=2")
+		return
+	}
+
+	// Insert metrics
+	for k, v := range metrics {
+		_ = sts.getStorage().storage.GetQuerier().CreateFoodLogEntryMetric(c, strggen.CreateFoodLogEntryMetricParams{
+			UserID:         userId,
+			FoodlogentryID: id,
+			MetricKey:      k,
+			MetricValue:    int32(v),
+		})
+	}
+
+	c.Redirect(http.StatusSeeOther, "/logs?tutorialStep=3")
 }

@@ -27,10 +27,7 @@
         {{ if .LogoutEndpoint }}
         <a href="{{ .LogoutEndpoint }}"><button type="button">Logout</button></a>
         {{ end }}
-        <button type="button"
-                hx-get="/tutorial"
-                hx-target="#modal-container"
-                hx-swap="innerHTML">Tutorial</button>
+        <a href="/logs?tutorialStep=0"><button type="button">Tutorial</button></a>
       </div>
     </div>
 

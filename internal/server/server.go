@@ -141,8 +141,7 @@ func (sts *DiaryServerState) RunServer() error {
 	r.GET("/config/upload", sts.handleUploadPage)
 
 	// Tutorial
-	r.GET("/tutorial", sts.handleTutorial)
-	r.GET("/tutorial/:step", sts.handleTutorialStep)
+	r.POST("/tutorial/log", sts.handleTutorialLog)
 
 	// API routes (existing)
 	generated.RegisterHandlers(r, sts.GeneratedInterface)

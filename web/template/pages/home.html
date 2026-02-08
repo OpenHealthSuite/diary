@@ -15,9 +15,13 @@
   </div>
 </div>
 {{ if .LogFormModal }}
-
   {{ template "components/log_form_modal" .LogFormModal }}
 {{ end }}
+
+{{ if .TutorialStep }}
+  {{ template "components/tutorial_modal" . }}
+{{ end }}
+
 {{ template "components/navigation" . }}
 {{ template "layouts/base/footer" . }}
 {{ end }}

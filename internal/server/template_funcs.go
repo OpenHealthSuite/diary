@@ -88,5 +88,12 @@ func templateFuncs() template.FuncMap {
 		"ge": func(a, b interface{}) bool {
 			return toInt(a) >= toInt(b)
 		},
+		"deref": func(p interface{}) interface{} {
+			rv := reflect.ValueOf(p)
+			if rv.Kind() == reflect.Ptr && !rv.IsNil() {
+				return rv.Elem().Interface()
+			}
+			return p
+		},
 	}
 }

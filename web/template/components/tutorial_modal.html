@@ -1,31 +1,27 @@
-{{ define "components/tutorial" }}
-<div class="modal__lightbox" onclick="closeModal(event)">
+{{ define "components/tutorial_modal" }}
+{{ $step := 0 }}{{ if .TutorialStep }}{{ $step = deref .TutorialStep }}{{ end }}
+<div class="modal__lightbox">
   <div class="modal__dialog">
     <div class="modal__bar">
-      <button class="modal__close-btn" onclick="markTutorialSeen(); closeModal();">Close</button>
+      <a class="modal__close-btn" href="/logs" onclick="markTutorialSeen()">Close</a>
     </div>
     <div class="modal__content">
       <div class="tutorial-content">
-        {{ if eq .Step 0 }}
+        {{ if eq $step 0 }}
           <h2>Welcome!</h2>
           <p>This brief tutorial will run you through the key concepts of OpenFoodDiary.</p>
-        {{ else if eq .Step 1 }}
+        {{ else if eq $step 1 }}
           <h2>Enter your metrics!</h2>
           <p>Enter the metrics you want to track, like Calories, Sugar, Satiation or Enjoyment.</p>
           <p class="note">Note: You can choose to track no metrics at all.</p>
           <div id="tutorial-metrics-config">
             {{ template "components/config/metrics" . }}
           </div>
-        {{ else if eq .Step 2 }}
+        {{ else if eq $step 2 }}
           <h2>Add a Log!</h2>
           <p class="note">Note: You can delete this log later - it's not permanent.</p>
           <div class="log-form">
-            <form class="log-form__container"
-                  hx-post="/htmx/logs"
-                  hx-target="#logs-container"
-                  hx-swap="innerHTML"
-                  hx-on::after-request="htmx.ajax('GET', '/tutorial/3', {target: '#modal-container'})">
-
+            <form class="log-form__container" action="/tutorial/log" method="POST">
               <fieldset class="log-datetime-selectors">
                 <label for="tutorial-log-day">Log Day
                   <input type="date" id="tutorial-log-day" name="date"
@@ -70,31 +66,24 @@
       </div>
 
       <div class="tutorial-step-controls">
-        <button type="button"
-                {{ if eq .Step 0 }}disabled{{ end }}
-                hx-get="/tutorial/{{ sub .Step 1 }}"
-                hx-target="#modal-container"
-                hx-swap="innerHTML">Back</button>
+        {{ if eq $step 0 }}
+          <button type="button" disabled>Back</button>
+        {{ else }}
+          <a href="/logs?tutorialStep={{ sub $step 1 }}"><button type="button">Back</button></a>
+        {{ end }}
 
         <div>
           {{ range $i := seq 4 }}
-            {{ if le $i $.Step }} * {{ else }} - {{ end }}
+            {{ if le $i $step }} * {{ else }} - {{ end }}
           {{ end }}
         </div>
 
-        {{ if eq .Step 2 }}
-          <button type="button" class="skip-button"
-                  hx-get="/tutorial/3"
-                  hx-target="#modal-container"
-                  hx-swap="innerHTML">Skip</button>
-        {{ else if ge .Step 3 }}
-          <button type="button"
-                  onclick="markTutorialSeen(); closeModal();">Close</button>
+        {{ if eq $step 2 }}
+          <a href="/logs?tutorialStep=3"><button type="button" class="skip-button">Skip</button></a>
+        {{ else if ge $step 3 }}
+          <a href="/logs" onclick="markTutorialSeen()"><button type="button">Done</button></a>
         {{ else }}
-          <button type="button"
-                  hx-get="/tutorial/{{ add .Step 1 }}"
-                  hx-target="#modal-container"
-                  hx-swap="innerHTML">Next</button>
+          <a href="/logs?tutorialStep={{ add $step 1 }}"><button type="button">Next</button></a>
         {{ end }}
       </div>
     </div>
