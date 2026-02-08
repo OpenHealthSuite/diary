@@ -6,9 +6,6 @@ on:
       - "v*.*.*"
 
 jobs:
-  build-and-test-webapp:
-    uses: ./.github/workflows/build_and_test_webapp.yml
-
   build-and-test-server:
     uses: ./.github/workflows/build_and_test_server.yml
 
