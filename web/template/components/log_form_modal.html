@@ -8,13 +8,11 @@
       <div class="log-form">
         <form class="log-form__container"
               {{ if .IsEdit }}
-              hx-put="/htmx/logs/{{ .LogID }}"
+              hx-put="/logs/{{ .LogID }}"
               {{ else }}
-              hx-post="/htmx/logs"
+              hx-post="/logs"
               {{ end }}
-              hx-target="#logs-container"
-              hx-swap="innerHTML"
-              hx-on::after-request="closeModal()">
+              hx-swap="none">
 
           <fieldset class="log-datetime-selectors">
             <label for="log-entry-day">Log Day
@@ -57,11 +55,8 @@
 
           {{ if .IsEdit }}
           <button type="button" class="submit-button"
-                  hx-delete="/htmx/logs/{{ .LogID }}"
-                  hx-target="#logs-container"
-                  hx-swap="innerHTML"
-                  hx-confirm="Delete this log?"
-                  hx-on::after-request="closeModal()">Delete</button>
+                  hx-delete="/logs/{{ .LogID }}"
+                  hx-confirm="Delete this log?">Delete</button>
           {{ end }}
         </form>
       </div>

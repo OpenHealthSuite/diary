@@ -126,6 +126,8 @@ func (sts *DiaryServerState) RunServer() error {
 	r.GET("/logs", sts.handleLogs)
 	r.GET("/logs/new", sts.handleNewLogForm)
 	r.GET("/logs/:id", sts.handleEditLogForm)
+
+	// THESE ALL NEED TO HANDLE AND REDIRECT
 	r.POST("/logs", sts.handleCreateLog)
 	r.PUT("/logs/:id", sts.handleUpdateLog)
 	r.DELETE("/logs/:id", sts.handleDeleteLog)

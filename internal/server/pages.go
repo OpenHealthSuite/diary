@@ -382,6 +382,7 @@ func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
 	c.Request.URL.RawQuery = "date=" + dateStr
 
 	// Return updated logs list
+	c.Header("HX-Redirect", "/logs?date="+dateStr)
 	sts.handleLogs(c)
 }
 
@@ -456,6 +457,7 @@ func (sts *DiaryServerState) handleUpdateLog(c *gin.Context) {
 	c.Request.URL.RawQuery = "date=" + dateStr
 
 	// Return updated logs list
+	c.Header("HX-Redirect", "/logs?date="+dateStr)
 	sts.handleLogs(c)
 }
 
@@ -497,6 +499,7 @@ func (sts *DiaryServerState) handleDeleteLog(c *gin.Context) {
 	}
 
 	// Return updated logs list
+	c.Header("HX-Redirect", "/logs?date="+entry.TimeStart.Time.Format("2006-01-02"))
 	sts.handleLogs(c)
 }
 
