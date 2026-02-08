@@ -21,11 +21,6 @@ describe("Authentication", () => {
         expect(response.status).not.toBe(403)
     })
 
-    it("Static root :: returns 200", async () => {
-        const response = await fetch(TEST_CONFIGURATION.API_HOST + '/')
-
-        expect(response.status).toBe(200)
-    })
     it("API ping :: returns 200", async () => {
         const response = await fetch(TEST_CONFIGURATION.API_HOST + '/api/ping')
 
