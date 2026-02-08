@@ -213,6 +213,49 @@ func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/home", data)
 }
 
+func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
+	date := parseDateParam(c, "date", time.Now())
+	logs := sts.fetchLogsForDate(c, date)
+	metrics := sts.fetchMetricsConfig(c)
+	topMetric := getTopMetric(metrics)
+
+	// Calculate total for top metric
+	var topMetricTotal float32 = 0
+	if topMetric != nil {
+		for _, log := range logs {
+			if val, ok := log.Metrics[topMetric.Key]; ok {
+				topMetricTotal += val
+			}
+		}
+	}
+
+	// Set time to current time but with the specified date
+	now := time.Now()
+	date = time.Date(date.Year(), date.Month(), date.Day(), now.Hour(), now.Minute(), 0, 0, time.UTC)
+
+	data := gin.H{
+		"CurrentPath":    "/",
+		"CurrentDay":     date.Format("2006-01-02"),
+		"PrevDay":        date.AddDate(0, 0, -1).Format("2006-01-02"),
+		"NextDay":        date.AddDate(0, 0, 1).Format("2006-01-02"),
+		"Logs":           logs,
+		"Metrics":        metrics,
+		"TopMetric":      topMetric,
+		"TopMetricTotal": topMetricTotal,
+		"LogFormModal": gin.H{
+			"IsEdit":     false,
+			"Log":        nil,
+			"LogDate":    date.Format("2006-01-02"),
+			"LogTime":    date.Format("15:04"),
+			"Metrics":    metrics,
+			"Duration":   1,
+			"CurrentDay": c.Query("date"),
+		},
+	}
+
+	c.HTML(http.StatusOK, "pages/home", data)
+}
+
 func (sts *DiaryServerState) handleConfig(c *gin.Context) {
 	metrics := sts.fetchMetricsConfig(c)
 
@@ -223,36 +266,6 @@ func (sts *DiaryServerState) handleConfig(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "pages/config", data)
-}
-
-// HTMX Partial Handlers
-
-func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
-	dateStr := c.Query("date")
-	date := time.Now()
-	if dateStr != "" {
-		if parsed, err := time.Parse("2006-01-02", dateStr); err == nil {
-			date = parsed
-		}
-	}
-
-	// Set time to current time but with the specified date
-	now := time.Now()
-	date = time.Date(date.Year(), date.Month(), date.Day(), now.Hour(), now.Minute(), 0, 0, time.UTC)
-
-	metrics := sts.fetchMetricsConfig(c)
-
-	data := gin.H{
-		"IsEdit":     false,
-		"Log":        nil,
-		"LogDate":    date.Format("2006-01-02"),
-		"LogTime":    date.Format("15:04"),
-		"Metrics":    metrics,
-		"Duration":   1,
-		"CurrentDay": c.Query("date"),
-	}
-
-	c.HTML(http.StatusOK, "components/log_form_modal", data)
 }
 
 func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {

@@ -5,17 +5,19 @@
   {{ template "components/day_selector" . }}
 
   <div class="controls-row">
-    <button class="add-log-button"
-            hx-get="/logs/new?date={{ .CurrentDay }}"
-            hx-target="#modal-container"
-            hx-swap="innerHTML">Add Log</button>
+    <a class="add-log-button"
+            href="/logs/new?date={{ .CurrentDay }}"
+            >Add Log</a>
   </div>
 
   <div id="logs-container">
     {{ template "components/daily_log" . }}
   </div>
 </div>
+{{ if .LogFormModal }}
 
+  {{ template "components/log_form_modal" .LogFormModal }}
+{{ end }}
 {{ template "components/navigation" . }}
 {{ template "layouts/base/footer" . }}
 {{ end }}
