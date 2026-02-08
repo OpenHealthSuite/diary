@@ -11,7 +11,6 @@ jobs:
 
   publish:
     needs:
-      - build-and-test-webapp
       - build-and-test-server
     uses: ./.github/workflows/build_docker_image.yml
     with:
