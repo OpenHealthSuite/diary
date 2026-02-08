@@ -11,20 +11,15 @@ COPY . .
 RUN GOOS=linux GOARCH=$(echo $TARGETPLATFORM | sed 's/linux\///') \
   go build -o dist/server cmd/server/main.go
 
-FROM --platform=$BUILDPLATFORM docker.io/node:24.9.0 AS databrowser-builder
-ARG TARGETPLATFORM
-WORKDIR /usr/src/app
-
-COPY web/app .
-RUN npm ci
-RUN npm run build
-
 FROM docker.io/debian:stable-slim AS runner
 
 WORKDIR /app
 COPY api api
 COPY --from=server-builder /usr/src/app/dist/server /app
-COPY --from=databrowser-builder /usr/src/app/dist /app/web/dist
+
+# Copy templates and static assets
+COPY web/template /app/web/template
+COPY web/static /app/web/static
 
 EXPOSE 8080
 ENV GIN_MODE=release

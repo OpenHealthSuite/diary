@@ -1,0 +1,16 @@
+{{ define "components/purge_modal" }}
+<div class="modal__lightbox" onclick="closeModal(event)">
+  <div class="modal__dialog">
+    <div class="modal__bar">
+      <a class="modal__close-btn" href="/config">Close</a>
+    </div>
+    <div class="modal__content">
+      <h1>Warning!</h1>
+      <p>This will <em>irretrievably</em> purge your food logs from the system.</p>
+      <form hx-delete="/config/purge" hx-swap="none">
+        <button type="submit">Purge Logs</button>
+      </form>
+    </div>
+  </div>
+</div>
+{{ end }}

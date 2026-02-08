@@ -1,0 +1,31 @@
+{{ define "components/daily_log" }}
+<div class="logs-area-container">
+  <div class="logs-area">
+    {{ if not .Logs }}
+      <div class="raw-text-message">
+        No logs entered for this day
+      </div>
+    {{ else }}
+      <div>
+        {{ if .TopMetric }}
+          <h1 class="topmetric">{{ printf "%.0f" .TopMetricTotal }} {{ .TopMetric.Label }} Total</h1>
+        {{ end }}
+        {{ range $i, $log := .Logs }}
+          {{ template "components/log_entry" (dict "Log" $log "Index" $i "TopMetric" $.TopMetric) }}
+        {{ end }}
+      </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}
+
+{{ define "components/log_entry" }}
+<div class="food-log {{ if .Index }}top-border{{ end }}" id="log-{{ .Log.ID }}">
+  {{ if .TopMetric }}
+    {{ $metricVal := index .Log.Metrics .TopMetric.Key }}
+    <h2>{{ if $metricVal }}{{ printf "%.0f" $metricVal }}{{ else }}0{{ end }} {{ .TopMetric.Label }}</h2>
+  {{ end }}
+  <h5>{{ .Log.TimeString }} - {{ .Log.Name }}</h5>
+  <a href="/logs/{{ .Log.ID }}"><button>Edit</button></a>
+</div>
+{{ end }}

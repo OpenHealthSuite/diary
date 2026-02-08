@@ -1,0 +1,56 @@
+{{ define "pages/config" }}
+{{ template "layouts/base/header" . }}
+
+<div class="config-page">
+  <h1>Config</h1>
+  <div class="config-container-wrapper">
+
+    <div class="config-container">
+      <h2>Metrics</h2>
+      <div class="config-content" id="metrics-config-container">
+        {{ template "components/config/metrics" . }}
+      </div>
+    </div>
+
+    <div class="config-container">
+      <h2>Data Management</h2>
+      <div class="config-content button-stack">
+        <a href="/api/logs/export" target="_blank" download><button type="button">Download Logs</button></a>
+        <a href="/config/upload"><button type="button">Upload Logs</button></a>
+        <a href="/config/purge"><button type="button">Purge Logs</button></a>
+      </div>
+    </div>
+
+    <div class="config-container">
+      <h2>User Actions</h2>
+      <div class="config-content button-stack">
+        {{ if .LogoutEndpoint }}
+        <a href="{{ .LogoutEndpoint }}"><button type="button">Logout</button></a>
+        {{ end }}
+        <a href="/logs?tutorialStep=0"><button type="button">Tutorial</button></a>
+      </div>
+    </div>
+
+    <div class="config-container">
+      <h2>About</h2>
+      <div class="config-content button-stack">
+        <a href="https://openhealthsuite.com/diary"><button type="button">Website</button></a>
+        <a href="https://github.com/OpenHealthSuite/diary"><button type="button">Source code</button></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{{ if .PurgeModal }}
+{{ template "components/purge_modal" . }}
+{{ end }}
+
+{{ if .UploadModal }}
+{{ template "components/upload_modal" . }}
+{{ end }}
+
+{{ template "components/navigation" . }}
+{{ template "layouts/base/footer" . }}
+{{ end }}
+

@@ -1,0 +1,92 @@
+{{ define "components/tutorial_modal" }}
+{{ $step := 0 }}{{ if .TutorialStep }}{{ $step = deref .TutorialStep }}{{ end }}
+<div class="modal__lightbox">
+  <div class="modal__dialog">
+    <div class="modal__bar">
+      <a class="modal__close-btn" href="/logs" onclick="markTutorialSeen()">Close</a>
+    </div>
+    <div class="modal__content">
+      <div class="tutorial-content">
+        {{ if eq $step 0 }}
+          <h2>Welcome!</h2>
+          <p>This brief tutorial will run you through the key concepts of OpenFoodDiary.</p>
+        {{ else if eq $step 1 }}
+          <h2>Enter your metrics!</h2>
+          <p>Enter the metrics you want to track, like Calories, Sugar, Satiation or Enjoyment.</p>
+          <p class="note">Note: You can choose to track no metrics at all.</p>
+          <div id="tutorial-metrics-config">
+            {{ template "components/config/metrics" (dict "Metrics" .Metrics "TutorialMode" true) }}
+          </div>
+        {{ else if eq $step 2 }}
+          <h2>Add a Log!</h2>
+          <p class="note">Note: You can delete this log later - it's not permanent.</p>
+          <div class="log-form">
+            <form class="log-form__container" action="/tutorial/log" method="POST">
+              <fieldset class="log-datetime-selectors">
+                <label for="tutorial-log-day">Log Day
+                  <input type="date" id="tutorial-log-day" name="date"
+                         pattern="\d{4}-\d{2}-\d{2}"
+                         value="{{ (now).Format "2006-01-02" }}">
+                </label>
+                <label for="tutorial-log-time">Log Time
+                  <input type="time" id="tutorial-log-time" name="time"
+                         value="{{ (now).Format "15:04" }}">
+                </label>
+              </fieldset>
+
+              <fieldset>
+                <label for="tutorial-name" hidden>Log Name</label>
+                <input style="width: 95%" id="tutorial-name" name="name" placeholder="Log Name" required>
+              </fieldset>
+
+              {{ range $key, $metric := .Metrics }}
+              <fieldset class="left-right-field">
+                <label for="tutorial_metric_{{ $key }}">{{ $metric.Label }}</label>
+                <input type="number"
+                       id="tutorial_metric_{{ $key }}"
+                       name="metric_{{ $key }}"
+                       min="0"
+                       max="999999"
+                       value="0">
+              </fieldset>
+              {{ end }}
+
+              <fieldset class="left-right-field">
+                <label for="tutorial-duration">Duration (minutes)</label>
+                <input type="number" id="tutorial-duration" name="duration" min="1" value="1">
+              </fieldset>
+
+              <button type="submit" class="submit-button">Submit</button>
+            </form>
+          </div>
+        {{ else }}
+          <h2>You're Ready!</h2>
+          <p>You can replay this tutorial at any time from the config page, accessed from the button at the bottom of the screen.</p>
+        {{ end }}
+      </div>
+
+      <div class="tutorial-step-controls">
+        {{ if eq $step 0 }}
+          <button type="button" disabled>Back</button>
+        {{ else }}
+          <a href="/logs?tutorialStep={{ sub $step 1 }}"><button type="button">Back</button></a>
+        {{ end }}
+
+        <div>
+          {{ range $i := seq 4 }}
+            {{ if le $i $step }} * {{ else }} - {{ end }}
+          {{ end }}
+        </div>
+
+        {{ if eq $step 2 }}
+          <a href="/logs?tutorialStep=3"><button type="button" class="skip-button">Skip</button></a>
+        {{ else if ge $step 3 }}
+          <a href="/logs" onclick="markTutorialSeen()"><button type="button">Done</button></a>
+        {{ else }}
+          <a href="/logs?tutorialStep={{ add $step 1 }}"><button type="button">Next</button></a>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+</div>
+{{ end }}

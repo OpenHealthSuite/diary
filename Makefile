@@ -1,7 +1,6 @@
 .PHONY: all
 
 include .env-compose-make
-include .env
 export $(shell sed 's/=.*//' .env-compose-make)
 export $(shell sed 's/=.*//' .env)
 
@@ -14,12 +13,9 @@ build:
 test:
 	go test -v ./...
 run:
-	go run cmd/server/main.go
+	OPENFOODDIARY_USERID="f1750ac3-d6cc-4981-9466-f1de2ebbad33" go run cmd/server/main.go
 watch:
-	gow run cmd/server/main.go
-
-devclient:
-	(cd web/app && npm run dev)
+	OPENFOODDIARY_USERID="f1750ac3-d6cc-4981-9466-f1de2ebbad33" gow run cmd/server/main.go
 
 docker:
 	docker build . -t openhealthsuite/diary:testimage

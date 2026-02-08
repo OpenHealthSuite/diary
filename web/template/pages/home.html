@@ -1,0 +1,28 @@
+{{ define "pages/home" }}
+{{ template "layouts/base/header" . }}
+
+<div id="logs-page">
+  {{ template "components/day_selector" . }}
+
+  <div class="controls-row">
+    <a class="add-log-button"
+            href="/logs/new?date={{ .CurrentDay }}"
+            >Add Log</a>
+  </div>
+
+  <div id="logs-container">
+    {{ template "components/daily_log" . }}
+  </div>
+</div>
+{{ if .LogFormModal }}
+  {{ template "components/log_form_modal" .LogFormModal }}
+{{ end }}
+
+{{ if .TutorialStep }}
+  {{ template "components/tutorial_modal" . }}
+{{ end }}
+
+{{ template "components/navigation" . }}
+{{ template "layouts/base/footer" . }}
+{{ end }}
+

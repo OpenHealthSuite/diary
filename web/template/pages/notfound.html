@@ -1,0 +1,13 @@
+{{ define "pages/notfound" }}
+{{ template "layouts/base/header" . }}
+
+<div style="text-align: center; padding: 2em;">
+  <h1>404 - Page Not Found</h1>
+  <p>The page you're looking for doesn't exist.</p>
+  <a href="/"><button>Go Home</button></a>
+</div>
+
+{{ template "components/navigation" . }}
+{{ template "layouts/base/footer" . }}
+{{ end }}
+

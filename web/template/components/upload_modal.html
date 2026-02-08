@@ -1,0 +1,15 @@
+{{ define "components/upload_modal" }}
+<div class="modal__lightbox" onclick="closeModal(event)">
+  <div class="modal__dialog">
+    <div class="modal__bar">
+      <a class="modal__close-btn" href="/config">Close</a>
+    </div>
+    <div class="modal__content">
+      <h2>Upload Logs</h2>
+      <input type="file" id="upload-input" accept=".csv,.json" onchange="handleBulkUpload(this)">
+      <div id="upload-status"></div>
+      <button type="button" id="upload-btn" disabled onclick="executeBulkUpload()">Upload Logs</button>
+    </div>
+  </div>
+</div>
+{{ end }}

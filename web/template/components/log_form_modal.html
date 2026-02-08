@@ -1,0 +1,66 @@
+{{ define "components/log_form_modal" }}
+<div class="modal__lightbox" onclick="closeModal(event)">
+  <div class="modal__dialog">
+    <div class="modal__bar">
+      <a class="modal__close-btn" href="/logs?date={{.LogDate}}">Close</a>
+    </div>
+    <div class="modal__content">
+      <div class="log-form">
+        <form class="log-form__container"
+              {{ if .IsEdit }}
+              hx-put="/logs/{{ .LogID }}"
+              {{ else }}
+              hx-post="/logs"
+              {{ end }}
+              hx-swap="none">
+
+          <fieldset class="log-datetime-selectors">
+            <label for="log-entry-day">Log Day
+              <input type="date" id="log-entry-day" name="date"
+                     pattern="\d{4}-\d{2}-\d{2}"
+                     value="{{ .LogDate }}">
+            </label>
+            <label for="log-entry-time">Log Time
+              <input type="time" id="log-entry-time" name="time"
+                     value="{{ .LogTime }}">
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <label for="name" hidden>Log Name</label>
+            <input style="width: 95%" id="name" name="name" placeholder="Log Name"
+                   value="{{ if .IsEdit }}{{ .LogName }}{{ end }}"
+                   required>
+          </fieldset>
+
+          {{ range $key, $metric := .Metrics }}
+          <fieldset class="left-right-field">
+            <label for="metric_{{ $key }}">{{ $metric.Label }}</label>
+            <input type="number"
+                   id="metric_{{ $key }}"
+                   name="metric_{{ $key }}"
+                   min="0"
+                   max="999999"
+                   value="{{ if $.IsEdit }}{{ index $.LogMetrics $key }}{{ else }}0{{ end }}">
+          </fieldset>
+          {{ end }}
+
+          <fieldset class="left-right-field">
+            <label for="duration">Duration (minutes)</label>
+            <input type="number" id="duration" name="duration" min="1"
+                   value="{{ .Duration }}">
+          </fieldset>
+
+          <button type="submit" class="submit-button">Submit</button>
+
+          {{ if .IsEdit }}
+          <button type="button" class="submit-button"
+                  hx-delete="/logs/{{ .LogID }}"
+                  hx-confirm="Delete this log?">Delete</button>
+          {{ end }}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{ end }}
