@@ -26,8 +26,6 @@
     <h2>{{ if $metricVal }}{{ printf "%.0f" $metricVal }}{{ else }}0{{ end }} {{ .TopMetric.Label }}</h2>
   {{ end }}
   <h5>{{ .Log.TimeString }} - {{ .Log.Name }}</h5>
-  <button hx-get="/logs/{{ .Log.ID }}/edit"
-          hx-target="#modal-container"
-          hx-swap="innerHTML">Edit</button>
+  <a href="/logs/{{ .Log.ID }}">Edit</a>
 </div>
 {{ end }}

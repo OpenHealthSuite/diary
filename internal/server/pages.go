@@ -256,18 +256,6 @@ func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/home", data)
 }
 
-func (sts *DiaryServerState) handleConfig(c *gin.Context) {
-	metrics := sts.fetchMetricsConfig(c)
-
-	data := gin.H{
-		"CurrentPath":    "/config",
-		"Metrics":        metrics,
-		"LogoutEndpoint": sts.Config.SingoutEndpoint,
-	}
-
-	c.HTML(http.StatusOK, "pages/config", data)
-}
-
 func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 	logId := c.Param("id")
 	userId := sts.getUserId(c)
@@ -287,6 +275,21 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 		return
 	}
 
+	date := entry.TimeStart.Time
+	logs := sts.fetchLogsForDate(c, date)
+	metrics := sts.fetchMetricsConfig(c)
+	topMetric := getTopMetric(metrics)
+
+	// Calculate total for top metric
+	var topMetricTotal float32 = 0
+	if topMetric != nil {
+		for _, log := range logs {
+			if val, ok := log.Metrics[topMetric.Key]; ok {
+				topMetricTotal += val
+			}
+		}
+	}
+
 	// Fetch metrics for this entry
 	metricsRows, _ := sts.getStorage().storage.GetQuerier().GetFoodLogEntryMetrics(c, strggen.GetFoodLogEntryMetricsParams{
 		UserID:         userId,
@@ -303,21 +306,41 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 		duration = 1
 	}
 
+	data := gin.H{
+		"CurrentPath":    "/",
+		"CurrentDay":     date.Format("2006-01-02"),
+		"PrevDay":        date.AddDate(0, 0, -1).Format("2006-01-02"),
+		"NextDay":        date.AddDate(0, 0, 1).Format("2006-01-02"),
+		"Logs":           logs,
+		"Metrics":        metrics,
+		"TopMetric":      topMetric,
+		"TopMetricTotal": topMetricTotal,
+		"LogFormModal": gin.H{
+			"IsEdit":     true,
+			"LogID":      entry.ID.String(),
+			"LogName":    entry.Name,
+			"LogDate":    entry.TimeStart.Time.Format("2006-01-02"),
+			"LogTime":    entry.TimeStart.Time.Format("15:04"),
+			"LogMetrics": logMetrics,
+			"Metrics":    metrics,
+			"Duration":   int(duration),
+			"CurrentDay": entry.TimeStart.Time.Format("2006-01-02"),
+		},
+	}
+
+	c.HTML(http.StatusOK, "pages/home", data)
+}
+
+func (sts *DiaryServerState) handleConfig(c *gin.Context) {
 	metrics := sts.fetchMetricsConfig(c)
 
 	data := gin.H{
-		"IsEdit":     true,
-		"LogID":      entry.ID.String(),
-		"LogName":    entry.Name,
-		"LogDate":    entry.TimeStart.Time.Format("2006-01-02"),
-		"LogTime":    entry.TimeStart.Time.Format("15:04"),
-		"LogMetrics": logMetrics,
-		"Metrics":    metrics,
-		"Duration":   int(duration),
-		"CurrentDay": entry.TimeStart.Time.Format("2006-01-02"),
+		"CurrentPath":    "/config",
+		"Metrics":        metrics,
+		"LogoutEndpoint": sts.Config.SingoutEndpoint,
 	}
 
-	c.HTML(http.StatusOK, "components/log_form_modal", data)
+	c.HTML(http.StatusOK, "pages/config", data)
 }
 
 func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
