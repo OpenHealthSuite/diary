@@ -6,9 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/openhealthsuite/diary/internal/server/generated"
-	"github.com/openhealthsuite/diary/internal/storage/strggen"
+	"github.com/openhealthsuite/diary/internal/storage/types"
 )
 
 // CreateFoodLog implements generated.ServerInterface.
@@ -25,36 +24,17 @@ func (g *ServerState) CreateFoodLog(c *gin.Context) {
 		return
 	}
 
-	// Generate a new UUID for the entry
-
-	id := uuid.New()
-
-	// Insert food log entry
-
-	tsStart := pgtype.Timestamp{Time: req.Time.Start, Valid: true}
-	tsEnd := pgtype.Timestamp{Time: req.Time.End, Valid: true}
-
-	_, err := g.storage.GetQuerier().CreateFoodLogEntry(c, strggen.CreateFoodLogEntryParams{
+	id, err := g.storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
 		UserID:    userId.(string),
-		ID:        id,
 		Name:      req.Name,
 		Labels:    req.Labels,
-		TimeStart: tsStart,
-		TimeEnd:   tsEnd,
+		TimeStart: req.Time.Start,
+		TimeEnd:   req.Time.End,
+		Metrics:   req.Metrics,
 	})
 	if err != nil {
 		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
 		return
-	}
-
-	// Insert metrics
-	for k, v := range req.Metrics {
-		_ = g.storage.GetQuerier().CreateFoodLogEntryMetric(c, strggen.CreateFoodLogEntryMetricParams{
-			UserID:         userId.(string),
-			FoodlogentryID: id,
-			MetricKey:      k,
-			MetricValue:    int32(v),
-		})
 	}
 
 	c.String(200, id.String())
@@ -74,14 +54,8 @@ func (g *ServerState) DeleteFoodLog(c *gin.Context, itemId string) {
 		return
 	}
 
-	// Delete metrics first (optional, for referential integrity)
-	_ = g.storage.GetQuerier().DeleteFoodLogEntryMetrics(c, struct {
-		UserID         string
-		FoodlogentryID uuid.UUID
-	}{UserID: userId.(string), FoodlogentryID: id})
-
 	// Delete entry
-	err = g.storage.GetQuerier().DeleteFoodLogEntry(c, struct {
+	err = g.storage.DeleteFoodLogEntry(c, struct {
 		UserID string
 		ID     uuid.UUID
 	}{UserID: userId.(string), ID: id})
@@ -101,24 +75,10 @@ func (g *ServerState) ExportFoodLogs(c *gin.Context) {
 	}
 
 	// Get all entries
-	entries, err := g.storage.GetQuerier().ExportFoodLogEntries(c, userId.(string))
+	entries, err := g.storage.ExportFoodLogEntries(c, userId.(string))
 	if err != nil {
 		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
 		return
-	}
-	// Get all metrics
-	metrics, err := g.storage.GetQuerier().ExportFoodLogEntryMetrics(c, userId.(string))
-	if err != nil {
-		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
-		return
-	}
-	// Map metrics by entry ID
-	metricsMap := make(map[uuid.UUID]map[string]float32)
-	for _, m := range metrics {
-		if metricsMap[m.FoodlogentryID] == nil {
-			metricsMap[m.FoodlogentryID] = make(map[string]float32)
-		}
-		metricsMap[m.FoodlogentryID][m.MetricKey] = float32(m.MetricValue)
 	}
 
 	// Write CSV response
@@ -133,14 +93,14 @@ func (g *ServerState) ExportFoodLogs(c *gin.Context) {
 
 	// Write rows
 	for _, e := range entries {
-		metricsJSON, _ := json.Marshal(metricsMap[e.ID])
+		metricsJSON, _ := json.Marshal(e.Metrics)
 		labelsJSON, _ := json.Marshal(e.Labels)
 
 		writer.Write([]string{
 			e.ID.String(),
 			e.Name,
-			e.TimeStart.Time.Format("2006-01-02T15:04:05Z"),
-			e.TimeEnd.Time.Format("2006-01-02T15:04:05Z"),
+			e.TimeStart.Format("2006-01-02T15:04:05Z"),
+			e.TimeEnd.Format("2006-01-02T15:04:05Z"),
 			string(metricsJSON),
 			string(labelsJSON),
 		})
@@ -162,7 +122,7 @@ func (g *ServerState) GetFoodLog(c *gin.Context, itemId string) {
 		return
 	}
 
-	entry, err := g.storage.GetQuerier().GetFoodLogEntry(c, struct {
+	entry, err := g.storage.GetFoodLogEntry(c, struct {
 		UserID string
 		ID     uuid.UUID
 	}{UserID: userId.(string), ID: id})
@@ -171,28 +131,15 @@ func (g *ServerState) GetFoodLog(c *gin.Context, itemId string) {
 		return
 	}
 
-	metrics, err := g.storage.GetQuerier().GetFoodLogEntryMetrics(c, struct {
-		UserID         string
-		FoodlogentryID uuid.UUID
-	}{UserID: userId.(string), FoodlogentryID: id})
-	if err != nil {
-		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
-		return
-	}
-	metricsMap := make(map[string]float32)
-	for _, m := range metrics {
-		metricsMap[m.MetricKey] = float32(m.MetricValue)
-	}
-
 	resp := generated.FoodLogEntry{
 		Id:     entry.ID.String(),
 		Name:   entry.Name,
 		Labels: entry.Labels,
 		Time: generated.TimeRange{
-			Start: entry.TimeStart.Time,
-			End:   entry.TimeEnd.Time,
+			Start: entry.TimeStart,
+			End:   entry.TimeEnd,
 		},
-		Metrics: metricsMap,
+		Metrics: entry.Metrics,
 	}
 	c.JSON(200, resp)
 }
@@ -206,7 +153,7 @@ func (g *ServerState) PurgeFoodLogs(c *gin.Context) {
 	}
 
 	// Delete all entries
-	err := g.storage.GetQuerier().PurgeFoodLogEntries(c, userId.(string))
+	err := g.storage.PurgeFoodLogEntries(c, userId.(string))
 	if err != nil {
 		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
 		return
@@ -223,37 +170,14 @@ func (g *ServerState) QueryFoodLogs(c *gin.Context, params generated.QueryFoodLo
 	}
 
 	// Query entries
-	entries, err := g.storage.GetQuerier().QueryFoodLogEntries(c, strggen.QueryFoodLogEntriesParams{
+	entries, err := g.storage.QueryFoodLogEntries(c, types.QueryFoodLogEntriesParams{
 		UserID:    userId.(string),
-		TimeStart: pgtype.Timestamp{Time: params.StartDate, Valid: true},
-		TimeEnd:   pgtype.Timestamp{Time: params.EndDate, Valid: true},
+		TimeStart: params.StartDate,
+		TimeEnd:   params.EndDate,
 	})
 	if err != nil {
 		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
 		return
-	}
-
-	// Collect entry IDs
-	ids := make([]uuid.UUID, 0, len(entries))
-	for _, e := range entries {
-		ids = append(ids, e.ID)
-	}
-	// Query all metrics for these entries
-	metrics, err := g.storage.GetQuerier().QueryFoodLogEntryMetrics(c, strggen.QueryFoodLogEntryMetricsParams{
-		UserID:  userId.(string),
-		Column2: ids,
-	})
-	if err != nil {
-		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
-		return
-	}
-	// Map metrics by entry ID
-	metricsMap := make(map[uuid.UUID]map[string]float32)
-	for _, m := range metrics {
-		if metricsMap[m.FoodlogentryID] == nil {
-			metricsMap[m.FoodlogentryID] = make(map[string]float32)
-		}
-		metricsMap[m.FoodlogentryID][m.MetricKey] = float32(m.MetricValue)
 	}
 
 	// Compose response
@@ -264,10 +188,10 @@ func (g *ServerState) QueryFoodLogs(c *gin.Context, params generated.QueryFoodLo
 			Name:   e.Name,
 			Labels: e.Labels,
 			Time: generated.TimeRange{
-				Start: e.TimeStart.Time,
-				End:   e.TimeEnd.Time,
+				Start: e.TimeStart,
+				End:   e.TimeEnd,
 			},
-			Metrics: metricsMap[e.ID],
+			Metrics: e.Metrics,
 		})
 	}
 	c.JSON(200, resp)
@@ -294,7 +218,7 @@ func (g *ServerState) UpdateFoodLog(c *gin.Context, itemId string) {
 	}
 
 	// Fetch existing entry
-	entry, err := g.storage.GetQuerier().GetFoodLogEntry(c, struct {
+	entry, err := g.storage.GetFoodLogEntry(c, struct {
 		UserID string
 		ID     uuid.UUID
 	}{UserID: userId.(string), ID: id})
@@ -315,65 +239,37 @@ func (g *ServerState) UpdateFoodLog(c *gin.Context, itemId string) {
 	tsStart := entry.TimeStart
 	tsEnd := entry.TimeEnd
 	if req.Time != nil {
-		tsStart = pgtype.Timestamp{Time: req.Time.Start, Valid: true}
-		tsEnd = pgtype.Timestamp{Time: req.Time.End, Valid: true}
+		tsStart = req.Time.Start
+		tsEnd = req.Time.End
+	}
+
+	metrics := entry.Metrics
+	if req.Metrics != nil {
+		metrics = *req.Metrics
 	}
 
 	// Update entry
-	_, err = g.storage.GetQuerier().UpdateFoodLogEntry(c, strggen.UpdateFoodLogEntryParams{
+	err = g.storage.UpdateFoodLogEntry(c, types.UpdateFoodLogEntryParams{
 		UserID:    userId.(string),
 		ID:        id,
 		Name:      name,
 		Labels:    labels,
 		TimeStart: tsStart,
 		TimeEnd:   tsEnd,
+		Metrics:   metrics,
 	})
 	if err != nil {
 		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
 		return
 	}
 
-	// Update metrics if provided
-	if req.Metrics != nil {
-		// Delete old metrics
-		_ = g.storage.GetQuerier().DeleteFoodLogEntryMetrics(c, struct {
-			UserID         string
-			FoodlogentryID uuid.UUID
-		}{UserID: userId.(string), FoodlogentryID: id})
-		// Insert new metrics
-		for k, v := range *req.Metrics {
-			_ = g.storage.GetQuerier().CreateFoodLogEntryMetric(c, strggen.CreateFoodLogEntryMetricParams{
-				UserID:         userId.(string),
-				FoodlogentryID: id,
-				MetricKey:      k,
-				MetricValue:    int32(v),
-			})
-		}
-	}
-
-	// Compose response
-	metrics := make(map[string]float32)
-	if req.Metrics != nil {
-		for k, v := range *req.Metrics {
-			metrics[k] = v
-		}
-	} else {
-		// Fetch current metrics
-		mlist, _ := g.storage.GetQuerier().GetFoodLogEntryMetrics(c, struct {
-			UserID         string
-			FoodlogentryID uuid.UUID
-		}{UserID: userId.(string), FoodlogentryID: id})
-		for _, m := range mlist {
-			metrics[m.MetricKey] = float32(m.MetricValue)
-		}
-	}
 	resp := generated.FoodLogEntry{
 		Id:     id.String(),
 		Name:   name,
 		Labels: labels,
 		Time: generated.TimeRange{
-			Start: tsStart.Time,
-			End:   tsEnd.Time,
+			Start: tsStart,
+			End:   tsEnd,
 		},
 		Metrics: metrics,
 	}

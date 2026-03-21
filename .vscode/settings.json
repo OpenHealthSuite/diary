@@ -1,6 +1,0 @@
-{
-  "typescript.tsdk": "server/node_modules/typescript/lib",
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
-}

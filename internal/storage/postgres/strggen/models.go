@@ -32,5 +32,5 @@ type UserFoodlogentryMetric struct {
 	UserID         string
 	FoodlogentryID uuid.UUID
 	MetricKey      string
-	MetricValue    int32
+	MetricValue    float64
 }

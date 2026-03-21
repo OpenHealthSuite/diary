@@ -11,8 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/openhealthsuite/diary/internal/storage/strggen"
+	"github.com/openhealthsuite/diary/internal/storage/types"
 )
 
 // MetricConfig represents a single metric configuration
@@ -37,7 +36,7 @@ type LogDisplay struct {
 	TimeStart  time.Time
 	TimeEnd    time.Time
 	TimeString string
-	Metrics    map[string]float32
+	Metrics    map[string]float64
 }
 
 func (sts *DiaryServerState) getUserId(c *gin.Context) string {
@@ -51,7 +50,7 @@ func (sts *DiaryServerState) getStorage() *ServerState {
 
 func (sts *DiaryServerState) fetchMetricsConfig(c *gin.Context) MetricsConfig {
 	userId := sts.getUserId(c)
-	cfg, err := sts.getStorage().storage.GetQuerier().GetUserConfig(c, strggen.GetUserConfigParams{
+	cfg, err := sts.getStorage().storage.GetUserConfig(c, types.GetUserConfigParams{
 		UserID: userId,
 		ID:     "metrics",
 	})
@@ -77,7 +76,7 @@ func (sts *DiaryServerState) saveMetricsConfig(c *gin.Context, metrics MetricsCo
 	if err != nil {
 		return err
 	}
-	return sts.getStorage().storage.GetQuerier().StoreUserConfig(c, strggen.StoreUserConfigParams{
+	return sts.getStorage().storage.StoreUserConfig(c, types.StoreUserConfigParams{
 		UserID:      userId,
 		ID:          "metrics",
 		ConfigValue: data,
@@ -126,50 +125,24 @@ func (sts *DiaryServerState) fetchLogsForDate(c *gin.Context, date time.Time) []
 	startDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
 	endDate := startDate.AddDate(0, 0, 1)
 
-	entries, err := sts.getStorage().storage.GetQuerier().QueryFoodLogEntries(c, strggen.QueryFoodLogEntriesParams{
+	entries, err := sts.getStorage().storage.QueryFoodLogEntries(c, types.QueryFoodLogEntriesParams{
 		UserID:    userId,
-		TimeStart: pgtype.Timestamp{Time: startDate, Valid: true},
-		TimeEnd:   pgtype.Timestamp{Time: endDate, Valid: true},
+		TimeStart: startDate,
+		TimeEnd:   endDate,
 	})
 	if err != nil {
 		return []LogDisplay{}
 	}
 
-	// Collect entry IDs
-	ids := make([]uuid.UUID, 0, len(entries))
-	for _, e := range entries {
-		ids = append(ids, e.ID)
-	}
-
-	// Query all metrics for these entries
-	metricsRows, _ := sts.getStorage().storage.GetQuerier().QueryFoodLogEntryMetrics(c, strggen.QueryFoodLogEntryMetricsParams{
-		UserID:  userId,
-		Column2: ids,
-	})
-
-	// Map metrics by entry ID
-	metricsMap := make(map[uuid.UUID]map[string]float32)
-	for _, m := range metricsRows {
-		if metricsMap[m.FoodlogentryID] == nil {
-			metricsMap[m.FoodlogentryID] = make(map[string]float32)
-		}
-		metricsMap[m.FoodlogentryID][m.MetricKey] = float32(m.MetricValue)
-	}
-
 	var result []LogDisplay
 	for _, entry := range entries {
-		metrics := metricsMap[entry.ID]
-		if metrics == nil {
-			metrics = make(map[string]float32)
-		}
-
 		result = append(result, LogDisplay{
 			ID:         entry.ID.String(),
 			Name:       entry.Name,
-			TimeStart:  entry.TimeStart.Time,
-			TimeEnd:    entry.TimeEnd.Time,
-			TimeString: entry.TimeStart.Time.Format("15:04:05"),
-			Metrics:    metrics,
+			TimeStart:  entry.TimeStart,
+			TimeEnd:    entry.TimeEnd,
+			TimeString: entry.TimeStart.Format("15:04:05"),
+			Metrics:    entry.Metrics,
 		})
 	}
 
@@ -190,7 +163,7 @@ func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 	topMetric := getTopMetric(metrics)
 
 	// Calculate total for top metric
-	var topMetricTotal float32 = 0
+	var topMetricTotal float64 = 0
 	if topMetric != nil {
 		for _, log := range logs {
 			if val, ok := log.Metrics[topMetric.Key]; ok {
@@ -229,7 +202,7 @@ func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
 	topMetric := getTopMetric(metrics)
 
 	// Calculate total for top metric
-	var topMetricTotal float32 = 0
+	var topMetricTotal float64 = 0
 	if topMetric != nil {
 		for _, log := range logs {
 			if val, ok := log.Metrics[topMetric.Key]; ok {
@@ -275,7 +248,7 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 		return
 	}
 
-	entry, err := sts.getStorage().storage.GetQuerier().GetFoodLogEntry(c, strggen.GetFoodLogEntryParams{
+	entry, err := sts.getStorage().storage.GetFoodLogEntry(c, types.GetFoodLogEntryParams{
 		UserID: userId,
 		ID:     logUuid,
 	})
@@ -284,13 +257,13 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 		return
 	}
 
-	date := entry.TimeStart.Time
+	date := entry.TimeStart
 	logs := sts.fetchLogsForDate(c, date)
 	metrics := sts.fetchMetricsConfig(c)
 	topMetric := getTopMetric(metrics)
 
 	// Calculate total for top metric
-	var topMetricTotal float32 = 0
+	var topMetricTotal float64 = 0
 	if topMetric != nil {
 		for _, log := range logs {
 			if val, ok := log.Metrics[topMetric.Key]; ok {
@@ -299,18 +272,7 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 		}
 	}
 
-	// Fetch metrics for this entry
-	metricsRows, _ := sts.getStorage().storage.GetQuerier().GetFoodLogEntryMetrics(c, strggen.GetFoodLogEntryMetricsParams{
-		UserID:         userId,
-		FoodlogentryID: logUuid,
-	})
-
-	logMetrics := make(map[string]float32)
-	for _, m := range metricsRows {
-		logMetrics[m.MetricKey] = float32(m.MetricValue)
-	}
-
-	duration := entry.TimeEnd.Time.Sub(entry.TimeStart.Time).Minutes()
+	duration := entry.TimeEnd.Sub(entry.TimeStart).Minutes()
 	if duration < 1 {
 		duration = 1
 	}
@@ -328,12 +290,12 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 			"IsEdit":     true,
 			"LogID":      entry.ID.String(),
 			"LogName":    entry.Name,
-			"LogDate":    entry.TimeStart.Time.Format("2006-01-02"),
-			"LogTime":    entry.TimeStart.Time.Format("15:04"),
-			"LogMetrics": logMetrics,
+			"LogDate":    entry.TimeStart.Format("2006-01-02"),
+			"LogTime":    entry.TimeStart.Format("15:04"),
+			"LogMetrics": entry.Metrics,
 			"Metrics":    metrics,
 			"Duration":   int(duration),
-			"CurrentDay": entry.TimeStart.Time.Format("2006-01-02"),
+			"CurrentDay": entry.TimeStart.Format("2006-01-02"),
 		},
 	}
 
@@ -376,40 +338,28 @@ func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
 
 	// Parse metrics from form
 	metricsConfig := sts.fetchMetricsConfig(c)
-	metrics := make(map[string]float32)
+	metrics := make(map[string]float64)
 	for key := range metricsConfig {
 		if val := c.PostForm("metric_" + key); val != "" {
 			var f float64
 			if _, err := fmt.Sscanf(val, "%f", &f); err == nil {
-				metrics[key] = float32(f)
+				metrics[key] = float64(f)
 			}
 		}
 	}
 
-	id := uuid.New()
-
 	// Create the entry
-	_, err := sts.getStorage().storage.GetQuerier().CreateFoodLogEntry(c, strggen.CreateFoodLogEntryParams{
+	_, err := sts.getStorage().storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
 		UserID:    userId,
-		ID:        id,
 		Name:      name,
 		Labels:    []string{},
-		TimeStart: pgtype.Timestamp{Time: startTime, Valid: true},
-		TimeEnd:   pgtype.Timestamp{Time: endTime, Valid: true},
+		TimeStart: startTime,
+		TimeEnd:   endTime,
+		Metrics:   metrics,
 	})
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to create log")
 		return
-	}
-
-	// Insert metrics
-	for k, v := range metrics {
-		_ = sts.getStorage().storage.GetQuerier().CreateFoodLogEntryMetric(c, strggen.CreateFoodLogEntryMetricParams{
-			UserID:         userId,
-			FoodlogentryID: id,
-			MetricKey:      k,
-			MetricValue:    int32(v),
-		})
 	}
 
 	// Set the date for the logs partial
@@ -449,42 +399,29 @@ func (sts *DiaryServerState) handleUpdateLog(c *gin.Context) {
 
 	// Parse metrics from form
 	metricsConfig := sts.fetchMetricsConfig(c)
-	metrics := make(map[string]float32)
+	metrics := make(map[string]float64)
 	for key := range metricsConfig {
 		if val := c.PostForm("metric_" + key); val != "" {
 			var f float64
 			if _, err := fmt.Sscanf(val, "%f", &f); err == nil {
-				metrics[key] = float32(f)
+				metrics[key] = float64(f)
 			}
 		}
 	}
 
 	// Update entry
-	_, err = sts.getStorage().storage.GetQuerier().UpdateFoodLogEntry(c, strggen.UpdateFoodLogEntryParams{
+	err = sts.getStorage().storage.UpdateFoodLogEntry(c, types.UpdateFoodLogEntryParams{
 		UserID:    userId,
 		ID:        logUuid,
 		Name:      name,
 		Labels:    []string{},
-		TimeStart: pgtype.Timestamp{Time: startTime, Valid: true},
-		TimeEnd:   pgtype.Timestamp{Time: endTime, Valid: true},
+		TimeStart: startTime,
+		TimeEnd:   endTime,
+		Metrics:   metrics,
 	})
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to update log")
 		return
-	}
-
-	// Delete old metrics and insert new ones
-	_ = sts.getStorage().storage.GetQuerier().DeleteFoodLogEntryMetrics(c, strggen.DeleteFoodLogEntryMetricsParams{
-		UserID:         userId,
-		FoodlogentryID: logUuid,
-	})
-	for k, v := range metrics {
-		_ = sts.getStorage().storage.GetQuerier().CreateFoodLogEntryMetric(c, strggen.CreateFoodLogEntryMetricParams{
-			UserID:         userId,
-			FoodlogentryID: logUuid,
-			MetricKey:      k,
-			MetricValue:    int32(v),
-		})
 	}
 
 	// Set the date for the logs partial
@@ -506,34 +443,24 @@ func (sts *DiaryServerState) handleDeleteLog(c *gin.Context) {
 	}
 
 	// Get the log first to know what date to refresh
-	entry, _ := sts.getStorage().storage.GetQuerier().GetFoodLogEntry(c, strggen.GetFoodLogEntryParams{
+	entry, _ := sts.getStorage().storage.GetFoodLogEntry(c, types.GetFoodLogEntryParams{
 		UserID: userId,
 		ID:     logUuid,
 	})
 
 	// Delete metrics first
-	_ = sts.getStorage().storage.GetQuerier().DeleteFoodLogEntryMetrics(c, strggen.DeleteFoodLogEntryMetricsParams{
-		UserID:         userId,
-		FoodlogentryID: logUuid,
-	})
-
-	// Delete entry
-	err = sts.getStorage().storage.GetQuerier().DeleteFoodLogEntry(c, strggen.DeleteFoodLogEntryParams{
+	err = sts.getStorage().storage.DeleteFoodLogEntry(c, types.DeleteFoodLogEntryParams{
 		UserID: userId,
 		ID:     logUuid,
 	})
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Failed to delete log")
-		return
-	}
 
 	// Set the date for the logs partial
 	if entry.ID != uuid.Nil {
-		c.Request.URL.RawQuery = "date=" + entry.TimeStart.Time.Format("2006-01-02")
+		c.Request.URL.RawQuery = "date=" + entry.TimeStart.Format("2006-01-02")
 	}
 
 	// Return updated logs list
-	c.Header("HX-Redirect", "/logs?date="+entry.TimeStart.Time.Format("2006-01-02"))
+	c.Header("HX-Redirect", "/logs?date="+entry.TimeStart.Format("2006-01-02"))
 	sts.handleLogs(c)
 }
 
@@ -635,7 +562,7 @@ func (sts *DiaryServerState) handlePurgePage(c *gin.Context) {
 func (sts *DiaryServerState) handlePurgeLogs(c *gin.Context) {
 	userId := sts.getUserId(c)
 
-	err := sts.getStorage().storage.GetQuerier().PurgeFoodLogEntries(c, userId)
+	err := sts.getStorage().storage.PurgeFoodLogEntries(c, userId)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to purge logs")
 		return
@@ -683,40 +610,28 @@ func (sts *DiaryServerState) handleTutorialLog(c *gin.Context) {
 
 	// Parse metrics from form
 	metricsConfig := sts.fetchMetricsConfig(c)
-	metrics := make(map[string]float32)
+	metrics := make(map[string]float64)
 	for key := range metricsConfig {
 		if val := c.PostForm("metric_" + key); val != "" {
 			var f float64
 			if _, err := fmt.Sscanf(val, "%f", &f); err == nil {
-				metrics[key] = float32(f)
+				metrics[key] = float64(f)
 			}
 		}
 	}
 
-	id := uuid.New()
-
 	// Create the entry
-	_, err := sts.getStorage().storage.GetQuerier().CreateFoodLogEntry(c, strggen.CreateFoodLogEntryParams{
+	_, err := sts.getStorage().storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
 		UserID:    userId,
-		ID:        id,
 		Name:      name,
 		Labels:    []string{},
-		TimeStart: pgtype.Timestamp{Time: startTime, Valid: true},
-		TimeEnd:   pgtype.Timestamp{Time: endTime, Valid: true},
+		TimeStart: startTime,
+		TimeEnd:   endTime,
+		Metrics:   metrics,
 	})
 	if err != nil {
 		c.Redirect(http.StatusSeeOther, "/logs?tutorialStep=2")
 		return
-	}
-
-	// Insert metrics
-	for k, v := range metrics {
-		_ = sts.getStorage().storage.GetQuerier().CreateFoodLogEntryMetric(c, strggen.CreateFoodLogEntryMetricParams{
-			UserID:         userId,
-			FoodlogentryID: id,
-			MetricKey:      k,
-			MetricValue:    int32(v),
-		})
 	}
 
 	c.Redirect(http.StatusSeeOther, "/logs?tutorialStep=3")

@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/openhealthsuite/diary/internal/server/generated"
-	"github.com/openhealthsuite/diary/internal/storage/strggen"
+	"github.com/openhealthsuite/diary/internal/storage/types"
 )
 
 // GetUserConfig implements generated.ServerInterface.
@@ -14,7 +14,7 @@ func (g *ServerState) GetUserConfig(c *gin.Context, configId string) {
 		return
 	}
 
-	cfg, err := g.storage.GetQuerier().GetUserConfig(c, strggen.GetUserConfigParams{
+	cfg, err := g.storage.GetUserConfig(c, types.GetUserConfigParams{
 		UserID: userId.(string),
 		ID:     configId,
 	})
@@ -47,7 +47,7 @@ func (g *ServerState) StoreUserConfig(c *gin.Context, configId string) {
 		return
 	}
 	raw, _ := val.MarshalJSON()
-	err := g.storage.GetQuerier().StoreUserConfig(c, strggen.StoreUserConfigParams{
+	err := g.storage.StoreUserConfig(c, types.StoreUserConfigParams{
 		UserID:      userId.(string),
 		ID:          configId,
 		ConfigValue: raw,

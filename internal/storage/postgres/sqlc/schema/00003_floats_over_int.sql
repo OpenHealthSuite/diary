@@ -1,0 +1,1 @@
+ALTER TABLE user_foodlogentry_metrics ALTER COLUMN metric_value TYPE double precision USING metric_value::double precision;

@@ -302,6 +302,7 @@ components:
         metrics:
           type: object
           additionalProperties:
+            format: double
             type: number
         time:
           $ref: '#/components/schemas/TimeRange'
@@ -322,6 +323,7 @@ components:
         metrics:
           type: object
           additionalProperties:
+            format: double
             type: number
         time:
           $ref: '#/components/schemas/TimeRange'
@@ -341,6 +343,7 @@ components:
         metrics:
           type: object
           additionalProperties:
+            format: double
             type: number
         time:
           $ref: '#/components/schemas/TimeRange'

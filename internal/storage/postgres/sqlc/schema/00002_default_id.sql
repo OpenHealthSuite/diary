@@ -1,0 +1,1 @@
+ALTER TABLE user_foodlogentry ALTER COLUMN id SET DEFAULT uuid_generate_v4();

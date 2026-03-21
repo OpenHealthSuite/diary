@@ -14,14 +14,13 @@ import (
 
 const createFoodLogEntry = `-- name: CreateFoodLogEntry :one
 
-INSERT INTO user_foodlogentry (user_id, id, name, labels, time_start, time_end)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING user_id, id, name, labels, time_start, time_end
+INSERT INTO user_foodlogentry (user_id, name, labels, time_start, time_end)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id
 `
 
 type CreateFoodLogEntryParams struct {
 	UserID    string
-	ID        uuid.UUID
 	Name      string
 	Labels    []string
 	TimeStart pgtype.Timestamp
@@ -29,25 +28,17 @@ type CreateFoodLogEntryParams struct {
 }
 
 // Storage functions for food log entries
-func (q *Queries) CreateFoodLogEntry(ctx context.Context, arg CreateFoodLogEntryParams) (UserFoodlogentry, error) {
+func (q *Queries) CreateFoodLogEntry(ctx context.Context, arg CreateFoodLogEntryParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, createFoodLogEntry,
 		arg.UserID,
-		arg.ID,
 		arg.Name,
 		arg.Labels,
 		arg.TimeStart,
 		arg.TimeEnd,
 	)
-	var i UserFoodlogentry
-	err := row.Scan(
-		&i.UserID,
-		&i.ID,
-		&i.Name,
-		&i.Labels,
-		&i.TimeStart,
-		&i.TimeEnd,
-	)
-	return i, err
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const createFoodLogEntryMetric = `-- name: CreateFoodLogEntryMetric :exec
@@ -59,7 +50,7 @@ type CreateFoodLogEntryMetricParams struct {
 	UserID         string
 	FoodlogentryID uuid.UUID
 	MetricKey      string
-	MetricValue    int32
+	MetricValue    float64
 }
 
 func (q *Queries) CreateFoodLogEntryMetric(ctx context.Context, arg CreateFoodLogEntryMetricParams) error {
@@ -101,18 +92,35 @@ func (q *Queries) DeleteFoodLogEntryMetrics(ctx context.Context, arg DeleteFoodL
 }
 
 const exportFoodLogEntries = `-- name: ExportFoodLogEntries :many
-SELECT user_id, id, name, labels, time_start, time_end FROM user_foodlogentry WHERE user_id = $1 ORDER BY time_start ASC
+SELECT  ufle.user_id, ufle.id, ufle.name, ufle.labels, ufle.time_start, ufle.time_end, jsonb_agg(
+    jsonb_build_object('key', uflem.metric_key, 'value', uflem.metric_value)
+  ) AS metrics
+FROM user_foodlogentry ufle
+INNER JOIN user_foodlogentry_metrics uflem ON ufle.id = uflem.foodlogentry_id AND uflem.user_id = ufle.user_id
+WHERE ufle.user_id = $1 
+GROUP BY ufle.id
+ORDER BY ufle.time_start ASC
 `
 
-func (q *Queries) ExportFoodLogEntries(ctx context.Context, userID string) ([]UserFoodlogentry, error) {
+type ExportFoodLogEntriesRow struct {
+	UserID    string
+	ID        uuid.UUID
+	Name      string
+	Labels    []string
+	TimeStart pgtype.Timestamp
+	TimeEnd   pgtype.Timestamp
+	Metrics   []byte
+}
+
+func (q *Queries) ExportFoodLogEntries(ctx context.Context, userID string) ([]ExportFoodLogEntriesRow, error) {
 	rows, err := q.db.Query(ctx, exportFoodLogEntries, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []UserFoodlogentry
+	var items []ExportFoodLogEntriesRow
 	for rows.Next() {
-		var i UserFoodlogentry
+		var i ExportFoodLogEntriesRow
 		if err := rows.Scan(
 			&i.UserID,
 			&i.ID,
@@ -120,37 +128,8 @@ func (q *Queries) ExportFoodLogEntries(ctx context.Context, userID string) ([]Us
 			&i.Labels,
 			&i.TimeStart,
 			&i.TimeEnd,
+			&i.Metrics,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const exportFoodLogEntryMetrics = `-- name: ExportFoodLogEntryMetrics :many
-SELECT foodlogentry_id, metric_key, metric_value FROM user_foodlogentry_metrics WHERE user_id = $1
-`
-
-type ExportFoodLogEntryMetricsRow struct {
-	FoodlogentryID uuid.UUID
-	MetricKey      string
-	MetricValue    int32
-}
-
-func (q *Queries) ExportFoodLogEntryMetrics(ctx context.Context, userID string) ([]ExportFoodLogEntryMetricsRow, error) {
-	rows, err := q.db.Query(ctx, exportFoodLogEntryMetrics, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ExportFoodLogEntryMetricsRow
-	for rows.Next() {
-		var i ExportFoodLogEntryMetricsRow
-		if err := rows.Scan(&i.FoodlogentryID, &i.MetricKey, &i.MetricValue); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -195,7 +174,7 @@ type GetFoodLogEntryMetricsParams struct {
 
 type GetFoodLogEntryMetricsRow struct {
 	MetricKey   string
-	MetricValue int32
+	MetricValue float64
 }
 
 func (q *Queries) GetFoodLogEntryMetrics(ctx context.Context, arg GetFoodLogEntryMetricsParams) ([]GetFoodLogEntryMetricsRow, error) {
@@ -228,9 +207,14 @@ func (q *Queries) PurgeFoodLogEntries(ctx context.Context, userID string) error 
 }
 
 const queryFoodLogEntries = `-- name: QueryFoodLogEntries :many
-SELECT user_id, id, name, labels, time_start, time_end FROM user_foodlogentry
-WHERE user_id = $1 AND time_start >= $2 AND time_end <= $3
-ORDER BY time_start ASC
+SELECT ufle.user_id, ufle.id, ufle.name, ufle.labels, ufle.time_start, ufle.time_end, jsonb_agg(
+    jsonb_build_object('key', uflem.metric_key, 'value', uflem.metric_value)
+  ) AS metrics
+FROM user_foodlogentry ufle
+INNER JOIN user_foodlogentry_metrics uflem ON ufle.id = uflem.foodlogentry_id AND uflem.user_id = ufle.user_id
+WHERE ufle.user_id = $1 AND ufle.time_start >= $2 AND ufle.time_end <= $3
+GROUP BY ufle.id
+ORDER BY ufle.time_start ASC
 `
 
 type QueryFoodLogEntriesParams struct {
@@ -239,15 +223,25 @@ type QueryFoodLogEntriesParams struct {
 	TimeEnd   pgtype.Timestamp
 }
 
-func (q *Queries) QueryFoodLogEntries(ctx context.Context, arg QueryFoodLogEntriesParams) ([]UserFoodlogentry, error) {
+type QueryFoodLogEntriesRow struct {
+	UserID    string
+	ID        uuid.UUID
+	Name      string
+	Labels    []string
+	TimeStart pgtype.Timestamp
+	TimeEnd   pgtype.Timestamp
+	Metrics   []byte
+}
+
+func (q *Queries) QueryFoodLogEntries(ctx context.Context, arg QueryFoodLogEntriesParams) ([]QueryFoodLogEntriesRow, error) {
 	rows, err := q.db.Query(ctx, queryFoodLogEntries, arg.UserID, arg.TimeStart, arg.TimeEnd)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []UserFoodlogentry
+	var items []QueryFoodLogEntriesRow
 	for rows.Next() {
-		var i UserFoodlogentry
+		var i QueryFoodLogEntriesRow
 		if err := rows.Scan(
 			&i.UserID,
 			&i.ID,
@@ -255,6 +249,7 @@ func (q *Queries) QueryFoodLogEntries(ctx context.Context, arg QueryFoodLogEntri
 			&i.Labels,
 			&i.TimeStart,
 			&i.TimeEnd,
+			&i.Metrics,
 		); err != nil {
 			return nil, err
 		}
@@ -266,47 +261,10 @@ func (q *Queries) QueryFoodLogEntries(ctx context.Context, arg QueryFoodLogEntri
 	return items, nil
 }
 
-const queryFoodLogEntryMetrics = `-- name: QueryFoodLogEntryMetrics :many
-SELECT foodlogentry_id, metric_key, metric_value FROM user_foodlogentry_metrics
-WHERE user_id = $1 AND foodlogentry_id = ANY($2::uuid[])
-`
-
-type QueryFoodLogEntryMetricsParams struct {
-	UserID  string
-	Column2 []uuid.UUID
-}
-
-type QueryFoodLogEntryMetricsRow struct {
-	FoodlogentryID uuid.UUID
-	MetricKey      string
-	MetricValue    int32
-}
-
-func (q *Queries) QueryFoodLogEntryMetrics(ctx context.Context, arg QueryFoodLogEntryMetricsParams) ([]QueryFoodLogEntryMetricsRow, error) {
-	rows, err := q.db.Query(ctx, queryFoodLogEntryMetrics, arg.UserID, arg.Column2)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []QueryFoodLogEntryMetricsRow
-	for rows.Next() {
-		var i QueryFoodLogEntryMetricsRow
-		if err := rows.Scan(&i.FoodlogentryID, &i.MetricKey, &i.MetricValue); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const updateFoodLogEntry = `-- name: UpdateFoodLogEntry :one
+const updateFoodLogEntry = `-- name: UpdateFoodLogEntry :exec
 UPDATE user_foodlogentry
 SET name = $3, labels = $4, time_start = $5, time_end = $6
 WHERE user_id = $1 AND id = $2
-RETURNING user_id, id, name, labels, time_start, time_end
 `
 
 type UpdateFoodLogEntryParams struct {
@@ -318,8 +276,8 @@ type UpdateFoodLogEntryParams struct {
 	TimeEnd   pgtype.Timestamp
 }
 
-func (q *Queries) UpdateFoodLogEntry(ctx context.Context, arg UpdateFoodLogEntryParams) (UserFoodlogentry, error) {
-	row := q.db.QueryRow(ctx, updateFoodLogEntry,
+func (q *Queries) UpdateFoodLogEntry(ctx context.Context, arg UpdateFoodLogEntryParams) error {
+	_, err := q.db.Exec(ctx, updateFoodLogEntry,
 		arg.UserID,
 		arg.ID,
 		arg.Name,
@@ -327,14 +285,5 @@ func (q *Queries) UpdateFoodLogEntry(ctx context.Context, arg UpdateFoodLogEntry
 		arg.TimeStart,
 		arg.TimeEnd,
 	)
-	var i UserFoodlogentry
-	err := row.Scan(
-		&i.UserID,
-		&i.ID,
-		&i.Name,
-		&i.Labels,
-		&i.TimeStart,
-		&i.TimeEnd,
-	)
-	return i, err
+	return err
 }

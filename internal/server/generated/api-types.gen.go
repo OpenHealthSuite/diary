@@ -27,7 +27,7 @@ type ConfigurationValue2 = map[string]interface{}
 // CreateFoodLogEntry defines model for CreateFoodLogEntry.
 type CreateFoodLogEntry struct {
 	Labels  []string           `json:"labels"`
-	Metrics map[string]float32 `json:"metrics"`
+	Metrics map[string]float64 `json:"metrics"`
 	Name    string             `json:"name"`
 	Time    TimeRange          `json:"time"`
 }
@@ -36,7 +36,7 @@ type CreateFoodLogEntry struct {
 type EditFoodLogEntry struct {
 	Id      string              `json:"id"`
 	Labels  *[]string           `json:"labels,omitempty"`
-	Metrics *map[string]float32 `json:"metrics,omitempty"`
+	Metrics *map[string]float64 `json:"metrics,omitempty"`
 	Name    *string             `json:"name,omitempty"`
 	Time    *TimeRange          `json:"time,omitempty"`
 }
@@ -51,7 +51,7 @@ type Error struct {
 type FoodLogEntry struct {
 	Id      string             `json:"id"`
 	Labels  []string           `json:"labels"`
-	Metrics map[string]float32 `json:"metrics"`
+	Metrics map[string]float64 `json:"metrics"`
 	Name    string             `json:"name"`
 	Time    TimeRange          `json:"time"`
 }

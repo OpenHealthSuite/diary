@@ -11,6 +11,7 @@ import (
 	"github.com/openhealthsuite/diary/internal/config"
 	"github.com/openhealthsuite/diary/internal/server/generated"
 	"github.com/openhealthsuite/diary/internal/storage"
+	strgtyp "github.com/openhealthsuite/diary/internal/storage/types"
 	"github.com/rs/zerolog/log"
 )
 
@@ -40,7 +41,7 @@ func NewServer(cfg *config.ServerConfiguration) (DiaryServer, error) {
 }
 
 type ServerState struct {
-	storage storage.Storage
+	storage strgtyp.Storage
 }
 
 func NewGeneratedInterface(srvst ServerState) generated.ServerInterface {
@@ -49,7 +50,7 @@ func NewGeneratedInterface(srvst ServerState) generated.ServerInterface {
 
 // TestEndpoint implements generated.ServerInterface.
 func (g *ServerState) TestEndpoint(c *gin.Context) {
-	_, err := g.storage.GetQuerier().GetTestData(c)
+	_, err := g.storage.GetTestData(c)
 	if err != nil {
 		log.Error().Err(err).Msg("error pinging database")
 		c.String(500, "KO")
