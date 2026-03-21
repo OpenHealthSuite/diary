@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
 
 	"github.com/openhealthsuite/diary/internal/config"
 	"github.com/openhealthsuite/diary/internal/server"
@@ -18,6 +20,11 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error setting up server")
 	}
-	err = srv.RunServer()
-	log.Fatal().Err(err).Msg("Error running server")
+	quit, err := srv.RunServer()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error running server")
+	}
+	signal.Notify(*quit, os.Interrupt)
+	for {
+	}
 }

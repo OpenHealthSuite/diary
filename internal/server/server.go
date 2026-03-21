@@ -1,11 +1,13 @@
 package server
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/openhealthsuite/diary/internal/config"
@@ -19,7 +21,7 @@ import (
 //go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=../../tools/oapi_codegen/types.cfg.yaml ../../api/swagger.yaml
 
 type DiaryServer interface {
-	RunServer() error
+	RunServer() (*chan os.Signal, error)
 }
 
 type DiaryServerState struct {
@@ -78,20 +80,28 @@ func loadTemplates(templatesDir string) (*template.Template, error) {
 	return tmpl, err
 }
 
-func (sts *DiaryServerState) RunServer() error {
+func (sts *DiaryServerState) RunServer() (*chan os.Signal, error) {
 	r := gin.Default()
 
 	// Load templates
 	r.SetFuncMap(templateFuncs())
-	tmpl, err := loadTemplates("web/template")
+	tmpldr := "web/template"
+	if sts.Config.TemplateDirectory != "" {
+		tmpldr = sts.Config.TemplateDirectory
+	}
+	tmpl, err := loadTemplates(tmpldr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	r.SetHTMLTemplate(tmpl)
 
+	stscdir := "web/static"
+	if sts.Config.StaticDirectory != "" {
+		stscdir = sts.Config.StaticDirectory
+	}
 	// Static files
-	r.StaticFile("/favicon.ico", "./web/static/favicon.ico")
-	r.Static("/static", "./web/static")
+	r.StaticFile("/favicon.ico", stscdir+"/favicon.ico")
+	r.Static("/static", stscdir)
 
 	// User identification middleware
 	r.Use(func(ctx *gin.Context) {
@@ -147,5 +157,32 @@ func (sts *DiaryServerState) RunServer() error {
 	// API routes (existing)
 	generated.RegisterHandlers(r, sts.GeneratedInterface)
 
-	return r.Run()
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", sts.Config.Port),
+		Handler:           r,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	quit := make(chan os.Signal, 1)
+
+	go func() {
+		<-quit
+		log.Info().Msg("receive interrupt signal")
+		if err := server.Close(); err != nil {
+			log.Error().Err(err).Msg("Server Close error")
+		}
+	}()
+
+	go func() {
+
+		if err := server.ListenAndServe(); err != nil {
+			if err == http.ErrServerClosed {
+				log.Info().Msg("Server closed under request")
+			} else {
+				log.Error().Err(err).Msg("Server closed unexpectedly")
+			}
+		}
+
+	}()
+	return &quit, nil
 }

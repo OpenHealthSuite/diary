@@ -309,7 +309,7 @@ func (sts *DiaryServerState) handleConfig(c *gin.Context) {
 	data := gin.H{
 		"CurrentPath":    "/config",
 		"Metrics":        metrics,
-		"LogoutEndpoint": sts.Config.SingoutEndpoint,
+		"LogoutEndpoint": sts.Config.SignoutEndpoint,
 		"TutorialMode":   tutorialMode,
 	}
 
@@ -552,7 +552,7 @@ func (sts *DiaryServerState) handlePurgePage(c *gin.Context) {
 	data := gin.H{
 		"CurrentPath":    "/config",
 		"Metrics":        metrics,
-		"LogoutEndpoint": sts.Config.SingoutEndpoint,
+		"LogoutEndpoint": sts.Config.SignoutEndpoint,
 		"PurgeModal":     true,
 	}
 
@@ -578,7 +578,7 @@ func (sts *DiaryServerState) handleUploadPage(c *gin.Context) {
 	data := gin.H{
 		"CurrentPath":    "/config",
 		"Metrics":        metrics,
-		"LogoutEndpoint": sts.Config.SingoutEndpoint,
+		"LogoutEndpoint": sts.Config.SignoutEndpoint,
 		"UploadModal":    true,
 	}
 

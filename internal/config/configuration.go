@@ -9,5 +9,8 @@ type ServerConfiguration struct {
 	UserIdHeader string `env:"OPENFOODDIARY_USERIDHEADER, default=x-openfooddiary-userid"`
 	UserId       string `env:"OPENFOODDIARY_USERID"`
 
-	SingoutEndpoint string `env:"OPENFOODDIARY_LOGOUT_ENDPOINT"`
+	SignoutEndpoint string `env:"OPENFOODDIARY_LOGOUT_ENDPOINT"`
+
+	TemplateDirectory string
+	StaticDirectory   string
 }
