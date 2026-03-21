@@ -23,6 +23,7 @@ If you've got a computer running docker at your disposal, you can quickly and ea
 mkdir openfooddiarydata
 docker run -d -v $(pwd)/openfooddiarydata:/app/.sqlite \
   -p 3012:3012 \
+  -e PORT="3012" \
   -e OPENFOODDIARY_USERID="my-ofd-userid" \
   --name openfooddiary-instance \
   ghcr.io/openhealthsuite/diary:latest
@@ -38,27 +39,13 @@ I keep a trim helm chart in this repository, which with a small amount of manual
 
 ## Running this Repo Locally
 
-Running locally, this repo expects you to run both the server and webapp concurrently.
+This project is a single golang application using SSR with HTMX. Therefore, your only dependency for running the code, is golang installed.
 
-This repo also expects you to probably be running a node version manager such as [fnm](https://github.com/Schniz/fnm), and has the requisite `.nvmrc` files in the client folder.
+Quickest way to just fire up the server is to run `OPENFOODDIARY_USERID="f1750ac3-d6cc-4981-9466-f1de2ebbad33" go run cmd/server/main.go`
 
-### Running the server/api
+I've included a makefile with the usual suspects in terms of development commands.
 
-```bash
-make run
-```
-
-### Running the client
-
-```bash
-cd webapp
-npm ci
-npm run dev
-```
-
-#### Notes
-
-By default, this will run the server with sqlite3 as a backing store, and will set a default userid header from the client for communicating with the server.
+There is a docker-compose.yaml file provided for rigging up a quick compose stack with postgres in it - however I'd recommend sticking with the sqlite3 backed storage for dev, and letting the parity tests save you from running postgres for development.
 
 ## Environment Variables
 
@@ -68,17 +55,15 @@ By default, this will run the server with sqlite3 as a backing store, and will s
   - sets the port OFD will run on
 - `OPENFOODDIARY_USERIDHEADER`: defaults to "x-openfooddiary-userid"
   - Denotes the header that will be populated with a user id
-- `OPENFOODDIARY_USERID`: defaults to undefined
+- `OPENFOODDIARY_USERID`: no default
   - Denotes userid that will _always_ be populated - intended for dev and single-user modes
-- `OPENFOODDIARY_LOGOUT_ENDPOINT`: defaults to `/api/logout`
-  - Value that will be returned when the user calls `/api/logout-endpoint`, allowing for different auth providers
+- `OPENFOODDIARY_LOGOUT_ENDPOINT`: no default
+  - Used in the UI for the logout button, for different auth provider support
 
 ### Storage
 
-- `OPENFOODDIARY_STORAGE_PROVIDER`: defaults to undefined
-  - Sets the storage provider, OFD falls back to sqlite3 if none is defined
-  - options: `postgres`
-- `OPENFOODDIARY_SQLITE3_FILENAME`: defaults to ".sqlite/openfooddiary.sqlite"
+- `OPENFOODDIARY_POSTGRES_CONNECTION_STRING`: No default
+  - If set, the application will attempt to connect and migrate on this string - if it fails, then 
+- `OPENFOODDIARY_SQLITE_PATH`: defaults to ".sqlite"
   - Sets the filename/path the sqlite3 database will be stored to
-  - note: this location equates to `/app/.sqlite/openfooddiary.sqlite` in the container
-- `OPENFOODDIARY_POSTGRES_CONNECTION_STRING`: Connection string for usage if provider is `postgres`
+  - note: this location equates to `/app/.sqlite` in the container
