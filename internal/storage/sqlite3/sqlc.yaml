@@ -1,0 +1,11 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    queries: "sqlc/queries"
+    schema: "sqlc/schema"
+    gen:
+      go:
+        package: "strggen"
+        out: "strggen"
+        emit_interface: true
+        emit_pointers_for_null_types: true

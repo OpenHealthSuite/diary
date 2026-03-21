@@ -11,6 +11,7 @@ import (
 
 	"github.com/openhealthsuite/diary/internal/config"
 	pgstr "github.com/openhealthsuite/diary/internal/storage/postgres"
+	sqlite "github.com/openhealthsuite/diary/internal/storage/sqlite3"
 	"github.com/openhealthsuite/diary/internal/storage/types"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -53,6 +54,23 @@ func setupPostgres(ctx context.Context, t *testing.T) (types.Storage, func()) {
 	}
 }
 
+func setupSqlite(ctx context.Context, t *testing.T) (types.Storage, func()) {
+
+	cfg := config.ServerConfiguration{
+		PostgresConnectionString: ":memory:",
+	}
+
+	strg, err := sqlite.SetupSqlite(&cfg)
+
+	if err != nil {
+		log.Error().Err(err).Msg("error setting up storage")
+		t.FailNow()
+	}
+	return strg, func() {
+
+	}
+}
+
 func Test_StorageImplementations(xt *testing.T) {
 	ctx := context.Background()
 
@@ -67,6 +85,12 @@ func Test_StorageImplementations(xt *testing.T) {
 		strg  types.Storage
 		clnup func()
 	}{"postgres", pg, pgc})
+	sql, sqlc := setupSqlite(ctx, xt)
+	impl = append(impl, struct {
+		name  string
+		strg  types.Storage
+		clnup func()
+	}{"sqlite", sql, sqlc})
 
 	for _, imp := range impl {
 		strg := imp.strg
