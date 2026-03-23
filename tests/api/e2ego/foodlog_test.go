@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_CRUD_Logs(t *testing.T) {
+func Test_CRUD_Logs(xt *testing.T) {
 
 	useridheader := "x-user-id"
 
@@ -36,11 +36,11 @@ func Test_CRUD_Logs(t *testing.T) {
 	target_host := "http://localhost:8937"
 
 	srv, err := server.NewServer(&config)
-	require.NoError(t, err)
+	require.NoError(xt, err)
 
 	quit, err := srv.RunServer()
 
-	t.Run("Happy Path :: Bad Retreives, Creates, Retreives, Edits, Reretrieves, Deletes, Fails Retreive, Redelete succeeds false", func(tt *testing.T) {
+	xt.Run("Happy Path :: Bad Retreives, Creates, Retreives, Edits, Reretrieves, Deletes, Fails Retreive, Redelete succeeds false", func(t *testing.T) {
 
 		test_user_id := uuid.NewString()
 
@@ -127,6 +127,100 @@ func Test_CRUD_Logs(t *testing.T) {
 
 	})
 
+	xt.Run("Queries :: can add some logs, and get expected query results", func(t *testing.T) {
+
+		test_user_id := uuid.NewString()
+
+		hdrs := map[string]string{
+			useridheader: test_user_id,
+		}
+
+		hc := http.Client{}
+
+		past_log := map[string]any{
+			"name":   "Past Log",
+			"labels": []string{},
+			"time": map[string]any{
+				"start": time.Date(1999, time.October, 10, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
+				"end":   time.Date(1999, time.October, 11, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
+			},
+			"metrics": map[string]any{
+				"calories": int64(500),
+			},
+		}
+
+		center_log := map[string]any{
+			"name":   "Center Log",
+			"labels": []string{},
+			"time": map[string]any{
+				"start": time.Date(1999, time.October, 15, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
+				"end":   time.Date(1999, time.October, 16, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
+			},
+			"metrics": map[string]any{
+				"calories": int64(500),
+			},
+		}
+
+		future_log := map[string]any{
+			"name":   "Future Log",
+			"labels": []string{},
+			"time": map[string]any{
+				"start": time.Date(1999, time.October, 20, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
+				"end":   time.Date(1999, time.October, 21, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
+			},
+			"metrics": map[string]any{
+				"calories": int64(500),
+			},
+		}
+
+		resp := doReq(&hc, t, "POST", target_host+"/api/logs", toJsonBody(t, past_log), hdrs)
+		defer resp.Body.Close()
+
+		assert.Equal(t, 200, resp.StatusCode)
+		past_log_id := toString(t, resp.Body)
+
+		resp = doReq(&hc, t, "POST", target_host+"/api/logs", toJsonBody(t, center_log), hdrs)
+		defer resp.Body.Close()
+
+		assert.Equal(t, 200, resp.StatusCode)
+		center_log_id := toString(t, resp.Body)
+
+		resp = doReq(&hc, t, "POST", target_host+"/api/logs", toJsonBody(t, future_log), hdrs)
+		defer resp.Body.Close()
+
+		assert.Equal(t, 200, resp.StatusCode)
+		future_log_id := toString(t, resp.Body)
+
+		queryLogs := func(start_date, end_date time.Time) []map[string]any {
+			resp := doReq(&hc, t, "GET", target_host+"/api/logs?startDate="+start_date.Format(time.RFC3339)+"&endDate="+end_date.Format(time.RFC3339), nil, hdrs)
+			defer resp.Body.Close()
+
+			assert.Equal(t, 200, resp.StatusCode)
+			return decode[[]map[string]any](t, resp.Body)
+		}
+
+		lgs := queryLogs(time.Date(1999, time.October, 14, 0, 0, 0, 0, time.UTC), time.Date(1999, time.October, 16, 0, 0, 0, 0, time.UTC))
+
+		assert.Len(t, lgs, 1)
+		assert.Equal(t, center_log_id, lgs[0]["id"].(string))
+
+		lgs = queryLogs(time.Date(1999, time.October, 9, 0, 0, 0, 0, time.UTC), time.Date(1999, time.October, 16, 0, 0, 0, 0, time.UTC))
+
+		assert.Len(t, lgs, 2)
+		assert.Equal(t, past_log_id, lgs[0]["id"].(string))
+		assert.Equal(t, center_log_id, lgs[1]["id"].(string))
+
+		lgs = queryLogs(time.Date(1999, time.October, 15, 0, 0, 0, 0, time.UTC), time.Date(1999, time.October, 30, 0, 0, 0, 0, time.UTC))
+
+		assert.Len(t, lgs, 2)
+		assert.Equal(t, center_log_id, lgs[0]["id"].(string))
+		assert.Equal(t, future_log_id, lgs[1]["id"].(string))
+
+		lgs = queryLogs(time.Date(2011, time.October, 15, 0, 0, 0, 0, time.UTC), time.Date(2012, time.October, 30, 0, 0, 0, 0, time.UTC))
+
+		assert.Len(t, lgs, 0)
+	})
+
 	(*quit) <- os.Interrupt
 }
 
@@ -134,8 +228,10 @@ func assertSubset(t *testing.T, sourceItem map[string]any, comparedItem map[stri
 	for k, v := range sourceItem {
 		storedVal := comparedItem[k]
 		var expectedNorm, actualNorm interface{}
-		expectedBytes, _ := json.Marshal(v)
-		actualBytes, _ := json.Marshal(storedVal)
+		expectedBytes, err := json.Marshal(v)
+		require.NoError(t, err)
+		actualBytes, err := json.Marshal(storedVal)
+		require.NoError(t, err)
 		json.Unmarshal(expectedBytes, &expectedNorm)
 		json.Unmarshal(actualBytes, &actualNorm)
 		assert.Equal(t, expectedNorm, actualNorm)
