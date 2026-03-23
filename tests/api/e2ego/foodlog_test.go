@@ -83,14 +83,63 @@ func Test_CRUD_Logs(t *testing.T) {
 		defer resp.Body.Close()
 
 		assert.Equal(t, 200, resp.StatusCode)
-		// storedItem := toMap(t, resp.Body)
-		// for k, v := range created_item {
-		// 	assert.Equal(t, v, storedItem[k])
-		// }
+		storedItem := decode[map[string]any](t, resp.Body)
+		assertSubset(t, created_item, storedItem)
+
+		modified_item := map[string]any{
+			"name":   "My Updated Food Log",
+			"labels": []string{"some other label", "other some label"},
+			"time": map[string]string{
+				"start": date.Add(-2 * time.Hour).Format(time.RFC3339),
+				"end":   endDate.Add(-1 * time.Hour).Format(time.RFC3339),
+			},
+			"metrics": map[string]int64{
+				"calories": 765,
+			},
+		}
+
+		resp = doReq(&hc, t, "PUT", target_host+"/api/logs/"+testItemId, toJsonBody(t, modified_item), hdrs)
+		defer resp.Body.Close()
+
+		assert.Equal(t, 200, resp.StatusCode)
+
+		resp = doReq(&hc, t, "GET", target_host+"/api/logs/"+testItemId, nil, hdrs)
+		defer resp.Body.Close()
+
+		assert.Equal(t, 200, resp.StatusCode)
+		storedItem = decode[map[string]any](t, resp.Body)
+		assertSubset(t, modified_item, storedItem)
+
+		resp = doReq(&hc, t, "DELETE", target_host+"/api/logs/"+testItemId, nil, hdrs)
+		defer resp.Body.Close()
+
+		assert.Equal(t, 204, resp.StatusCode)
+
+		resp = doReq(&hc, t, "GET", target_host+"/api/logs/"+testItemId, nil, hdrs)
+		defer resp.Body.Close()
+
+		assert.Equal(t, 404, resp.StatusCode)
+
+		resp = doReq(&hc, t, "DELETE", target_host+"/api/logs/"+testItemId, nil, hdrs)
+		defer resp.Body.Close()
+
+		assert.Equal(t, 204, resp.StatusCode)
 
 	})
 
 	(*quit) <- os.Interrupt
+}
+
+func assertSubset(t *testing.T, sourceItem map[string]any, comparedItem map[string]any) {
+	for k, v := range sourceItem {
+		storedVal := comparedItem[k]
+		var expectedNorm, actualNorm interface{}
+		expectedBytes, _ := json.Marshal(v)
+		actualBytes, _ := json.Marshal(storedVal)
+		json.Unmarshal(expectedBytes, &expectedNorm)
+		json.Unmarshal(actualBytes, &actualNorm)
+		assert.Equal(t, expectedNorm, actualNorm)
+	}
 }
 
 func doReq(hc *http.Client, t *testing.T, method string, url string, body io.Reader, headers map[string]string) *http.Response {
@@ -119,12 +168,12 @@ func toString(t *testing.T, bdy io.Reader) string {
 
 }
 
-// func toMap(t *testing.T, bdy io.Reader) map[any]any {
-// 	rs := map[any]any{}
-// 	buf := new(bytes.Buffer)
-// 	_, err := buf.ReadFrom(bdy)
-// 	require.NoError(t, err)
-// 	err = json.Unmarshal(buf.Bytes(), &rs)
-// 	require.NoError(t, err)
-// 	return rs
-// }
+func decode[E any](t *testing.T, bdy io.Reader) E {
+	rs := new(E)
+	buf := new(bytes.Buffer)
+	_, err := buf.ReadFrom(bdy)
+	require.NoError(t, err)
+	err = json.Unmarshal(buf.Bytes(), &rs)
+	require.NoError(t, err)
+	return *rs
+}
