@@ -16,10 +16,6 @@ spec:
         app: openfooddiary
       namespace: {{ .Release.Namespace }}
       name: openfooddiary
-      annotations:
-        prometheus.io/scrape: 'true'
-        prometheus.io/path: '/metrics'
-        prometheus.io/port: '3024'
     spec:
       containers:
         - name: openfooddiary
