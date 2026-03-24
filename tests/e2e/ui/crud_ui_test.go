@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/openhealthsuite/diary/internal/config"
 	"github.com/openhealthsuite/diary/internal/server"
 	"github.com/playwright-community/playwright-go"
@@ -13,22 +14,33 @@ import (
 
 func Test_CRUD_Logs(t *testing.T) {
 
-	config := config.ServerConfiguration{
-		Port:                     8936,
-		PostgresConnectionString: "",
-		SqliteFile:               ":memory:",
-		UserId:                   "single-test-user-id",
-		SignoutEndpoint:          "/logout",
-		UserIdHeader:             "",
+	target := "http://localhost:8936"
+	useridheader := "x-openfooddiary-userid"
+	userid := uuid.NewString()
 
-		TemplateDirectory: "../../../web/template",
-		StaticDirectory:   "../../../web/static",
+	if os.Getenv("OFD_E2E_TARGET") != "" {
+		target = os.Getenv("OFD_E2E_TARGET")
+	} else {
+
+		config := config.ServerConfiguration{
+			Port:                     8936,
+			PostgresConnectionString: "",
+			SqliteFile:               ":memory:",
+			UserId:                   userid,
+			SignoutEndpoint:          "/logout",
+			UserIdHeader:             useridheader,
+
+			TemplateDirectory: "../../../web/template",
+			StaticDirectory:   "../../../web/static",
+		}
+
+		srv, err := server.NewServer(&config)
+		require.NoError(t, err)
+		quit, err := srv.RunServer()
+		defer func() {
+			(*quit) <- os.Interrupt
+		}()
 	}
-
-	srv, err := server.NewServer(&config)
-	require.NoError(t, err)
-
-	quit, err := srv.RunServer()
 
 	pw, err := playwright.Run()
 	require.NoError(t, err)
@@ -37,9 +49,13 @@ func Test_CRUD_Logs(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("Test create log", func(tt *testing.T) {
-		page, err := browser.NewPage()
+		page, err := browser.NewPage(playwright.BrowserNewPageOptions{
+			ExtraHttpHeaders: map[string]string{
+				useridheader: userid,
+			},
+		})
 		require.NoError(tt, err)
-		if _, err = page.Goto("http://localhost:8936"); err != nil {
+		if _, err = page.Goto(target); err != nil {
 			tt.Fatalf("could not goto: %v", err)
 		}
 		alb := page.Locator(".add-log-button").First()
@@ -60,5 +76,4 @@ func Test_CRUD_Logs(t *testing.T) {
 		assert.Equal(tt, "123 Calories Total", tms)
 	})
 
-	(*quit) <- os.Interrupt
 }

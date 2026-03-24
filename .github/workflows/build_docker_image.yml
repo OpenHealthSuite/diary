@@ -15,7 +15,6 @@ on:
         default: false
         required: false
 
-# TODO: Let's be honest, this needs binning.
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
@@ -23,169 +22,65 @@ jobs:
       RUN_TAG: ghcr.io/openhealthsuite/diary:${{ github.run_id }}
     steps:
       - uses: actions/checkout@v5
-      - name: Login to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25"
+          cache: true
+          cache-dependency-path: 'go.sum'
+      - name: Install playwright
+        run: go run github.com/playwright-community/playwright-go/cmd/playwright@v0.5700.1 install --with-deps
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
-      # - name: Build local image for testing (single-platform, load)
-      #   working-directory: .
-      #   # buildx --load produces a single-platform image loaded into the local docker engine for fast testing
-      #   run: |
-      #     PLATFORM=linux/amd64
-      #     echo "Building local image ${RUN_TAG} for testing (platform=${PLATFORM})"
-      #     docker buildx build --platform=${PLATFORM} --load --tag ${RUN_TAG} .
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # - name: Bring up stack (postgres only)
-      #   working-directory: .
-      #   run: |
-      #     docker compose up -d postgres
+      - name: Build Version
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/arm64/v8,linux/amd64
+          push: false
+          tags: ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }}
+      
+      - name: Test Image
+        run: |
+          docker run --name=ofgtest -d -e PORT=3011 -p 3011:3011 ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }}
+          MAX_WAIT=10
+          INTERVAL=1
+          i=0
+          until curl --output /dev/null --silent --fail http://localhost:3011/api/ping; do
+            i=$((i+INTERVAL))
+            if [ "$i" -ge "$MAX_WAIT" ]; then
+              echo "Timed out waiting for API after ${MAX_WAIT}s"
+              exit 1
+            fi
+            sleep ${INTERVAL}
+          done
+          OFD_E2E_TARGET='http://localhost:3011' go test ./tests/e2e/...
 
-      # - name: Wait for Postgres healthy
-      #   # wait for postgres healthcheck to report healthy (requires the service to have a healthcheck)
-      #   timeout-minutes: 2
-      #   run: |
-      #     set -euo pipefail
-      #     MAX_WAIT=120
-      #     INTERVAL=1
-      #     echo "Waiting up to ${MAX_WAIT}s for postgres service to be healthy"
-      #     cid=""
-      #     # Wait until compose has created the container
-      #     until [ -n "$cid" ]; do
-      #       cid=$(docker compose ps -q postgres || true)
-      #       if [ -n "$cid" ]; then
-      #         break
-      #       fi
-      #       sleep 1
-      #     done
-      #     i=0
-      #     while true; do
-      #       status=$(docker inspect --format '{{.State.Health.Status}}' "$cid" 2>/dev/null || echo unknown)
-      #       echo "Postgres health: $status"
-      #       if [ "$status" = "healthy" ]; then
-      #         echo "Postgres is healthy"
-      #         break
-      #       fi
-      #       i=$((i+INTERVAL))
-      #       if [ "$i" -ge "$MAX_WAIT" ]; then
-      #         echo "Timed out waiting for postgres to be healthy"
-      #         echo "--- docker compose ps ---"
-      #         docker compose ps
-      #         echo "--- docker compose logs: postgres (last 200 lines) ---"
-      #         docker compose logs --no-color --tail 200 postgres || true
-      #         exit 1
-      #       fi
-      #       sleep $INTERVAL
-      #     done
-
-      # - name: Wait for Stack
-      #   # wait until the API responds (loop until curl succeeds). Print diagnostics and fail if not ready within timeout.
-      #   timeout-minutes: 2
-      #   run: |
-      #     set -euo pipefail
-      #     MAX_WAIT=120
-      #     INTERVAL=1
-      #     i=0
-      #     echo "Waiting up to ${MAX_WAIT}s for API at http://localhost:3022/api/ping"
-      #     until curl --output /dev/null --silent --fail http://localhost:3022/api/ping; do
-      #       i=$((i+INTERVAL))
-      #       if [ "$i" -ge "$MAX_WAIT" ]; then
-      #         echo "Timed out waiting for API after ${MAX_WAIT}s"
-      #         echo "--- docker compose ps ---"
-      #         docker compose ps
-      #         echo "--- docker compose logs: app (last 200 lines) ---"
-      #         docker compose logs --no-color --tail 200 app || true
-      #         echo "--- docker compose logs: postgres (last 200 lines) ---"
-      #         docker compose logs --no-color --tail 200 postgres || true
-      #         exit 1
-      #       fi
-      #       echo "Waiting for API at http://localhost:3022/api/ping (${i}s)"
-      #       sleep ${INTERVAL}
-      #     done
-      #     echo "API is responding"
-
-      # - name: Test the Image
-      #   working-directory: .
-      #   # pull and run the run-specific image (outside compose) attached to the compose network so it can reach postgres
-      #   run: |
-      #     set -euo pipefail
-
-      #     echo "Using local test image ${RUN_TAG}"
-
-      #     echo "Determining docker network used by compose postgres"
-      #     cid=$(docker compose ps -q postgres)
-      #     if [ -z "$cid" ]; then
-      #       echo "Postgres container not found"
-      #       docker compose ps
-      #       exit 1
-      #     fi
-      #     # Get the first network (handles multiple networks safely)
-      #     network=$(docker inspect -f '{{range $net, $_ := .NetworkSettings.Networks}}{{println $net}}{{end}}' "$cid" | head -1)
-      #     if [ -z "$network" ]; then
-      #       echo "Could not determine network for postgres container"
-      #       docker inspect "$cid"
-      #       exit 1
-      #     fi
-      #     echo "Using network: $network"
-
-      #     echo "Starting app container from image ${RUN_TAG}"
-      #     docker run --name diary-test -d --network "$network" -p 3022:8080 --env-file .env-compose -e GIN_MODE=release ${RUN_TAG}
-
-      #     echo "Waiting for API to respond"
-      #     MAX_WAIT=120
-      #     i=0
-      #     until curl --output /dev/null --silent --fail http://localhost:3022/api/ping; do
-      #       i=$((i+1))
-      #       if [ "$i" -ge "$MAX_WAIT" ]; then
-      #         echo "Timed out waiting for API after ${MAX_WAIT}s"
-      #         echo "--- diary-test logs ---"
-      #         docker logs diary-test || true
-      #         echo "--- docker compose ps ---"
-      #         docker compose ps || true
-      #         echo "--- docker compose logs: postgres (last 200 lines) ---"
-      #         docker compose logs --no-color --tail 200 postgres || true
-      #         docker ps -a || true
-      #         docker inspect diary-test || true
-      #         exit 1
-      #       fi
-      #       echo "Waiting for API at http://localhost:3022/api/ping (${i}s)"
-      #       sleep 1
-      #     done
-
-      #     echo "API is responding; running tests"
-      #     cd tests/api/e2e
-      #     OPENFOODDIARY_API_HOST=http://localhost:3022 npm test
-      #     rc=$?
-
-      #     echo "Stopping diary-test container"
-      #     docker stop diary-test || true
-      #     docker rm diary-test || true
-      #     exit $rc
-
-      # - name: Cleanup test containers
-      #   if: always()
-      #   run: |
-      #     docker stop diary-test 2>/dev/null || true
-      #     docker rm diary-test 2>/dev/null || true
-      #     docker compose down 2>/dev/null || true
-
-      - name: Push Version (multi-arch build and push)
+      - name: Push Version
         if: ${{ inputs.PUSH }}
-        working-directory: .
-        run: |
-          set -euo pipefail
-          platarch=linux/arm64/v8,linux/amd64
-          echo "Building and pushing multi-arch image for tag: ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }}"
-          docker buildx build --platform=$platarch --push --tag ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }} .
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/arm64/v8,linux/amd64
+          push: true
+          tags: ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }}
 
-      - name: Push Latest (multi-arch)
+      - name: Push Latest
         if: ${{ inputs.PUSH && inputs.PUSH_LATEST }}
-        working-directory: .
-        run: |
-          set -euo pipefail
-          platarch=linux/arm64/v8,linux/amd64
-          echo "Building and pushing multi-arch image for tag: ghcr.io/openhealthsuite/diary:latest"
-          docker buildx build --platform=$platarch --push --tag ghcr.io/openhealthsuite/diary:latest .
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/arm64/v8,linux/amd64
+          push: true
+          tags: ghcr.io/openhealthsuite/diary:latest

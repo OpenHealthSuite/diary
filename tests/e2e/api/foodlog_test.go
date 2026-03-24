@@ -18,27 +18,32 @@ import (
 )
 
 func Test_CRUD_Logs(xt *testing.T) {
-
-	useridheader := "x-user-id"
-
-	config := config.ServerConfiguration{
-		Port:                     8937,
-		PostgresConnectionString: "",
-		SqliteFile:               ":memory:",
-
-		SignoutEndpoint: "/logout",
-		UserIdHeader:    useridheader,
-
-		TemplateDirectory: "../../../web/template",
-		StaticDirectory:   "../../../web/static",
-	}
-
 	target_host := "http://localhost:8937"
+	useridheader := "x-openfooddiary-userid"
 
-	srv, err := server.NewServer(&config)
-	require.NoError(xt, err)
+	if os.Getenv("OFD_E2E_TARGET") != "" {
+		target_host = os.Getenv("OFD_E2E_TARGET")
+	} else {
 
-	quit, err := srv.RunServer()
+		config := config.ServerConfiguration{
+			Port:                     8937,
+			PostgresConnectionString: "",
+			SqliteFile:               ":memory:",
+
+			SignoutEndpoint: "/logout",
+			UserIdHeader:    useridheader,
+
+			TemplateDirectory: "../../../web/template",
+			StaticDirectory:   "../../../web/static",
+		}
+
+		srv, err := server.NewServer(&config)
+		require.NoError(xt, err)
+		quit, err := srv.RunServer()
+		defer func() {
+			(*quit) <- os.Interrupt
+		}()
+	}
 
 	xt.Run("Happy Path :: Bad Retreives, Creates, Retreives, Edits, Reretrieves, Deletes, Fails Retreive, Redelete succeeds false", func(t *testing.T) {
 
@@ -221,7 +226,6 @@ func Test_CRUD_Logs(xt *testing.T) {
 		assert.Len(t, lgs, 0)
 	})
 
-	(*quit) <- os.Interrupt
 }
 
 func assertSubset(t *testing.T, sourceItem map[string]any, comparedItem map[string]any) {
