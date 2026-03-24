@@ -49,6 +49,7 @@ jobs:
           context: .
           platforms: linux/arm64/v8,linux/amd64
           push: false
+          load: true
           tags: ghcr.io/openhealthsuite/diary:${{ inputs.VERSION }}
       
       - name: Test Image
