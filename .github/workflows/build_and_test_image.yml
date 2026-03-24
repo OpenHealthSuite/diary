@@ -10,7 +10,7 @@ on:
   pull_request:
 
 jobs:
-  publish-bleed:
+  test-image:
     uses: ./.github/workflows/build_docker_image.yml
     with:
       VERSION: test
