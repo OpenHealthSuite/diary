@@ -242,14 +242,6 @@ func (p *PostgresStorage) UpdateFoodLogEntry(ctx context.Context, arg types.Upda
 	defer rollbacker(tx)
 	q := strggen.New(tx)
 
-	_, err = q.GetFoodLogEntry(ctx, strggen.GetFoodLogEntryParams{
-		UserID: arg.UserID,
-		ID:     arg.ID,
-	})
-	if err != nil {
-		return err
-	}
-
 	err = q.UpdateFoodLogEntry(ctx, strggen.UpdateFoodLogEntryParams{
 		ID:        arg.ID,
 		UserID:    arg.UserID,

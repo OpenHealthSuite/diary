@@ -274,14 +274,6 @@ func (p *Sqlite3Storage) UpdateFoodLogEntry(ctx context.Context, arg types.Updat
 	defer rollbacker(tx)
 	q := strggen.New(tx)
 
-	_, err = q.GetFoodLogEntry(ctx, strggen.GetFoodLogEntryParams{
-		UserID: arg.UserID,
-		ID:     arg.ID.String(),
-	})
-	if err != nil {
-		return err
-	}
-
 	lbls, err := json.Marshal(arg.Labels)
 
 	if err != nil {
