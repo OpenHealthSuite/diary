@@ -25,10 +25,11 @@ WHERE ufle.user_id = ? AND ufle.time_start >= ? AND ufle.time_end <= ?
 GROUP BY ufle.id
 ORDER BY ufle.time_start ASC;
 
--- name: UpdateFoodLogEntry :exec
+-- name: UpdateFoodLogEntry :one
 UPDATE user_foodlogentry
 SET name = ?, labels = ?, time_start = ?, time_end = ?
-WHERE user_id = ? AND id = ?;
+WHERE user_id = ? AND id = ?
+RETURNING id;
 
 -- name: DeleteFoodLogEntry :exec
 DELETE FROM user_foodlogentry WHERE user_id = ? AND id = ?;

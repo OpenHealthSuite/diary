@@ -261,10 +261,11 @@ func (q *Queries) QueryFoodLogEntries(ctx context.Context, arg QueryFoodLogEntri
 	return items, nil
 }
 
-const updateFoodLogEntry = `-- name: UpdateFoodLogEntry :exec
+const updateFoodLogEntry = `-- name: UpdateFoodLogEntry :one
 UPDATE user_foodlogentry
 SET name = $3, labels = $4, time_start = $5, time_end = $6
 WHERE user_id = $1 AND id = $2
+RETURNING id
 `
 
 type UpdateFoodLogEntryParams struct {
@@ -276,8 +277,8 @@ type UpdateFoodLogEntryParams struct {
 	TimeEnd   pgtype.Timestamp
 }
 
-func (q *Queries) UpdateFoodLogEntry(ctx context.Context, arg UpdateFoodLogEntryParams) error {
-	_, err := q.db.Exec(ctx, updateFoodLogEntry,
+func (q *Queries) UpdateFoodLogEntry(ctx context.Context, arg UpdateFoodLogEntryParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, updateFoodLogEntry,
 		arg.UserID,
 		arg.ID,
 		arg.Name,
@@ -285,5 +286,7 @@ func (q *Queries) UpdateFoodLogEntry(ctx context.Context, arg UpdateFoodLogEntry
 		arg.TimeStart,
 		arg.TimeEnd,
 	)
-	return err
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }

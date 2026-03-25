@@ -280,7 +280,7 @@ func (p *Sqlite3Storage) UpdateFoodLogEntry(ctx context.Context, arg types.Updat
 		return err
 	}
 
-	err = q.UpdateFoodLogEntry(ctx, strggen.UpdateFoodLogEntryParams{
+	_, err = q.UpdateFoodLogEntry(ctx, strggen.UpdateFoodLogEntryParams{
 		ID:        arg.ID.String(),
 		UserID:    arg.UserID,
 		Name:      arg.Name,
@@ -288,6 +288,10 @@ func (p *Sqlite3Storage) UpdateFoodLogEntry(ctx context.Context, arg types.Updat
 		TimeStart: arg.TimeStart,
 		TimeEnd:   arg.TimeEnd,
 	})
+
+	if err == sql.ErrNoRows {
+		return types.ErrNotFound
+	}
 	if err != nil {
 		return err
 	}

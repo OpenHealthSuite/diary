@@ -133,6 +133,9 @@ func (p *PostgresStorage) GetFoodLogEntry(ctx context.Context, arg types.GetFood
 		UserID: arg.UserID,
 		ID:     arg.ID,
 	})
+	if err == pgx.ErrNoRows {
+		return nil, types.ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +245,7 @@ func (p *PostgresStorage) UpdateFoodLogEntry(ctx context.Context, arg types.Upda
 	defer rollbacker(tx)
 	q := strggen.New(tx)
 
-	err = q.UpdateFoodLogEntry(ctx, strggen.UpdateFoodLogEntryParams{
+	_, err = q.UpdateFoodLogEntry(ctx, strggen.UpdateFoodLogEntryParams{
 		ID:        arg.ID,
 		UserID:    arg.UserID,
 		Name:      arg.Name,
@@ -250,6 +253,9 @@ func (p *PostgresStorage) UpdateFoodLogEntry(ctx context.Context, arg types.Upda
 		TimeStart: pgtype.Timestamp{Time: arg.TimeStart, Valid: true},
 		TimeEnd:   pgtype.Timestamp{Time: arg.TimeEnd, Valid: true},
 	})
+	if err == pgx.ErrNoRows {
+		return types.ErrNotFound
+	}
 	if err != nil {
 		return err
 	}

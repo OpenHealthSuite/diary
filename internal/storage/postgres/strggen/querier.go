@@ -25,7 +25,7 @@ type Querier interface {
 	PurgeFoodLogEntries(ctx context.Context, userID string) error
 	QueryFoodLogEntries(ctx context.Context, arg QueryFoodLogEntriesParams) ([]QueryFoodLogEntriesRow, error)
 	StoreUserConfig(ctx context.Context, arg StoreUserConfigParams) error
-	UpdateFoodLogEntry(ctx context.Context, arg UpdateFoodLogEntryParams) error
+	UpdateFoodLogEntry(ctx context.Context, arg UpdateFoodLogEntryParams) (uuid.UUID, error)
 }
 
 var _ Querier = (*Queries)(nil)

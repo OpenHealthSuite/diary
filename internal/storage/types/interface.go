@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,6 +28,10 @@ type Storage interface {
 	GetUserConfig(ctx context.Context, arg GetUserConfigParams) (*UserConfig, error)
 	StoreUserConfig(ctx context.Context, arg StoreUserConfigParams) error
 }
+
+var (
+	ErrNotFound = fmt.Errorf("not found")
+)
 
 type GetUserConfigParams struct {
 	UserID string

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -168,6 +169,26 @@ func Test_StorageImplementations(xt *testing.T) {
 				})
 
 				assert.Error(t, err)
+			})
+
+			t.Run("Update non-existent log returns error", func(t *testing.T) {
+				userid := "jimbloggs"
+				ts := mustParseTime("2006-01-02 15:04:05", "2020-11-12 08:00:00")
+				te := mustParseTime("2006-01-02 15:04:05", "2020-11-12 09:12:00")
+				err := strg.UpdateFoodLogEntry(ctx, types.UpdateFoodLogEntryParams{
+					ID:        uuid.New(),
+					UserID:    userid,
+					Name:      "My Food Log",
+					Labels:    []string{},
+					TimeStart: ts,
+					TimeEnd:   te,
+					Metrics: map[string]float64{
+						"cals": 123,
+						"hap":  456,
+					},
+				})
+				require.Error(t, err)
+				assert.Equal(t, types.ErrNotFound, err)
 			})
 
 			t.Run("Test export", func(t *testing.T) {
