@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openhealthsuite/diary/internal/auth"
 	"github.com/openhealthsuite/diary/internal/server/generated"
 	"github.com/openhealthsuite/diary/internal/storage/types"
 )
@@ -18,14 +19,15 @@ func (g *ServerState) CreateFoodLog(c *gin.Context) {
 		return
 	}
 
-	userId, ok := c.Get("userId")
-	if !ok {
+	uidptr, err := auth.GetUserId(c)
+	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
 		return
 	}
+	userId := *uidptr
 
 	id, err := g.storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
-		UserID:    userId.(string),
+		UserID:    userId,
 		Name:      req.Name,
 		Labels:    req.Labels,
 		TimeStart: req.Time.Start,
@@ -42,11 +44,12 @@ func (g *ServerState) CreateFoodLog(c *gin.Context) {
 
 // DeleteFoodLog implements generated.ServerInterface.
 func (g *ServerState) DeleteFoodLog(c *gin.Context, itemId string) {
-	userId, ok := c.Get("userId")
-	if !ok {
+	uidptr, err := auth.GetUserId(c)
+	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
 		return
 	}
+	userId := *uidptr
 
 	id, err := uuid.Parse(itemId)
 	if err != nil {
@@ -58,7 +61,7 @@ func (g *ServerState) DeleteFoodLog(c *gin.Context, itemId string) {
 	err = g.storage.DeleteFoodLogEntry(c, struct {
 		UserID string
 		ID     uuid.UUID
-	}{UserID: userId.(string), ID: id})
+	}{UserID: userId, ID: id})
 	if err != nil {
 		c.JSON(404, generated.Error{Code: 404, Message: "Food log entry not found"})
 		return
@@ -68,14 +71,15 @@ func (g *ServerState) DeleteFoodLog(c *gin.Context, itemId string) {
 
 // ExportFoodLogs implements generated.ServerInterface.
 func (g *ServerState) ExportFoodLogs(c *gin.Context) {
-	userId, ok := c.Get("userId")
-	if !ok {
+	uidptr, err := auth.GetUserId(c)
+	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
 		return
 	}
+	userId := *uidptr
 
 	// Get all entries
-	entries, err := g.storage.ExportFoodLogEntries(c, userId.(string))
+	entries, err := g.storage.ExportFoodLogEntries(c, userId)
 	if err != nil {
 		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
 		return
@@ -109,11 +113,12 @@ func (g *ServerState) ExportFoodLogs(c *gin.Context) {
 
 // GetFoodLog implements generated.ServerInterface.
 func (g *ServerState) GetFoodLog(c *gin.Context, itemId string) {
-	userId, ok := c.Get("userId")
-	if !ok {
+	uidptr, err := auth.GetUserId(c)
+	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
 		return
 	}
+	userId := *uidptr
 
 	// Parse UUID
 	id, err := uuid.Parse(itemId)
@@ -125,7 +130,7 @@ func (g *ServerState) GetFoodLog(c *gin.Context, itemId string) {
 	entry, err := g.storage.GetFoodLogEntry(c, struct {
 		UserID string
 		ID     uuid.UUID
-	}{UserID: userId.(string), ID: id})
+	}{UserID: userId, ID: id})
 	if err != nil {
 		c.JSON(404, generated.Error{Code: 404, Message: "Food log entry not found"})
 		return
@@ -146,14 +151,15 @@ func (g *ServerState) GetFoodLog(c *gin.Context, itemId string) {
 
 // PurgeFoodLogs implements generated.ServerInterface.
 func (g *ServerState) PurgeFoodLogs(c *gin.Context) {
-	userId, ok := c.Get("userId")
-	if !ok {
+	uidptr, err := auth.GetUserId(c)
+	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
 		return
 	}
+	userId := *uidptr
 
 	// Delete all entries
-	err := g.storage.PurgeFoodLogEntries(c, userId.(string))
+	err = g.storage.PurgeFoodLogEntries(c, userId)
 	if err != nil {
 		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
 		return
@@ -163,15 +169,16 @@ func (g *ServerState) PurgeFoodLogs(c *gin.Context) {
 
 // QueryFoodLogs implements generated.ServerInterface.
 func (g *ServerState) QueryFoodLogs(c *gin.Context, params generated.QueryFoodLogsParams) {
-	userId, ok := c.Get("userId")
-	if !ok {
+	uidptr, err := auth.GetUserId(c)
+	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
 		return
 	}
+	userId := *uidptr
 
 	// Query entries
 	entries, err := g.storage.QueryFoodLogEntries(c, types.QueryFoodLogEntriesParams{
-		UserID:    userId.(string),
+		UserID:    userId,
 		TimeStart: params.StartDate,
 		TimeEnd:   params.EndDate,
 	})
@@ -199,11 +206,12 @@ func (g *ServerState) QueryFoodLogs(c *gin.Context, params generated.QueryFoodLo
 
 // UpdateFoodLog implements generated.ServerInterface.
 func (g *ServerState) UpdateFoodLog(c *gin.Context, itemId string) {
-	userId, ok := c.Get("userId")
-	if !ok {
+	uidptr, err := auth.GetUserId(c)
+	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
 		return
 	}
+	userId := *uidptr
 
 	var req generated.EditFoodLogEntry
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -221,7 +229,7 @@ func (g *ServerState) UpdateFoodLog(c *gin.Context, itemId string) {
 	entry, err := g.storage.GetFoodLogEntry(c, struct {
 		UserID string
 		ID     uuid.UUID
-	}{UserID: userId.(string), ID: id})
+	}{UserID: userId, ID: id})
 	if err != nil {
 		c.JSON(404, generated.Error{Code: 404, Message: "Food log entry not found"})
 		return
@@ -250,7 +258,7 @@ func (g *ServerState) UpdateFoodLog(c *gin.Context, itemId string) {
 
 	// Update entry
 	err = g.storage.UpdateFoodLogEntry(c, types.UpdateFoodLogEntryParams{
-		UserID:    userId.(string),
+		UserID:    userId,
 		ID:        id,
 		Name:      name,
 		Labels:    labels,

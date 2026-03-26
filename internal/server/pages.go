@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openhealthsuite/diary/internal/auth"
 	"github.com/openhealthsuite/diary/internal/storage/types"
 )
 
@@ -39,39 +40,42 @@ type LogDisplay struct {
 	Metrics    map[string]float64
 }
 
-func (sts *DiaryServerState) getUserId(c *gin.Context) string {
-	userId, _ := c.Get("userId")
-	return userId.(string)
-}
-
 func (sts *DiaryServerState) getStorage() *ServerState {
 	return sts.GeneratedInterface.(*ServerState)
 }
 
-func (sts *DiaryServerState) fetchMetricsConfig(c *gin.Context) MetricsConfig {
-	userId := sts.getUserId(c)
+func (sts *DiaryServerState) fetchMetricsConfig(c *gin.Context) (*MetricsConfig, error) {
+	userIdPtr, err := auth.GetUserId(c)
+	if err != nil {
+		return nil, err
+	}
+	userId := *userIdPtr
 	cfg, err := sts.getStorage().storage.GetUserConfig(c, types.GetUserConfigParams{
 		UserID: userId,
 		ID:     "metrics",
 	})
 	if err != nil {
 		// Return default metrics
-		return MetricsConfig{
+		return &MetricsConfig{
 			"calories": {Label: "Calories", Priority: 0},
-		}
+		}, nil
 	}
 
 	var metrics MetricsConfig
 	if err := json.Unmarshal(cfg.ConfigValue, &metrics); err != nil {
-		return MetricsConfig{
+		return &MetricsConfig{
 			"calories": {Label: "Calories", Priority: 0},
-		}
+		}, nil
 	}
-	return metrics
+	return &metrics, nil
 }
 
 func (sts *DiaryServerState) saveMetricsConfig(c *gin.Context, metrics MetricsConfig) error {
-	userId := sts.getUserId(c)
+	userIdPtr, err := auth.GetUserId(c)
+	if err != nil {
+		return err
+	}
+	userId := *userIdPtr
 	data, err := json.Marshal(metrics)
 	if err != nil {
 		return err
@@ -119,8 +123,12 @@ func parseDateParam(c *gin.Context, param string, defaultVal time.Time) time.Tim
 	return parsed
 }
 
-func (sts *DiaryServerState) fetchLogsForDate(c *gin.Context, date time.Time) []LogDisplay {
-	userId := sts.getUserId(c)
+func (sts *DiaryServerState) fetchLogsForDate(c *gin.Context, date time.Time) ([]LogDisplay, error) {
+	userIdPtr, err := auth.GetUserId(c)
+	if err != nil {
+		return nil, err
+	}
+	userId := *userIdPtr
 
 	startDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
 	endDate := startDate.AddDate(0, 0, 1)
@@ -131,7 +139,7 @@ func (sts *DiaryServerState) fetchLogsForDate(c *gin.Context, date time.Time) []
 		TimeEnd:   endDate,
 	})
 	if err != nil {
-		return []LogDisplay{}
+		return []LogDisplay{}, nil
 	}
 
 	var result []LogDisplay
@@ -151,16 +159,24 @@ func (sts *DiaryServerState) fetchLogsForDate(c *gin.Context, date time.Time) []
 		return result[i].TimeStart.Before(result[j].TimeStart)
 	})
 
-	return result
+	return result, nil
 }
 
 // Page Handlers
 
 func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 	date := parseDateParam(c, "date", time.Now())
-	logs := sts.fetchLogsForDate(c, date)
-	metrics := sts.fetchMetricsConfig(c)
-	topMetric := getTopMetric(metrics)
+	logs, err := sts.fetchLogsForDate(c, date)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	metrics, err := sts.fetchMetricsConfig(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	topMetric := getTopMetric(*metrics)
 
 	// Calculate total for top metric
 	var topMetricTotal float64 = 0
@@ -186,7 +202,7 @@ func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 		"PrevDay":        date.AddDate(0, 0, -1).Format("2006-01-02"),
 		"NextDay":        date.AddDate(0, 0, 1).Format("2006-01-02"),
 		"Logs":           logs,
-		"Metrics":        metrics,
+		"Metrics":        *metrics,
 		"TopMetric":      topMetric,
 		"TopMetricTotal": topMetricTotal,
 		"TutorialStep":   tutorialStep,
@@ -197,9 +213,17 @@ func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 
 func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
 	date := parseDateParam(c, "date", time.Now())
-	logs := sts.fetchLogsForDate(c, date)
-	metrics := sts.fetchMetricsConfig(c)
-	topMetric := getTopMetric(metrics)
+	logs, err := sts.fetchLogsForDate(c, date)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	metrics, err := sts.fetchMetricsConfig(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	topMetric := getTopMetric(*metrics)
 
 	// Calculate total for top metric
 	var topMetricTotal float64 = 0
@@ -221,7 +245,7 @@ func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
 		"PrevDay":        date.AddDate(0, 0, -1).Format("2006-01-02"),
 		"NextDay":        date.AddDate(0, 0, 1).Format("2006-01-02"),
 		"Logs":           logs,
-		"Metrics":        metrics,
+		"Metrics":        *metrics,
 		"TopMetric":      topMetric,
 		"TopMetricTotal": topMetricTotal,
 		"LogFormModal": gin.H{
@@ -240,7 +264,12 @@ func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
 
 func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 	logId := c.Param("id")
-	userId := sts.getUserId(c)
+	userIdPtr, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(403, err)
+		return
+	}
+	userId := *userIdPtr
 
 	logUuid, err := uuid.Parse(logId)
 	if err != nil {
@@ -258,9 +287,17 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 	}
 
 	date := entry.TimeStart
-	logs := sts.fetchLogsForDate(c, date)
-	metrics := sts.fetchMetricsConfig(c)
-	topMetric := getTopMetric(metrics)
+	logs, err := sts.fetchLogsForDate(c, date)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	metrics, err := sts.fetchMetricsConfig(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	topMetric := getTopMetric(*metrics)
 
 	// Calculate total for top metric
 	var topMetricTotal float64 = 0
@@ -283,7 +320,7 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 		"PrevDay":        date.AddDate(0, 0, -1).Format("2006-01-02"),
 		"NextDay":        date.AddDate(0, 0, 1).Format("2006-01-02"),
 		"Logs":           logs,
-		"Metrics":        metrics,
+		"Metrics":        *metrics,
 		"TopMetric":      topMetric,
 		"TopMetricTotal": topMetricTotal,
 		"LogFormModal": gin.H{
@@ -303,12 +340,16 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 }
 
 func (sts *DiaryServerState) handleConfig(c *gin.Context) {
-	metrics := sts.fetchMetricsConfig(c)
+	metrics, err := sts.fetchMetricsConfig(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
 	tutorialMode := c.Query("tutorial") == "1"
 
 	data := gin.H{
 		"CurrentPath":    "/config",
-		"Metrics":        metrics,
+		"Metrics":        *metrics,
 		"LogoutEndpoint": sts.Config.SignoutEndpoint,
 		"TutorialMode":   tutorialMode,
 	}
@@ -317,7 +358,12 @@ func (sts *DiaryServerState) handleConfig(c *gin.Context) {
 }
 
 func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
-	userId := sts.getUserId(c)
+	userIdPtr, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(403, err)
+		return
+	}
+	userId := *userIdPtr
 
 	name := c.PostForm("name")
 	dateStr := c.PostForm("date")
@@ -337,9 +383,9 @@ func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
 	endTime := startTime.Add(time.Duration(duration) * time.Minute)
 
 	// Parse metrics from form
-	metricsConfig := sts.fetchMetricsConfig(c)
+	metricsConfig, err := sts.fetchMetricsConfig(c)
 	metrics := make(map[string]float64)
-	for key := range metricsConfig {
+	for key := range *metricsConfig {
 		if val := c.PostForm("metric_" + key); val != "" {
 			var f float64
 			if _, err := fmt.Sscanf(val, "%f", &f); err == nil {
@@ -349,7 +395,7 @@ func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
 	}
 
 	// Create the entry
-	_, err := sts.getStorage().storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
+	_, err = sts.getStorage().storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
 		UserID:    userId,
 		Name:      name,
 		Labels:    []string{},
@@ -372,7 +418,12 @@ func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
 
 func (sts *DiaryServerState) handleUpdateLog(c *gin.Context) {
 	logId := c.Param("id")
-	userId := sts.getUserId(c)
+	userIdPtr, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(403, err)
+		return
+	}
+	userId := *userIdPtr
 
 	logUuid, err := uuid.Parse(logId)
 	if err != nil {
@@ -398,9 +449,13 @@ func (sts *DiaryServerState) handleUpdateLog(c *gin.Context) {
 	endTime := startTime.Add(time.Duration(duration) * time.Minute)
 
 	// Parse metrics from form
-	metricsConfig := sts.fetchMetricsConfig(c)
+	metricsConfig, err := sts.fetchMetricsConfig(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
 	metrics := make(map[string]float64)
-	for key := range metricsConfig {
+	for key := range *metricsConfig {
 		if val := c.PostForm("metric_" + key); val != "" {
 			var f float64
 			if _, err := fmt.Sscanf(val, "%f", &f); err == nil {
@@ -434,7 +489,12 @@ func (sts *DiaryServerState) handleUpdateLog(c *gin.Context) {
 
 func (sts *DiaryServerState) handleDeleteLog(c *gin.Context) {
 	logId := c.Param("id")
-	userId := sts.getUserId(c)
+	userIdPtr, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(403, err)
+		return
+	}
+	userId := *userIdPtr
 
 	logUuid, err := uuid.Parse(logId)
 	if err != nil {
@@ -479,7 +539,13 @@ func (sts *DiaryServerState) handleSaveMetrics(c *gin.Context) {
 		return
 	}
 
-	metrics := sts.fetchMetricsConfig(c)
+	metricsPrt, err := sts.fetchMetricsConfig(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+
+	metrics := *metricsPrt
 
 	if cfg, exists := metrics[key]; exists {
 		cfg.Label = label
@@ -505,7 +571,13 @@ func (sts *DiaryServerState) handleCreateMetric(c *gin.Context) {
 		return
 	}
 
-	metrics := sts.fetchMetricsConfig(c)
+	metricsPrt, err := sts.fetchMetricsConfig(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+
+	metrics := *metricsPrt
 
 	// Generate key from label
 	key := strings.ToLower(strings.ReplaceAll(newMetricLabel, " ", "_"))
@@ -534,7 +606,14 @@ func (sts *DiaryServerState) handleDeleteMetric(c *gin.Context) {
 	key := c.Param("key")
 	tutorialMode := c.Query("tutorial") == "1"
 
-	metrics := sts.fetchMetricsConfig(c)
+	metricsPrt, err := sts.fetchMetricsConfig(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+
+	metrics := *metricsPrt
+
 	delete(metrics, key)
 
 	sts.saveMetricsConfig(c, metrics)
@@ -547,7 +626,13 @@ func (sts *DiaryServerState) handleDeleteMetric(c *gin.Context) {
 // Purge and Upload Pages
 
 func (sts *DiaryServerState) handlePurgePage(c *gin.Context) {
-	metrics := sts.fetchMetricsConfig(c)
+	metricsPrt, err := sts.fetchMetricsConfig(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+
+	metrics := *metricsPrt
 
 	data := gin.H{
 		"CurrentPath":    "/config",
@@ -560,9 +645,14 @@ func (sts *DiaryServerState) handlePurgePage(c *gin.Context) {
 }
 
 func (sts *DiaryServerState) handlePurgeLogs(c *gin.Context) {
-	userId := sts.getUserId(c)
+	userIdPtr, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(403, err)
+		return
+	}
+	userId := *userIdPtr
 
-	err := sts.getStorage().storage.PurgeFoodLogEntries(c, userId)
+	err = sts.getStorage().storage.PurgeFoodLogEntries(c, userId)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to purge logs")
 		return
@@ -573,7 +663,13 @@ func (sts *DiaryServerState) handlePurgeLogs(c *gin.Context) {
 }
 
 func (sts *DiaryServerState) handleUploadPage(c *gin.Context) {
-	metrics := sts.fetchMetricsConfig(c)
+	metricsPrt, err := sts.fetchMetricsConfig(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+
+	metrics := *metricsPrt
 
 	data := gin.H{
 		"CurrentPath":    "/config",
@@ -589,7 +685,12 @@ func (sts *DiaryServerState) handleUploadPage(c *gin.Context) {
 
 func (sts *DiaryServerState) handleTutorialLog(c *gin.Context) {
 	// Create the log entry and redirect to tutorial step 3
-	userId := sts.getUserId(c)
+	userIdPtr, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(403, err)
+		return
+	}
+	userId := *userIdPtr
 
 	name := c.PostForm("name")
 	dateStr := c.PostForm("date")
@@ -609,9 +710,13 @@ func (sts *DiaryServerState) handleTutorialLog(c *gin.Context) {
 	endTime := startTime.Add(time.Duration(duration) * time.Minute)
 
 	// Parse metrics from form
-	metricsConfig := sts.fetchMetricsConfig(c)
+	metricsConfig, err := sts.fetchMetricsConfig(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
 	metrics := make(map[string]float64)
-	for key := range metricsConfig {
+	for key := range *metricsConfig {
 		if val := c.PostForm("metric_" + key); val != "" {
 			var f float64
 			if _, err := fmt.Sscanf(val, "%f", &f); err == nil {
@@ -621,7 +726,7 @@ func (sts *DiaryServerState) handleTutorialLog(c *gin.Context) {
 	}
 
 	// Create the entry
-	_, err := sts.getStorage().storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
+	_, err = sts.getStorage().storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
 		UserID:    userId,
 		Name:      name,
 		Labels:    []string{},

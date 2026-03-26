@@ -45,6 +45,54 @@ func Test_CRUD_Logs(xt *testing.T) {
 		}()
 	}
 
+	xt.Run("Auth :: User one can't get User 2", func(t *testing.T) {
+		test_user_id := uuid.NewString()
+
+		test_user_id_2 := uuid.NewString()
+
+		hdrs := map[string]string{
+			useridheader: test_user_id,
+		}
+
+		hdrs2 := map[string]string{
+			useridheader: test_user_id_2,
+		}
+
+		hc := http.Client{}
+
+		date := time.Now()
+		endDate := date.Add(5 * time.Minute)
+
+		created_item := map[string]any{
+			"name":   "My Food Log",
+			"labels": []string{"some label", "other label"},
+			"time": map[string]string{
+				"start": date.Format(time.RFC3339),
+				"end":   endDate.Format(time.RFC3339),
+			},
+			"metrics": map[string]int64{
+				"calories": 500,
+			},
+		}
+		resp := doReq(&hc, t, "POST", target_host+"/api/logs", toJsonBody(t, created_item), hdrs)
+		defer resp.Body.Close()
+
+		assert.Equal(t, 200, resp.StatusCode)
+		testItemId := toString(t, resp.Body)
+		fmt.Println(testItemId)
+		assert.Greater(t, len(testItemId), 0)
+
+		resp = doReq(&hc, t, "GET", target_host+"/api/logs/"+testItemId, nil, hdrs)
+		defer resp.Body.Close()
+
+		assert.Equal(t, 200, resp.StatusCode)
+
+		resp = doReq(&hc, t, "GET", target_host+"/api/logs/"+testItemId, nil, hdrs2)
+		defer resp.Body.Close()
+
+		assert.Equal(t, 404, resp.StatusCode)
+	})
+
 	xt.Run("Happy Path :: Bad Retreives, Creates, Retreives, Edits, Reretrieves, Deletes, Fails Retreive, Redelete succeeds false", func(t *testing.T) {
 
 		test_user_id := uuid.NewString()

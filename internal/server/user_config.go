@@ -2,20 +2,22 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/openhealthsuite/diary/internal/auth"
 	"github.com/openhealthsuite/diary/internal/server/generated"
 	"github.com/openhealthsuite/diary/internal/storage/types"
 )
 
 // GetUserConfig implements generated.ServerInterface.
 func (g *ServerState) GetUserConfig(c *gin.Context, configId string) {
-	userId, ok := c.Get("userId")
-	if !ok {
+	uidptr, err := auth.GetUserId(c)
+	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
 		return
 	}
+	userId := *uidptr
 
 	cfg, err := g.storage.GetUserConfig(c, types.GetUserConfigParams{
-		UserID: userId.(string),
+		UserID: userId,
 		ID:     configId,
 	})
 	if err != nil {
@@ -35,11 +37,12 @@ func (g *ServerState) GetUserConfig(c *gin.Context, configId string) {
 
 // StoreUserConfig implements generated.ServerInterface.
 func (g *ServerState) StoreUserConfig(c *gin.Context, configId string) {
-	userId, ok := c.Get("userId")
-	if !ok {
+	uidptr, err := auth.GetUserId(c)
+	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
 		return
 	}
+	userId := *uidptr
 
 	var val generated.ConfigurationValue
 	if err := c.ShouldBindJSON(&val); err != nil {
@@ -47,8 +50,8 @@ func (g *ServerState) StoreUserConfig(c *gin.Context, configId string) {
 		return
 	}
 	raw, _ := val.MarshalJSON()
-	err := g.storage.StoreUserConfig(c, types.StoreUserConfigParams{
-		UserID:      userId.(string),
+	err = g.storage.StoreUserConfig(c, types.StoreUserConfigParams{
+		UserID:      userId,
 		ID:          configId,
 		ConfigValue: raw,
 	})

@@ -26,7 +26,6 @@ func Test_CRUD_Logs(t *testing.T) {
 			Port:                     8936,
 			PostgresConnectionString: "",
 			SqliteFile:               ":memory:",
-			UserId:                   userid,
 			SignoutEndpoint:          "/logout",
 			UserIdHeader:             useridheader,
 

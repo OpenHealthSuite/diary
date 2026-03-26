@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/openhealthsuite/diary/internal/auth"
 	"github.com/openhealthsuite/diary/internal/config"
 	"github.com/openhealthsuite/diary/internal/server/generated"
 	"github.com/openhealthsuite/diary/internal/storage"
@@ -104,29 +105,7 @@ func (sts *DiaryServerState) RunServer() (*chan os.Signal, error) {
 	r.Static("/static", stscdir)
 
 	// User identification middleware
-	r.Use(func(ctx *gin.Context) {
-		if ctx.Request.URL.Path == "/api/ping" {
-			ctx.Next()
-			return
-		}
-		// Skip auth for static files
-		if strings.HasPrefix(ctx.Request.URL.Path, "/static/") {
-			ctx.Next()
-			return
-		}
-		if sts.Config.UserId != "" {
-			ctx.Set("userId", sts.Config.UserId)
-			ctx.Next()
-			return
-		}
-
-		if ctx.Request.Header.Get(sts.Config.UserIdHeader) != "" {
-			ctx.Set("userId", ctx.Request.Header.Get(sts.Config.UserIdHeader))
-			ctx.Next()
-			return
-		}
-		ctx.String(403, "Missing User Identification")
-	})
+	r.Use(auth.UserAuthenticationMiddleware(sts.Config))
 
 	// Page routes
 	r.GET("/", func(ctx *gin.Context) {
