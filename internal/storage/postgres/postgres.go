@@ -169,6 +169,9 @@ func (p *PostgresStorage) GetUserConfig(ctx context.Context, arg types.GetUserCo
 		UserID: arg.UserID,
 		ID:     arg.ID,
 	})
+	if err == pgx.ErrNoRows {
+		return nil, types.ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}

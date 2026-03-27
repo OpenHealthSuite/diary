@@ -151,6 +151,10 @@ func (p *Sqlite3Storage) GetFoodLogEntry(ctx context.Context, arg types.GetFoodL
 		UserID: arg.UserID,
 		ID:     arg.ID.String(),
 	})
+
+	if err == sql.ErrNoRows {
+		return nil, types.ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -191,6 +195,10 @@ func (p *Sqlite3Storage) GetUserConfig(ctx context.Context, arg types.GetUserCon
 		UserID: arg.UserID,
 		ID:     arg.ID,
 	})
+
+	if err == sql.ErrNoRows {
+		return nil, types.ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}

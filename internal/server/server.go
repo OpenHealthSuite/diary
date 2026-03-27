@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/openhealthsuite/diary/internal/auth"
 	"github.com/openhealthsuite/diary/internal/config"
+	"github.com/openhealthsuite/diary/internal/metrics"
 	"github.com/openhealthsuite/diary/internal/server/generated"
 	"github.com/openhealthsuite/diary/internal/storage"
 	strgtyp "github.com/openhealthsuite/diary/internal/storage/types"
@@ -28,6 +29,9 @@ type DiaryServer interface {
 type DiaryServerState struct {
 	GeneratedInterface generated.ServerInterface
 	Config             *config.ServerConfiguration
+
+	storage strgtyp.Storage
+	metrics metrics.MetricsProvider
 }
 
 func NewServer(cfg *config.ServerConfiguration) (DiaryServer, error) {
@@ -35,16 +39,22 @@ func NewServer(cfg *config.ServerConfiguration) (DiaryServer, error) {
 	if err != nil {
 		return nil, err
 	}
+	mtr, err := metrics.NewMetricsProvider(strg)
 	return &DiaryServerState{
 		GeneratedInterface: NewGeneratedInterface(ServerState{
 			storage: strg,
+			metrics: mtr,
 		}),
 		Config: cfg,
+
+		storage: strg,
+		metrics: mtr,
 	}, nil
 }
 
 type ServerState struct {
 	storage strgtyp.Storage
+	metrics metrics.MetricsProvider
 }
 
 func NewGeneratedInterface(srvst ServerState) generated.ServerInterface {

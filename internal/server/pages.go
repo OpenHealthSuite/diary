@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
@@ -12,23 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openhealthsuite/diary/internal/auth"
+	"github.com/openhealthsuite/diary/internal/metrics"
 	"github.com/openhealthsuite/diary/internal/storage/types"
 )
-
-// MetricConfig represents a single metric configuration
-type MetricConfig struct {
-	Label    string `json:"label"`
-	Priority int    `json:"priority"`
-}
-
-// MetricsConfig is a map of metric key to config
-type MetricsConfig map[string]MetricConfig
-
-// TopMetric represents the highest priority metric for display
-type TopMetric struct {
-	Key   string
-	Label string
-}
 
 // LogDisplay represents a food log for template display
 type LogDisplay struct {
@@ -42,73 +27,6 @@ type LogDisplay struct {
 
 func (sts *DiaryServerState) getStorage() *ServerState {
 	return sts.GeneratedInterface.(*ServerState)
-}
-
-func (sts *DiaryServerState) fetchMetricsConfig(c *gin.Context) (*MetricsConfig, error) {
-	userIdPtr, err := auth.GetUserId(c)
-	if err != nil {
-		return nil, err
-	}
-	userId := *userIdPtr
-	cfg, err := sts.getStorage().storage.GetUserConfig(c, types.GetUserConfigParams{
-		UserID: userId,
-		ID:     "metrics",
-	})
-	if err != nil {
-		// Return default metrics
-		return &MetricsConfig{
-			"calories": {Label: "Calories", Priority: 0},
-		}, nil
-	}
-
-	var metrics MetricsConfig
-	if err := json.Unmarshal(cfg.ConfigValue, &metrics); err != nil {
-		return &MetricsConfig{
-			"calories": {Label: "Calories", Priority: 0},
-		}, nil
-	}
-	return &metrics, nil
-}
-
-func (sts *DiaryServerState) saveMetricsConfig(c *gin.Context, metrics MetricsConfig) error {
-	userIdPtr, err := auth.GetUserId(c)
-	if err != nil {
-		return err
-	}
-	userId := *userIdPtr
-	data, err := json.Marshal(metrics)
-	if err != nil {
-		return err
-	}
-	return sts.getStorage().storage.StoreUserConfig(c, types.StoreUserConfigParams{
-		UserID:      userId,
-		ID:          "metrics",
-		ConfigValue: data,
-	})
-}
-
-func getTopMetric(metrics MetricsConfig) *TopMetric {
-	if len(metrics) == 0 {
-		return nil
-	}
-
-	type kv struct {
-		Key string
-		Val MetricConfig
-	}
-
-	var sorted []kv
-	for k, v := range metrics {
-		sorted = append(sorted, kv{k, v})
-	}
-	sort.Slice(sorted, func(i, j int) bool {
-		return sorted[i].Val.Priority < sorted[j].Val.Priority
-	})
-
-	return &TopMetric{
-		Key:   sorted[0].Key,
-		Label: sorted[0].Val.Label,
-	}
 }
 
 func parseDateParam(c *gin.Context, param string, defaultVal time.Time) time.Time {
@@ -171,12 +89,18 @@ func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metrics, err := sts.fetchMetricsConfig(c)
+	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
-	topMetric := getTopMetric(*metrics)
+
+	metrics, err := sts.metrics.GetUserMetrics(c, *user_id)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	topMetric := sts.metrics.GetTopMetric(*metrics)
 
 	// Calculate total for top metric
 	var topMetricTotal float64 = 0
@@ -218,12 +142,18 @@ func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metrics, err := sts.fetchMetricsConfig(c)
+	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
-	topMetric := getTopMetric(*metrics)
+
+	metrics, err := sts.metrics.GetUserMetrics(c, *user_id)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	topMetric := sts.metrics.GetTopMetric(*metrics)
 
 	// Calculate total for top metric
 	var topMetricTotal float64 = 0
@@ -292,12 +222,18 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metrics, err := sts.fetchMetricsConfig(c)
+	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
-	topMetric := getTopMetric(*metrics)
+
+	metrics, err := sts.metrics.GetUserMetrics(c, *user_id)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	topMetric := sts.metrics.GetTopMetric(*metrics)
 
 	// Calculate total for top metric
 	var topMetricTotal float64 = 0
@@ -340,7 +276,13 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 }
 
 func (sts *DiaryServerState) handleConfig(c *gin.Context) {
-	metrics, err := sts.fetchMetricsConfig(c)
+
+	user_id, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	metrics, err := sts.metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -383,7 +325,16 @@ func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
 	endTime := startTime.Add(time.Duration(duration) * time.Minute)
 
 	// Parse metrics from form
-	metricsConfig, err := sts.fetchMetricsConfig(c)
+	user_id, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	metricsConfig, err := sts.metrics.GetUserMetrics(c, *user_id)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
 	metrics := make(map[string]float64)
 	for key := range *metricsConfig {
 		if val := c.PostForm("metric_" + key); val != "" {
@@ -449,7 +400,12 @@ func (sts *DiaryServerState) handleUpdateLog(c *gin.Context) {
 	endTime := startTime.Add(time.Duration(duration) * time.Minute)
 
 	// Parse metrics from form
-	metricsConfig, err := sts.fetchMetricsConfig(c)
+	user_id, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	metricsConfig, err := sts.metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -539,7 +495,12 @@ func (sts *DiaryServerState) handleSaveMetrics(c *gin.Context) {
 		return
 	}
 
-	metricsPrt, err := sts.fetchMetricsConfig(c)
+	user_id, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	metricsPrt, err := sts.metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -552,7 +513,7 @@ func (sts *DiaryServerState) handleSaveMetrics(c *gin.Context) {
 		metrics[key] = cfg
 	}
 
-	sts.saveMetricsConfig(c, metrics)
+	sts.metrics.UpdateUserMetrics(c, *user_id, metrics)
 	if !tutorialMode {
 		c.Header("HX-Redirect", "/config")
 	}
@@ -570,32 +531,36 @@ func (sts *DiaryServerState) handleCreateMetric(c *gin.Context) {
 		sts.handleConfig(c)
 		return
 	}
-
-	metricsPrt, err := sts.fetchMetricsConfig(c)
+	user_id, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	metricsPrt, err := sts.metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
 
-	metrics := *metricsPrt
+	metri := *metricsPrt
 
 	// Generate key from label
 	key := strings.ToLower(strings.ReplaceAll(newMetricLabel, " ", "_"))
 
 	// Find max priority
 	maxPriority := 0
-	for _, m := range metrics {
+	for _, m := range metri {
 		if m.Priority > maxPriority {
 			maxPriority = m.Priority
 		}
 	}
 
-	metrics[key] = MetricConfig{
+	metri[key] = metrics.MetricConfig{
 		Label:    newMetricLabel,
 		Priority: maxPriority + 1,
 	}
 
-	sts.saveMetricsConfig(c, metrics)
+	sts.metrics.UpdateUserMetrics(c, *user_id, metri)
 	if !tutorialMode {
 		c.Header("HX-Redirect", "/config")
 	}
@@ -606,7 +571,12 @@ func (sts *DiaryServerState) handleDeleteMetric(c *gin.Context) {
 	key := c.Param("key")
 	tutorialMode := c.Query("tutorial") == "1"
 
-	metricsPrt, err := sts.fetchMetricsConfig(c)
+	user_id, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	metricsPrt, err := sts.metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -616,7 +586,7 @@ func (sts *DiaryServerState) handleDeleteMetric(c *gin.Context) {
 
 	delete(metrics, key)
 
-	sts.saveMetricsConfig(c, metrics)
+	sts.metrics.UpdateUserMetrics(c, *user_id, metrics)
 	if !tutorialMode {
 		c.Header("HX-Redirect", "/config")
 	}
@@ -626,7 +596,12 @@ func (sts *DiaryServerState) handleDeleteMetric(c *gin.Context) {
 // Purge and Upload Pages
 
 func (sts *DiaryServerState) handlePurgePage(c *gin.Context) {
-	metricsPrt, err := sts.fetchMetricsConfig(c)
+	user_id, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	metricsPrt, err := sts.metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -663,7 +638,12 @@ func (sts *DiaryServerState) handlePurgeLogs(c *gin.Context) {
 }
 
 func (sts *DiaryServerState) handleUploadPage(c *gin.Context) {
-	metricsPrt, err := sts.fetchMetricsConfig(c)
+	user_id, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	metricsPrt, err := sts.metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -710,11 +690,17 @@ func (sts *DiaryServerState) handleTutorialLog(c *gin.Context) {
 	endTime := startTime.Add(time.Duration(duration) * time.Minute)
 
 	// Parse metrics from form
-	metricsConfig, err := sts.fetchMetricsConfig(c)
+	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
+	metricsConfig, err := sts.metrics.GetUserMetrics(c, *user_id)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+
 	metrics := make(map[string]float64)
 	for key := range *metricsConfig {
 		if val := c.PostForm("metric_" + key); val != "" {
