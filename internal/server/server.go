@@ -27,15 +27,6 @@ type DiaryServer interface {
 	RunServer() (*chan os.Signal, error)
 }
 
-type DiaryServerState struct {
-	GeneratedInterface generated.ServerInterface
-	Config             *config.ServerConfiguration
-
-	storage  strgtyp.Storage
-	metrics  metrics.MetricsProvider
-	foodlogs foodlogs.FoodLogService
-}
-
 func NewServer(cfg *config.ServerConfiguration) (DiaryServer, error) {
 	strg, err := storage.NewStorage(cfg)
 	if err != nil {
@@ -49,61 +40,20 @@ func NewServer(cfg *config.ServerConfiguration) (DiaryServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DiaryServerState{
-		GeneratedInterface: NewGeneratedInterface(ServerState{
-			storage:  strg,
-			metrics:  mtr,
-			foodlogs: lgs,
-		}),
-		Config: cfg,
-
+	sts := &ServerState{
+		Config:   cfg,
 		storage:  strg,
 		metrics:  mtr,
 		foodlogs: lgs,
-	}, nil
-}
-
-type ServerState struct {
-	storage  strgtyp.Storage
-	metrics  metrics.MetricsProvider
-	foodlogs foodlogs.FoodLogService
-}
-
-func NewGeneratedInterface(srvst ServerState) generated.ServerInterface {
-	return &srvst
-}
-
-// TestEndpoint implements generated.ServerInterface.
-func (g *ServerState) TestEndpoint(c *gin.Context) {
-	_, err := g.storage.GetTestData(c)
-	if err != nil {
-		log.Error().Err(err).Msg("error pinging database")
-		c.String(500, "KO")
-		return
 	}
-	c.String(200, "OK")
+	err = sts.setupHttpServer()
+	if err != nil {
+		return nil, err
+	}
+	return sts, nil
 }
 
-func loadTemplates(templatesDir string) (*template.Template, error) {
-	tmpl := template.New("").Funcs(templateFuncs())
-
-	err := filepath.Walk(templatesDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() && strings.HasSuffix(path, ".html") {
-			_, err = tmpl.ParseFiles(path)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-
-	return tmpl, err
-}
-
-func (sts *DiaryServerState) RunServer() (*chan os.Signal, error) {
+func (sts *ServerState) setupHttpServer() error {
 	r := gin.Default()
 
 	// Load templates
@@ -114,7 +64,7 @@ func (sts *DiaryServerState) RunServer() (*chan os.Signal, error) {
 	}
 	tmpl, err := loadTemplates(tmpldr)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	r.SetHTMLTemplate(tmpl)
 
@@ -156,27 +106,73 @@ func (sts *DiaryServerState) RunServer() (*chan os.Signal, error) {
 	r.POST("/tutorial/log", sts.handleTutorialLog)
 
 	// API routes (existing)
-	generated.RegisterHandlers(r, sts.GeneratedInterface)
+	generated.RegisterHandlers(r, sts.AsGeneratedInterface())
 
-	server := &http.Server{
+	sts.httpServer = &http.Server{
 		Addr:              fmt.Sprintf(":%d", sts.Config.Port),
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
+	return nil
+}
+
+type ServerState struct {
+	Config   *config.ServerConfiguration
+	storage  strgtyp.Storage
+	metrics  metrics.MetricsProvider
+	foodlogs foodlogs.FoodLogService
+
+	httpServer *http.Server
+}
+
+func (srvst *ServerState) AsGeneratedInterface() generated.ServerInterface {
+	return srvst
+}
+
+// TestEndpoint implements generated.ServerInterface.
+func (g *ServerState) TestEndpoint(c *gin.Context) {
+	_, err := g.storage.GetTestData(c)
+	if err != nil {
+		log.Error().Err(err).Msg("error pinging database")
+		c.String(500, "KO")
+		return
+	}
+	c.String(200, "OK")
+}
+
+func loadTemplates(templatesDir string) (*template.Template, error) {
+	tmpl := template.New("").Funcs(templateFuncs())
+
+	err := filepath.Walk(templatesDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(path, ".html") {
+			_, err = tmpl.ParseFiles(path)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	return tmpl, err
+}
+
+func (sts *ServerState) RunServer() (*chan os.Signal, error) {
 
 	quit := make(chan os.Signal, 1)
 
 	go func() {
 		<-quit
 		log.Info().Msg("receive interrupt signal")
-		if err := server.Close(); err != nil {
+		if err := sts.httpServer.Close(); err != nil {
 			log.Error().Err(err).Msg("Server Close error")
 		}
 	}()
 
 	go func() {
-
-		if err := server.ListenAndServe(); err != nil {
+		if err := sts.httpServer.ListenAndServe(); err != nil {
 			if err == http.ErrServerClosed {
 				log.Info().Msg("Server closed under request")
 			} else {

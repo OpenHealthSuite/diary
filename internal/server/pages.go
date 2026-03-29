@@ -14,10 +14,6 @@ import (
 	"github.com/openhealthsuite/diary/internal/storage/types"
 )
 
-func (sts *DiaryServerState) getStorage() *ServerState {
-	return sts.GeneratedInterface.(*ServerState)
-}
-
 func parseDateParam(c *gin.Context, param string, defaultVal time.Time) time.Time {
 	dateStr := c.Query(param)
 	if dateStr == "" {
@@ -32,7 +28,7 @@ func parseDateParam(c *gin.Context, param string, defaultVal time.Time) time.Tim
 
 // Page Handlers
 
-func (sts *DiaryServerState) handleLogs(c *gin.Context) {
+func (sts *ServerState) handleLogs(c *gin.Context) {
 	date := parseDateParam(c, "date", time.Now())
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
@@ -85,7 +81,7 @@ func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/home", data)
 }
 
-func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
+func (sts *ServerState) handleNewLogForm(c *gin.Context) {
 	date := parseDateParam(c, "date", time.Now())
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
@@ -142,7 +138,7 @@ func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/home", data)
 }
 
-func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
+func (sts *ServerState) handleEditLogForm(c *gin.Context) {
 	logId := c.Param("id")
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {
@@ -157,7 +153,7 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 		return
 	}
 
-	entry, err := sts.getStorage().storage.GetFoodLogEntry(c, types.GetFoodLogEntryParams{
+	entry, err := sts.storage.GetFoodLogEntry(c, types.GetFoodLogEntryParams{
 		UserID: userId,
 		ID:     logUuid,
 	})
@@ -226,7 +222,7 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/home", data)
 }
 
-func (sts *DiaryServerState) handleConfig(c *gin.Context) {
+func (sts *ServerState) handleConfig(c *gin.Context) {
 
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
@@ -250,7 +246,7 @@ func (sts *DiaryServerState) handleConfig(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/config", data)
 }
 
-func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
+func (sts *ServerState) handleCreateLog(c *gin.Context) {
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(403, err)
@@ -297,7 +293,7 @@ func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
 	}
 
 	// Create the entry
-	_, err = sts.getStorage().storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
+	_, err = sts.storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
 		UserID:    userId,
 		Name:      name,
 		Labels:    []string{},
@@ -318,7 +314,7 @@ func (sts *DiaryServerState) handleCreateLog(c *gin.Context) {
 	sts.handleLogs(c)
 }
 
-func (sts *DiaryServerState) handleUpdateLog(c *gin.Context) {
+func (sts *ServerState) handleUpdateLog(c *gin.Context) {
 	logId := c.Param("id")
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {
@@ -372,7 +368,7 @@ func (sts *DiaryServerState) handleUpdateLog(c *gin.Context) {
 	}
 
 	// Update entry
-	err = sts.getStorage().storage.UpdateFoodLogEntry(c, types.UpdateFoodLogEntryParams{
+	err = sts.storage.UpdateFoodLogEntry(c, types.UpdateFoodLogEntryParams{
 		UserID:    userId,
 		ID:        logUuid,
 		Name:      name,
@@ -394,7 +390,7 @@ func (sts *DiaryServerState) handleUpdateLog(c *gin.Context) {
 	sts.handleLogs(c)
 }
 
-func (sts *DiaryServerState) handleDeleteLog(c *gin.Context) {
+func (sts *ServerState) handleDeleteLog(c *gin.Context) {
 	logId := c.Param("id")
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {
@@ -410,13 +406,13 @@ func (sts *DiaryServerState) handleDeleteLog(c *gin.Context) {
 	}
 
 	// Get the log first to know what date to refresh
-	entry, _ := sts.getStorage().storage.GetFoodLogEntry(c, types.GetFoodLogEntryParams{
+	entry, _ := sts.storage.GetFoodLogEntry(c, types.GetFoodLogEntryParams{
 		UserID: userId,
 		ID:     logUuid,
 	})
 
 	// Delete metrics first
-	err = sts.getStorage().storage.DeleteFoodLogEntry(c, types.DeleteFoodLogEntryParams{
+	err = sts.storage.DeleteFoodLogEntry(c, types.DeleteFoodLogEntryParams{
 		UserID: userId,
 		ID:     logUuid,
 	})
@@ -433,7 +429,7 @@ func (sts *DiaryServerState) handleDeleteLog(c *gin.Context) {
 
 // Metrics Config Handlers
 
-func (sts *DiaryServerState) handleSaveMetrics(c *gin.Context) {
+func (sts *ServerState) handleSaveMetrics(c *gin.Context) {
 	key := c.PostForm("key")
 	label := c.PostForm("label")
 	tutorialMode := c.Query("tutorial") == "1"
@@ -471,7 +467,7 @@ func (sts *DiaryServerState) handleSaveMetrics(c *gin.Context) {
 	sts.handleConfig(c)
 }
 
-func (sts *DiaryServerState) handleCreateMetric(c *gin.Context) {
+func (sts *ServerState) handleCreateMetric(c *gin.Context) {
 	newMetricLabel := c.PostForm("new_metric")
 	tutorialMode := c.Query("tutorial") == "1"
 
@@ -518,7 +514,7 @@ func (sts *DiaryServerState) handleCreateMetric(c *gin.Context) {
 	sts.handleConfig(c)
 }
 
-func (sts *DiaryServerState) handleDeleteMetric(c *gin.Context) {
+func (sts *ServerState) handleDeleteMetric(c *gin.Context) {
 	key := c.Param("key")
 	tutorialMode := c.Query("tutorial") == "1"
 
@@ -546,7 +542,7 @@ func (sts *DiaryServerState) handleDeleteMetric(c *gin.Context) {
 
 // Purge and Upload Pages
 
-func (sts *DiaryServerState) handlePurgePage(c *gin.Context) {
+func (sts *ServerState) handlePurgePage(c *gin.Context) {
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
@@ -570,7 +566,7 @@ func (sts *DiaryServerState) handlePurgePage(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/config", data)
 }
 
-func (sts *DiaryServerState) handlePurgeLogs(c *gin.Context) {
+func (sts *ServerState) handlePurgeLogs(c *gin.Context) {
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(403, err)
@@ -578,7 +574,7 @@ func (sts *DiaryServerState) handlePurgeLogs(c *gin.Context) {
 	}
 	userId := *userIdPtr
 
-	err = sts.getStorage().storage.PurgeFoodLogEntries(c, userId)
+	err = sts.storage.PurgeFoodLogEntries(c, userId)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to purge logs")
 		return
@@ -588,7 +584,7 @@ func (sts *DiaryServerState) handlePurgeLogs(c *gin.Context) {
 	sts.handleConfig(c)
 }
 
-func (sts *DiaryServerState) handleUploadPage(c *gin.Context) {
+func (sts *ServerState) handleUploadPage(c *gin.Context) {
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
@@ -614,7 +610,7 @@ func (sts *DiaryServerState) handleUploadPage(c *gin.Context) {
 
 // Tutorial Handler
 
-func (sts *DiaryServerState) handleTutorialLog(c *gin.Context) {
+func (sts *ServerState) handleTutorialLog(c *gin.Context) {
 	// Create the log entry and redirect to tutorial step 3
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {
@@ -663,7 +659,7 @@ func (sts *DiaryServerState) handleTutorialLog(c *gin.Context) {
 	}
 
 	// Create the entry
-	_, err = sts.getStorage().storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
+	_, err = sts.storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
 		UserID:    userId,
 		Name:      name,
 		Labels:    []string{},
