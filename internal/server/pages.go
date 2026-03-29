@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -14,16 +13,6 @@ import (
 	"github.com/openhealthsuite/diary/internal/metrics"
 	"github.com/openhealthsuite/diary/internal/storage/types"
 )
-
-// LogDisplay represents a food log for template display
-type LogDisplay struct {
-	ID         string
-	Name       string
-	TimeStart  time.Time
-	TimeEnd    time.Time
-	TimeString string
-	Metrics    map[string]float64
-}
 
 func (sts *DiaryServerState) getStorage() *ServerState {
 	return sts.GeneratedInterface.(*ServerState)
@@ -41,60 +30,21 @@ func parseDateParam(c *gin.Context, param string, defaultVal time.Time) time.Tim
 	return parsed
 }
 
-func (sts *DiaryServerState) fetchLogsForDate(c *gin.Context, date time.Time) ([]LogDisplay, error) {
-	userIdPtr, err := auth.GetUserId(c)
-	if err != nil {
-		return nil, err
-	}
-	userId := *userIdPtr
-
-	startDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
-	endDate := startDate.AddDate(0, 0, 1)
-
-	entries, err := sts.getStorage().storage.QueryFoodLogEntries(c, types.QueryFoodLogEntriesParams{
-		UserID:    userId,
-		TimeStart: startDate,
-		TimeEnd:   endDate,
-	})
-	if err != nil {
-		return []LogDisplay{}, nil
-	}
-
-	var result []LogDisplay
-	for _, entry := range entries {
-		result = append(result, LogDisplay{
-			ID:         entry.ID.String(),
-			Name:       entry.Name,
-			TimeStart:  entry.TimeStart,
-			TimeEnd:    entry.TimeEnd,
-			TimeString: entry.TimeStart.Format("15:04:05"),
-			Metrics:    entry.Metrics,
-		})
-	}
-
-	// Sort by time
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].TimeStart.Before(result[j].TimeStart)
-	})
-
-	return result, nil
-}
-
 // Page Handlers
 
 func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 	date := parseDateParam(c, "date", time.Now())
-	logs, err := sts.fetchLogsForDate(c, date)
-	if err != nil {
-		c.AbortWithError(500, err)
-		return
-	}
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
 
+	logs, err := sts.foodlogs.GetLogsForDate(c, *user_id, date)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
 	metrics, err := sts.metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
@@ -137,17 +87,17 @@ func (sts *DiaryServerState) handleLogs(c *gin.Context) {
 
 func (sts *DiaryServerState) handleNewLogForm(c *gin.Context) {
 	date := parseDateParam(c, "date", time.Now())
-	logs, err := sts.fetchLogsForDate(c, date)
-	if err != nil {
-		c.AbortWithError(500, err)
-		return
-	}
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
 
+	logs, err := sts.foodlogs.GetLogsForDate(c, *user_id, date)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
 	metrics, err := sts.metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
@@ -217,17 +167,18 @@ func (sts *DiaryServerState) handleEditLogForm(c *gin.Context) {
 	}
 
 	date := entry.TimeStart
-	logs, err := sts.fetchLogsForDate(c, date)
-	if err != nil {
-		c.AbortWithError(500, err)
-		return
-	}
+
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
 
+	logs, err := sts.foodlogs.GetLogsForDate(c, *user_id, date)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
 	metrics, err := sts.metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
