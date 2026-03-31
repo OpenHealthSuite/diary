@@ -7,7 +7,8 @@
   <div class="controls-row">
     <a class="add-log-button"
             hx-get="/logs/new"
-            hx-vals="js:{ date: {{ .CurrentDay }}, ts: new Date().toISOString() }"
+            hx-target="body" hx-swap="outerHTML"
+            hx-vals="js:{ date: '{{ .CurrentDay }}', ts: new Date().toISOString() }"
             >Add Log</a>
   </div>
 
