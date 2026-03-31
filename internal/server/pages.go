@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openhealthsuite/diary/internal/auth"
+	"github.com/openhealthsuite/diary/internal/foodlogs"
 	"github.com/openhealthsuite/diary/internal/metrics"
 	"github.com/openhealthsuite/diary/internal/storage/types"
 )
@@ -81,6 +82,18 @@ func (sts *ServerState) handleLogs(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/home", data)
 }
 
+func totalTopMetrics(topMetric *metrics.TopMetric, logs []foodlogs.UserFoodLog) float64 {
+	var topMetricTotal float64 = 0
+	if topMetric != nil {
+		for _, log := range logs {
+			if val, ok := log.Metrics[topMetric.Key]; ok {
+				topMetricTotal += val
+			}
+		}
+	}
+	return topMetricTotal
+}
+
 func (sts *ServerState) handleNewLogForm(c *gin.Context) {
 	date := parseDateParam(c, "date", time.Now())
 	user_id, err := auth.GetUserId(c)
@@ -99,22 +112,11 @@ func (sts *ServerState) handleNewLogForm(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	topMetric := sts.metrics.GetTopMetric(*metrics)
-
-	// Calculate total for top metric
-	var topMetricTotal float64 = 0
-	if topMetric != nil {
-		for _, log := range logs {
-			if val, ok := log.Metrics[topMetric.Key]; ok {
-				topMetricTotal += val
-			}
-		}
-	}
-
 	// Set time to current time but with the specified date
-	now := time.Now()
+	now := time.Now() //FIXME: need to send user's time
 	date = time.Date(date.Year(), date.Month(), date.Day(), now.Hour(), now.Minute(), 0, 0, time.UTC)
 
+	topMetric := sts.metrics.GetTopMetric(*metrics)
 	data := gin.H{
 		"CurrentPath":    "/",
 		"CurrentDay":     date.Format("2006-01-02"),
@@ -123,7 +125,7 @@ func (sts *ServerState) handleNewLogForm(c *gin.Context) {
 		"Logs":           logs,
 		"Metrics":        *metrics,
 		"TopMetric":      topMetric,
-		"TopMetricTotal": topMetricTotal,
+		"TopMetricTotal": totalTopMetrics(topMetric, logs),
 		"LogFormModal": gin.H{
 			"IsEdit":     false,
 			"Log":        nil,
@@ -183,15 +185,6 @@ func (sts *ServerState) handleEditLogForm(c *gin.Context) {
 	topMetric := sts.metrics.GetTopMetric(*metrics)
 
 	// Calculate total for top metric
-	var topMetricTotal float64 = 0
-	if topMetric != nil {
-		for _, log := range logs {
-			if val, ok := log.Metrics[topMetric.Key]; ok {
-				topMetricTotal += val
-			}
-		}
-	}
-
 	duration := entry.TimeEnd.Sub(entry.TimeStart).Minutes()
 	if duration < 1 {
 		duration = 1
@@ -205,7 +198,7 @@ func (sts *ServerState) handleEditLogForm(c *gin.Context) {
 		"Logs":           logs,
 		"Metrics":        *metrics,
 		"TopMetric":      topMetric,
-		"TopMetricTotal": topMetricTotal,
+		"TopMetricTotal": totalTopMetrics(topMetric, logs),
 		"LogFormModal": gin.H{
 			"IsEdit":     true,
 			"LogID":      entry.ID.String(),
@@ -223,7 +216,6 @@ func (sts *ServerState) handleEditLogForm(c *gin.Context) {
 }
 
 func (sts *ServerState) handleConfig(c *gin.Context) {
-
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
