@@ -113,7 +113,8 @@ func (sts *ServerState) handleNewLogForm(c *gin.Context) {
 		return
 	}
 	// Set time to current time but with the specified date
-	now := time.Now() //FIXME: need to send user's time
+	now := parseDateParam(c, "ts", time.Now())
+
 	date = time.Date(date.Year(), date.Month(), date.Day(), now.Hour(), now.Minute(), 0, 0, time.UTC)
 
 	topMetric := sts.metrics.GetTopMetric(*metrics)
