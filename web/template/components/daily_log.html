@@ -25,7 +25,7 @@
     {{ $metricVal := index .Log.Metrics .TopMetric.Key }}
     <h2>{{ if $metricVal }}{{ printf "%.0f" $metricVal }}{{ else }}0{{ end }} {{ .TopMetric.Label }}</h2>
   {{ end }}
-  <h5>{{ .Log.TimeString }} - {{ .Log.Name }}</h5>
+  <h5>{{ formatTime .Log.TimeStart }} - {{ .Log.Name }}</h5>
   <a href="/logs/{{ .Log.ID }}"><button>Edit</button></a>
 </div>
 {{ end }}
