@@ -1,9 +1,7 @@
 {{ define "components/navigation" }}
 <div class="navigation">
-  {{ if eq .CurrentPath "/" }}
-    <a href="/config"><button>Config</button></a>
-  {{ else }}
-    <a href="/"><button>Logs</button></a>
-  {{ end }}
+  
+    <a href="/logs"><button {{ if eq .CurrentPath "/logs" }}class="active"{{ end }}>Logs</button></a>
+    <a href="/config"><button {{ if eq .CurrentPath "/config" }}class="active"{{ end }}>Config</button></a>
 </div>
 {{ end }}

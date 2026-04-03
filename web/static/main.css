@@ -61,6 +61,7 @@ main {
   display: flex;
   justify-content: center;
   width: 100vw;
+  gap: 2em;
 }
 
 .navigation button {
@@ -70,7 +71,15 @@ main {
   border-radius: 1em;
   color: #222;
   cursor: pointer;
+  min-width: 5em;
 }
+
+
+.navigation button.active {
+  background-color: #ccc;
+  border: 1px solid #333;
+}
+
 
 .navigation button:hover {
   background-color: rgba(0, 0, 0, 0.3);

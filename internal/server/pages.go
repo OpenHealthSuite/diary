@@ -78,7 +78,7 @@ func (sts *ServerState) handleLogs(c *gin.Context) {
 	}
 
 	data := gin.H{
-		"CurrentPath":    "/",
+		"CurrentPath":    "/logs",
 		"CurrentDay":     date.Format("2006-01-02"),
 		"PrevDay":        date.AddDate(0, 0, -1).Format("2006-01-02"),
 		"NextDay":        date.AddDate(0, 0, 1).Format("2006-01-02"),
@@ -126,7 +126,7 @@ func (sts *ServerState) handleNewLogForm(c *gin.Context) {
 
 	topMetric := sts.metrics.GetTopMetric(*metrics)
 	data := gin.H{
-		"CurrentPath":    "/",
+		"CurrentPath":    "/logs",
 		"CurrentDay":     date.Format("2006-01-02"),
 		"PrevDay":        date.AddDate(0, 0, -1).Format("2006-01-02"),
 		"NextDay":        date.AddDate(0, 0, 1).Format("2006-01-02"),
@@ -199,7 +199,7 @@ func (sts *ServerState) handleEditLogForm(c *gin.Context) {
 	}
 
 	data := gin.H{
-		"CurrentPath":    "/",
+		"CurrentPath":    "/logs",
 		"CurrentDay":     date.Format("2006-01-02"),
 		"PrevDay":        date.AddDate(0, 0, -1).Format("2006-01-02"),
 		"NextDay":        date.AddDate(0, 0, 1).Format("2006-01-02"),
