@@ -8,7 +8,7 @@
     <a class="add-log-button"
             hx-get="/logs/new"
             hx-target="body" hx-swap="outerHTML"
-            hx-vals="js:{ date: '{{ .CurrentDay }}', ts: new Intl.DateTimeFormat('sv-SE', {
+            hx-vals="js:{ ts: new Intl.DateTimeFormat('sv-SE', {
   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   year: 'numeric',
   month: '2-digit',

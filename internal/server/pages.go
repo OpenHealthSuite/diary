@@ -27,7 +27,17 @@ func parseDateParam(c *gin.Context, param string, defaultVal time.Time) time.Tim
 	return parsed
 }
 
-// Page Handlers
+func parseDateTimeParam(c *gin.Context, param string, defaultVal time.Time) time.Time {
+	dateStr := c.Query(param)
+	if dateStr == "" {
+		return defaultVal
+	}
+	parsed, err := time.Parse("2006-01-02T15:04:05", dateStr)
+	if err != nil {
+		return defaultVal
+	}
+	return parsed
+}
 
 func (sts *ServerState) handleLogs(c *gin.Context) {
 	date := parseDateParam(c, "date", time.Now())
@@ -95,7 +105,7 @@ func totalTopMetrics(topMetric *metrics.TopMetric, logs []foodlogs.UserFoodLog) 
 }
 
 func (sts *ServerState) handleNewLogForm(c *gin.Context) {
-	date := parseDateParam(c, "date", time.Now())
+	date := parseDateTimeParam(c, "ts", time.Now())
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
@@ -112,10 +122,7 @@ func (sts *ServerState) handleNewLogForm(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	// Set time to current time but with the specified date
-	now := parseDateParam(c, "ts", time.Now())
-
-	date = time.Date(date.Year(), date.Month(), date.Day(), now.Hour(), now.Minute(), 0, 0, time.UTC)
+	date = time.Date(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0, 0, time.UTC)
 
 	topMetric := sts.metrics.GetTopMetric(*metrics)
 	data := gin.H{
