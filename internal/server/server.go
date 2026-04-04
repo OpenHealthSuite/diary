@@ -54,23 +54,13 @@ func (sts *ServerState) setupHttpServer() error {
 	// User identification middleware
 	r.Use(auth.UserAuthenticationMiddleware(sts.Config))
 
-	err := pages.Setup(&pages.ServerState{
-		Config:   sts.Config,
-		Storage:  sts.storage,
-		FoodLogs: sts.foodlogs,
-		Metrics:  sts.metrics,
-	}, r)
+	err := pages.Setup(sts.Config, sts.storage, sts.metrics, sts.foodlogs, r)
 
 	if err != nil {
 		return err
 	}
 
-	err = api.Setup(&api.ServerState{
-		Config:   sts.Config,
-		Storage:  sts.storage,
-		FoodLogs: sts.foodlogs,
-		Metrics:  sts.metrics,
-	}, r)
+	err = api.Setup(sts.Config, sts.storage, sts.metrics, sts.foodlogs, r)
 
 	if err != nil {
 		return err

@@ -14,24 +14,36 @@ import (
 //go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=../../tools/oapi_codegen/server.cfg.yaml ../../api/swagger.yaml
 //go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=../../tools/oapi_codegen/types.cfg.yaml ../../api/swagger.yaml
 
-type ServerState struct {
+type ApiState struct {
 	Config   *config.ServerConfiguration
 	Storage  strgtyp.Storage
 	Metrics  metrics.MetricsProvider
 	FoodLogs foodlogs.FoodLogService
 }
 
-func (srvst *ServerState) AsGeneratedInterface() generated.ServerInterface {
+func (srvst *ApiState) AsGeneratedInterface() generated.ServerInterface {
 	return srvst
 }
 
-func Setup(sts *ServerState, r *gin.Engine) error {
+func Setup(
+	config *config.ServerConfiguration,
+	storage strgtyp.Storage,
+	metrics metrics.MetricsProvider,
+	foodLogs foodlogs.FoodLogService,
+	r *gin.Engine,
+) error {
+	sts := &ApiState{
+		Config:   config,
+		Storage:  storage,
+		FoodLogs: foodLogs,
+		Metrics:  metrics,
+	}
 	generated.RegisterHandlers(r, sts.AsGeneratedInterface())
 	return nil
 }
 
 // TestEndpoint implements generated.ServerInterface.
-func (g *ServerState) TestEndpoint(c *gin.Context) {
+func (g *ApiState) TestEndpoint(c *gin.Context) {
 	_, err := g.Storage.GetTestData(c)
 	if err != nil {
 		log.Error().Err(err).Msg("error pinging database")

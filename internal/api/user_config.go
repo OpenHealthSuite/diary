@@ -8,7 +8,7 @@ import (
 )
 
 // GetUserConfig implements generated.ServerInterface.
-func (g *ServerState) GetUserConfig(c *gin.Context, configId string) {
+func (g *ApiState) GetUserConfig(c *gin.Context, configId string) {
 	uidptr, err := auth.GetUserId(c)
 	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
@@ -36,7 +36,7 @@ func (g *ServerState) GetUserConfig(c *gin.Context, configId string) {
 }
 
 // StoreUserConfig implements generated.ServerInterface.
-func (g *ServerState) StoreUserConfig(c *gin.Context, configId string) {
+func (g *ApiState) StoreUserConfig(c *gin.Context, configId string) {
 	uidptr, err := auth.GetUserId(c)
 	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})

@@ -17,14 +17,27 @@ import (
 	strgtyp "github.com/openhealthsuite/diary/internal/storage/types"
 )
 
-type ServerState struct {
+type PagesState struct {
 	Config   *config.ServerConfiguration
 	Storage  strgtyp.Storage
 	Metrics  metrics.MetricsProvider
 	FoodLogs foodlogs.FoodLogService
 }
 
-func Setup(sts *ServerState, r *gin.Engine) error {
+func Setup(
+	config *config.ServerConfiguration,
+	storage strgtyp.Storage,
+	metrics metrics.MetricsProvider,
+	foodLogs foodlogs.FoodLogService,
+	r *gin.Engine,
+) error {
+
+	sts := &PagesState{
+		Config:   config,
+		Storage:  storage,
+		FoodLogs: foodLogs,
+		Metrics:  metrics,
+	}
 	// Load templates
 	r.SetFuncMap(templateFuncs())
 	tmpldr := "web/template"
@@ -98,7 +111,7 @@ func parseDateTimeParam(c *gin.Context, param string, defaultVal time.Time) time
 	return parsed
 }
 
-func (sts *ServerState) handleLogs(c *gin.Context) {
+func (sts *PagesState) handleLogs(c *gin.Context) {
 	date := parseDateParam(c, "date", time.Now())
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
@@ -163,7 +176,7 @@ func totalTopMetrics(topMetric *metrics.TopMetric, logs []foodlogs.UserFoodLog) 
 	return topMetricTotal
 }
 
-func (sts *ServerState) handleNewLogForm(c *gin.Context) {
+func (sts *PagesState) handleNewLogForm(c *gin.Context) {
 	date := parseDateTimeParam(c, "ts", time.Now())
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
@@ -207,7 +220,7 @@ func (sts *ServerState) handleNewLogForm(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/home", data)
 }
 
-func (sts *ServerState) handleEditLogForm(c *gin.Context) {
+func (sts *PagesState) handleEditLogForm(c *gin.Context) {
 	logId := c.Param("id")
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {
@@ -282,7 +295,7 @@ func (sts *ServerState) handleEditLogForm(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/home", data)
 }
 
-func (sts *ServerState) handleConfig(c *gin.Context) {
+func (sts *PagesState) handleConfig(c *gin.Context) {
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
@@ -305,7 +318,7 @@ func (sts *ServerState) handleConfig(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/config", data)
 }
 
-func (sts *ServerState) handleCreateLog(c *gin.Context) {
+func (sts *PagesState) handleCreateLog(c *gin.Context) {
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(403, err)
@@ -373,7 +386,7 @@ func (sts *ServerState) handleCreateLog(c *gin.Context) {
 	sts.handleLogs(c)
 }
 
-func (sts *ServerState) handleUpdateLog(c *gin.Context) {
+func (sts *PagesState) handleUpdateLog(c *gin.Context) {
 	logId := c.Param("id")
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {
@@ -449,7 +462,7 @@ func (sts *ServerState) handleUpdateLog(c *gin.Context) {
 	sts.handleLogs(c)
 }
 
-func (sts *ServerState) handleDeleteLog(c *gin.Context) {
+func (sts *PagesState) handleDeleteLog(c *gin.Context) {
 	logId := c.Param("id")
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {
@@ -488,7 +501,7 @@ func (sts *ServerState) handleDeleteLog(c *gin.Context) {
 
 // Metrics Config Handlers
 
-func (sts *ServerState) handleSaveMetrics(c *gin.Context) {
+func (sts *PagesState) handleSaveMetrics(c *gin.Context) {
 	key := c.PostForm("key")
 	label := c.PostForm("label")
 	tutorialMode := c.Query("tutorial") == "1"
@@ -526,7 +539,7 @@ func (sts *ServerState) handleSaveMetrics(c *gin.Context) {
 	sts.handleConfig(c)
 }
 
-func (sts *ServerState) handleCreateMetric(c *gin.Context) {
+func (sts *PagesState) handleCreateMetric(c *gin.Context) {
 	newMetricLabel := c.PostForm("new_metric")
 	tutorialMode := c.Query("tutorial") == "1"
 
@@ -573,7 +586,7 @@ func (sts *ServerState) handleCreateMetric(c *gin.Context) {
 	sts.handleConfig(c)
 }
 
-func (sts *ServerState) handleDeleteMetric(c *gin.Context) {
+func (sts *PagesState) handleDeleteMetric(c *gin.Context) {
 	key := c.Param("key")
 	tutorialMode := c.Query("tutorial") == "1"
 
@@ -601,7 +614,7 @@ func (sts *ServerState) handleDeleteMetric(c *gin.Context) {
 
 // Purge and Upload Pages
 
-func (sts *ServerState) handlePurgePage(c *gin.Context) {
+func (sts *PagesState) handlePurgePage(c *gin.Context) {
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
@@ -625,7 +638,7 @@ func (sts *ServerState) handlePurgePage(c *gin.Context) {
 	c.HTML(http.StatusOK, "pages/config", data)
 }
 
-func (sts *ServerState) handlePurgeLogs(c *gin.Context) {
+func (sts *PagesState) handlePurgeLogs(c *gin.Context) {
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(403, err)
@@ -643,7 +656,7 @@ func (sts *ServerState) handlePurgeLogs(c *gin.Context) {
 	sts.handleConfig(c)
 }
 
-func (sts *ServerState) handleUploadPage(c *gin.Context) {
+func (sts *PagesState) handleUploadPage(c *gin.Context) {
 	user_id, err := auth.GetUserId(c)
 	if err != nil {
 		c.AbortWithError(500, err)
@@ -669,7 +682,7 @@ func (sts *ServerState) handleUploadPage(c *gin.Context) {
 
 // Tutorial Handler
 
-func (sts *ServerState) handleTutorialLog(c *gin.Context) {
+func (sts *PagesState) handleTutorialLog(c *gin.Context) {
 	// Create the log entry and redirect to tutorial step 3
 	userIdPtr, err := auth.GetUserId(c)
 	if err != nil {

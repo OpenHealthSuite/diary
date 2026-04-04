@@ -12,7 +12,7 @@ import (
 )
 
 // CreateFoodLog implements generated.ServerInterface.
-func (g *ServerState) CreateFoodLog(c *gin.Context) {
+func (g *ApiState) CreateFoodLog(c *gin.Context) {
 	var req generated.CreateFoodLogEntry
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, generated.Error{Code: 400, Message: "Invalid request body"})
@@ -43,7 +43,7 @@ func (g *ServerState) CreateFoodLog(c *gin.Context) {
 }
 
 // DeleteFoodLog implements generated.ServerInterface.
-func (g *ServerState) DeleteFoodLog(c *gin.Context, itemId string) {
+func (g *ApiState) DeleteFoodLog(c *gin.Context, itemId string) {
 	uidptr, err := auth.GetUserId(c)
 	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
@@ -70,7 +70,7 @@ func (g *ServerState) DeleteFoodLog(c *gin.Context, itemId string) {
 }
 
 // ExportFoodLogs implements generated.ServerInterface.
-func (g *ServerState) ExportFoodLogs(c *gin.Context) {
+func (g *ApiState) ExportFoodLogs(c *gin.Context) {
 	uidptr, err := auth.GetUserId(c)
 	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
@@ -112,7 +112,7 @@ func (g *ServerState) ExportFoodLogs(c *gin.Context) {
 }
 
 // GetFoodLog implements generated.ServerInterface.
-func (g *ServerState) GetFoodLog(c *gin.Context, itemId string) {
+func (g *ApiState) GetFoodLog(c *gin.Context, itemId string) {
 	uidptr, err := auth.GetUserId(c)
 	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
@@ -150,7 +150,7 @@ func (g *ServerState) GetFoodLog(c *gin.Context, itemId string) {
 }
 
 // PurgeFoodLogs implements generated.ServerInterface.
-func (g *ServerState) PurgeFoodLogs(c *gin.Context) {
+func (g *ApiState) PurgeFoodLogs(c *gin.Context) {
 	uidptr, err := auth.GetUserId(c)
 	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
@@ -168,7 +168,7 @@ func (g *ServerState) PurgeFoodLogs(c *gin.Context) {
 }
 
 // QueryFoodLogs implements generated.ServerInterface.
-func (g *ServerState) QueryFoodLogs(c *gin.Context, params generated.QueryFoodLogsParams) {
+func (g *ApiState) QueryFoodLogs(c *gin.Context, params generated.QueryFoodLogsParams) {
 	uidptr, err := auth.GetUserId(c)
 	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
@@ -205,7 +205,7 @@ func (g *ServerState) QueryFoodLogs(c *gin.Context, params generated.QueryFoodLo
 }
 
 // UpdateFoodLog implements generated.ServerInterface.
-func (g *ServerState) UpdateFoodLog(c *gin.Context, itemId string) {
+func (g *ApiState) UpdateFoodLog(c *gin.Context, itemId string) {
 	uidptr, err := auth.GetUserId(c)
 	if err != nil {
 		c.JSON(403, generated.Error{Code: 403, Message: "Missing user identification"})
