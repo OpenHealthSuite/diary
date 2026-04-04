@@ -1,4 +1,4 @@
-package server
+package api
 
 import (
 	"encoding/csv"
@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openhealthsuite/diary/internal/api/generated"
 	"github.com/openhealthsuite/diary/internal/auth"
-	"github.com/openhealthsuite/diary/internal/server/generated"
 	"github.com/openhealthsuite/diary/internal/storage/types"
 )
 
@@ -26,7 +26,7 @@ func (g *ServerState) CreateFoodLog(c *gin.Context) {
 	}
 	userId := *uidptr
 
-	id, err := g.storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
+	id, err := g.Storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
 		UserID:    userId,
 		Name:      req.Name,
 		Labels:    req.Labels,
@@ -58,7 +58,7 @@ func (g *ServerState) DeleteFoodLog(c *gin.Context, itemId string) {
 	}
 
 	// Delete entry
-	err = g.storage.DeleteFoodLogEntry(c, struct {
+	err = g.Storage.DeleteFoodLogEntry(c, struct {
 		UserID string
 		ID     uuid.UUID
 	}{UserID: userId, ID: id})
@@ -79,7 +79,7 @@ func (g *ServerState) ExportFoodLogs(c *gin.Context) {
 	userId := *uidptr
 
 	// Get all entries
-	entries, err := g.storage.ExportFoodLogEntries(c, userId)
+	entries, err := g.Storage.ExportFoodLogEntries(c, userId)
 	if err != nil {
 		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
 		return
@@ -127,7 +127,7 @@ func (g *ServerState) GetFoodLog(c *gin.Context, itemId string) {
 		return
 	}
 
-	entry, err := g.storage.GetFoodLogEntry(c, struct {
+	entry, err := g.Storage.GetFoodLogEntry(c, struct {
 		UserID string
 		ID     uuid.UUID
 	}{UserID: userId, ID: id})
@@ -159,7 +159,7 @@ func (g *ServerState) PurgeFoodLogs(c *gin.Context) {
 	userId := *uidptr
 
 	// Delete all entries
-	err = g.storage.PurgeFoodLogEntries(c, userId)
+	err = g.Storage.PurgeFoodLogEntries(c, userId)
 	if err != nil {
 		c.JSON(500, generated.Error{Code: 500, Message: err.Error()})
 		return
@@ -177,7 +177,7 @@ func (g *ServerState) QueryFoodLogs(c *gin.Context, params generated.QueryFoodLo
 	userId := *uidptr
 
 	// Query entries
-	entries, err := g.storage.QueryFoodLogEntries(c, types.QueryFoodLogEntriesParams{
+	entries, err := g.Storage.QueryFoodLogEntries(c, types.QueryFoodLogEntriesParams{
 		UserID:    userId,
 		TimeStart: params.StartDate,
 		TimeEnd:   params.EndDate,
@@ -226,7 +226,7 @@ func (g *ServerState) UpdateFoodLog(c *gin.Context, itemId string) {
 	}
 
 	// Fetch existing entry
-	entry, err := g.storage.GetFoodLogEntry(c, struct {
+	entry, err := g.Storage.GetFoodLogEntry(c, struct {
 		UserID string
 		ID     uuid.UUID
 	}{UserID: userId, ID: id})
@@ -257,7 +257,7 @@ func (g *ServerState) UpdateFoodLog(c *gin.Context, itemId string) {
 	}
 
 	// Update entry
-	err = g.storage.UpdateFoodLogEntry(c, types.UpdateFoodLogEntryParams{
+	err = g.Storage.UpdateFoodLogEntry(c, types.UpdateFoodLogEntryParams{
 		UserID:    userId,
 		ID:        id,
 		Name:      name,

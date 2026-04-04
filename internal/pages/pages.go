@@ -1,4 +1,4 @@
-package server
+package pages
 
 import (
 	"fmt"
@@ -10,10 +10,69 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openhealthsuite/diary/internal/auth"
+	"github.com/openhealthsuite/diary/internal/config"
 	"github.com/openhealthsuite/diary/internal/foodlogs"
 	"github.com/openhealthsuite/diary/internal/metrics"
 	"github.com/openhealthsuite/diary/internal/storage/types"
+	strgtyp "github.com/openhealthsuite/diary/internal/storage/types"
 )
+
+type ServerState struct {
+	Config   *config.ServerConfiguration
+	Storage  strgtyp.Storage
+	Metrics  metrics.MetricsProvider
+	FoodLogs foodlogs.FoodLogService
+}
+
+func Setup(sts *ServerState, r *gin.Engine) error {
+	// Load templates
+	r.SetFuncMap(templateFuncs())
+	tmpldr := "web/template"
+	if sts.Config.TemplateDirectory != "" {
+		tmpldr = sts.Config.TemplateDirectory
+	}
+	tmpl, err := loadTemplates(tmpldr)
+	if err != nil {
+		return err
+	}
+	r.SetHTMLTemplate(tmpl)
+
+	stscdir := "web/static"
+	if sts.Config.StaticDirectory != "" {
+		stscdir = sts.Config.StaticDirectory
+	}
+	// Static files
+	r.StaticFile("/favicon.ico", stscdir+"/favicon.ico")
+	r.Static("/static", stscdir)
+
+	// Page routes
+	r.GET("/", func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusSeeOther, "/logs")
+	})
+	r.GET("/config", sts.handleConfig)
+
+	r.GET("/logs", sts.handleLogs)
+	r.GET("/logs/new", sts.handleNewLogForm)
+	r.GET("/logs/:id", sts.handleEditLogForm)
+
+	// THESE ALL NEED TO HANDLE AND REDIRECT
+	r.POST("/logs", sts.handleCreateLog)
+	r.PUT("/logs/:id", sts.handleUpdateLog)
+	r.DELETE("/logs/:id", sts.handleDeleteLog)
+
+	// Config routes
+	r.POST("/config/metrics", sts.handleSaveMetrics)
+	r.POST("/config/metrics/new", sts.handleCreateMetric)
+	r.DELETE("/config/metrics/:key", sts.handleDeleteMetric)
+	r.GET("/config/purge", sts.handlePurgePage)
+	r.DELETE("/config/purge", sts.handlePurgeLogs)
+	r.GET("/config/upload", sts.handleUploadPage)
+
+	// Tutorial
+	r.POST("/tutorial/log", sts.handleTutorialLog)
+
+	return nil
+}
 
 func parseDateParam(c *gin.Context, param string, defaultVal time.Time) time.Time {
 	dateStr := c.Query(param)
@@ -47,17 +106,17 @@ func (sts *ServerState) handleLogs(c *gin.Context) {
 		return
 	}
 
-	logs, err := sts.foodlogs.GetLogsForDate(c, *user_id, date)
+	logs, err := sts.FoodLogs.GetLogsForDate(c, *user_id, date)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
-	metrics, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metrics, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
-	topMetric := sts.metrics.GetTopMetric(*metrics)
+	topMetric := sts.Metrics.GetTopMetric(*metrics)
 
 	// Calculate total for top metric
 	var topMetricTotal float64 = 0
@@ -112,19 +171,19 @@ func (sts *ServerState) handleNewLogForm(c *gin.Context) {
 		return
 	}
 
-	logs, err := sts.foodlogs.GetLogsForDate(c, *user_id, date)
+	logs, err := sts.FoodLogs.GetLogsForDate(c, *user_id, date)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
-	metrics, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metrics, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
 	date = time.Date(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0, 0, time.UTC)
 
-	topMetric := sts.metrics.GetTopMetric(*metrics)
+	topMetric := sts.Metrics.GetTopMetric(*metrics)
 	data := gin.H{
 		"CurrentPath":    "/logs",
 		"CurrentDay":     date.Format("2006-01-02"),
@@ -163,7 +222,7 @@ func (sts *ServerState) handleEditLogForm(c *gin.Context) {
 		return
 	}
 
-	entry, err := sts.storage.GetFoodLogEntry(c, types.GetFoodLogEntryParams{
+	entry, err := sts.Storage.GetFoodLogEntry(c, types.GetFoodLogEntryParams{
 		UserID: userId,
 		ID:     logUuid,
 	})
@@ -180,17 +239,17 @@ func (sts *ServerState) handleEditLogForm(c *gin.Context) {
 		return
 	}
 
-	logs, err := sts.foodlogs.GetLogsForDate(c, *user_id, date)
+	logs, err := sts.FoodLogs.GetLogsForDate(c, *user_id, date)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
-	metrics, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metrics, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
-	topMetric := sts.metrics.GetTopMetric(*metrics)
+	topMetric := sts.Metrics.GetTopMetric(*metrics)
 
 	// Calculate total for top metric
 	duration := entry.TimeEnd.Sub(entry.TimeStart).Minutes()
@@ -229,7 +288,7 @@ func (sts *ServerState) handleConfig(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metrics, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metrics, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -277,7 +336,7 @@ func (sts *ServerState) handleCreateLog(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metricsConfig, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metricsConfig, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -293,7 +352,7 @@ func (sts *ServerState) handleCreateLog(c *gin.Context) {
 	}
 
 	// Create the entry
-	_, err = sts.storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
+	_, err = sts.Storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
 		UserID:    userId,
 		Name:      name,
 		Labels:    []string{},
@@ -352,7 +411,7 @@ func (sts *ServerState) handleUpdateLog(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metricsConfig, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metricsConfig, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -368,7 +427,7 @@ func (sts *ServerState) handleUpdateLog(c *gin.Context) {
 	}
 
 	// Update entry
-	err = sts.storage.UpdateFoodLogEntry(c, types.UpdateFoodLogEntryParams{
+	err = sts.Storage.UpdateFoodLogEntry(c, types.UpdateFoodLogEntryParams{
 		UserID:    userId,
 		ID:        logUuid,
 		Name:      name,
@@ -406,13 +465,13 @@ func (sts *ServerState) handleDeleteLog(c *gin.Context) {
 	}
 
 	// Get the log first to know what date to refresh
-	entry, _ := sts.storage.GetFoodLogEntry(c, types.GetFoodLogEntryParams{
+	entry, _ := sts.Storage.GetFoodLogEntry(c, types.GetFoodLogEntryParams{
 		UserID: userId,
 		ID:     logUuid,
 	})
 
 	// Delete metrics first
-	err = sts.storage.DeleteFoodLogEntry(c, types.DeleteFoodLogEntryParams{
+	err = sts.Storage.DeleteFoodLogEntry(c, types.DeleteFoodLogEntryParams{
 		UserID: userId,
 		ID:     logUuid,
 	})
@@ -447,7 +506,7 @@ func (sts *ServerState) handleSaveMetrics(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metricsPrt, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metricsPrt, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -460,7 +519,7 @@ func (sts *ServerState) handleSaveMetrics(c *gin.Context) {
 		metrics[key] = cfg
 	}
 
-	sts.metrics.UpdateUserMetrics(c, *user_id, metrics)
+	sts.Metrics.UpdateUserMetrics(c, *user_id, metrics)
 	if !tutorialMode {
 		c.Header("HX-Redirect", "/config")
 	}
@@ -483,7 +542,7 @@ func (sts *ServerState) handleCreateMetric(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metricsPrt, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metricsPrt, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -507,7 +566,7 @@ func (sts *ServerState) handleCreateMetric(c *gin.Context) {
 		Priority: maxPriority + 1,
 	}
 
-	sts.metrics.UpdateUserMetrics(c, *user_id, metri)
+	sts.Metrics.UpdateUserMetrics(c, *user_id, metri)
 	if !tutorialMode {
 		c.Header("HX-Redirect", "/config")
 	}
@@ -523,7 +582,7 @@ func (sts *ServerState) handleDeleteMetric(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metricsPrt, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metricsPrt, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -533,7 +592,7 @@ func (sts *ServerState) handleDeleteMetric(c *gin.Context) {
 
 	delete(metrics, key)
 
-	sts.metrics.UpdateUserMetrics(c, *user_id, metrics)
+	sts.Metrics.UpdateUserMetrics(c, *user_id, metrics)
 	if !tutorialMode {
 		c.Header("HX-Redirect", "/config")
 	}
@@ -548,7 +607,7 @@ func (sts *ServerState) handlePurgePage(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metricsPrt, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metricsPrt, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -574,7 +633,7 @@ func (sts *ServerState) handlePurgeLogs(c *gin.Context) {
 	}
 	userId := *userIdPtr
 
-	err = sts.storage.PurgeFoodLogEntries(c, userId)
+	err = sts.Storage.PurgeFoodLogEntries(c, userId)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to purge logs")
 		return
@@ -590,7 +649,7 @@ func (sts *ServerState) handleUploadPage(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metricsPrt, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metricsPrt, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -642,7 +701,7 @@ func (sts *ServerState) handleTutorialLog(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	metricsConfig, err := sts.metrics.GetUserMetrics(c, *user_id)
+	metricsConfig, err := sts.Metrics.GetUserMetrics(c, *user_id)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -659,7 +718,7 @@ func (sts *ServerState) handleTutorialLog(c *gin.Context) {
 	}
 
 	// Create the entry
-	_, err = sts.storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
+	_, err = sts.Storage.CreateFoodLogEntry(c, types.CreateFoodLogEntryParams{
 		UserID:    userId,
 		Name:      name,
 		Labels:    []string{},

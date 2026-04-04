@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/openhealthsuite/diary/internal/api/generated"
 	"github.com/openhealthsuite/diary/internal/config"
-	"github.com/openhealthsuite/diary/internal/server/generated"
 )
 
 func UserAuthenticationMiddleware(cfg *config.ServerConfiguration) func(ctx *gin.Context) {

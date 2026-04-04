@@ -1,9 +1,9 @@
-package server
+package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/openhealthsuite/diary/internal/api/generated"
 	"github.com/openhealthsuite/diary/internal/auth"
-	"github.com/openhealthsuite/diary/internal/server/generated"
 	"github.com/openhealthsuite/diary/internal/storage/types"
 )
 
@@ -16,7 +16,7 @@ func (g *ServerState) GetUserConfig(c *gin.Context, configId string) {
 	}
 	userId := *uidptr
 
-	cfg, err := g.storage.GetUserConfig(c, types.GetUserConfigParams{
+	cfg, err := g.Storage.GetUserConfig(c, types.GetUserConfigParams{
 		UserID: userId,
 		ID:     configId,
 	})
@@ -50,7 +50,7 @@ func (g *ServerState) StoreUserConfig(c *gin.Context, configId string) {
 		return
 	}
 	raw, _ := val.MarshalJSON()
-	err = g.storage.StoreUserConfig(c, types.StoreUserConfigParams{
+	err = g.Storage.StoreUserConfig(c, types.StoreUserConfigParams{
 		UserID:      userId,
 		ID:          configId,
 		ConfigValue: raw,

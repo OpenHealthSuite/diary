@@ -1,11 +1,33 @@
-package server
+package pages
 
 import (
 	"fmt"
 	"html/template"
+	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"time"
 )
+
+func loadTemplates(templatesDir string) (*template.Template, error) {
+	tmpl := template.New("").Funcs(templateFuncs())
+
+	err := filepath.Walk(templatesDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(path, ".html") {
+			_, err = tmpl.ParseFiles(path)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	return tmpl, err
+}
 
 func toInt(v interface{}) int {
 	switch val := v.(type) {
