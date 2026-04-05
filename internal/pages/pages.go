@@ -80,6 +80,8 @@ func (sts *PagesState) registerRoutes(r *gin.Engine) {
 	r.PUT("/logs/:id", sts.handleUpdateLog)
 	r.DELETE("/logs/:id", sts.handleDeleteLog)
 
+	r.GET("/reports", sts.handleReports)
+
 	r.POST("/config/metrics", sts.handleSaveMetrics)
 	r.POST("/config/metrics/new", sts.handleCreateMetric)
 	r.DELETE("/config/metrics/:key", sts.handleDeleteMetric)
