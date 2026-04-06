@@ -17,7 +17,14 @@
   minute: '2-digit',
   second: '2-digit',
   hour12: false
-}).format(new Date()).replace(' ', 'T') }"
+}).format(new Date(
+  '{{ .CurrentDay }}'.split('-')[0],
+  '{{ .CurrentDay }}'.split('-')[1] - 1,
+  '{{ .CurrentDay }}'.split('-')[2],
+  new Date().getHours(),
+  new Date().getMinutes(),
+  new Date().getSeconds()
+)).replace(' ', 'T') }"
             >Add Log</a>
   </div>
 
