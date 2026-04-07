@@ -1,6 +1,7 @@
 package charts
 
 import (
+	"fmt"
 	"slices"
 	"time"
 
@@ -52,6 +53,7 @@ func (sts *ChartsState) registerRoutes(r *gin.Engine) {
 	r.GET("/charts/test.svg", sts.handleTestSvg)
 
 	r.GET("/charts/:metric/total.svg", sts.handleMetricTotals)
+	r.GET("/charts/:metric/minutes.svg", sts.handleMetricMinutePeaks)
 }
 
 func (sts *ChartsState) handleTestSvg(c *gin.Context) {
@@ -122,4 +124,69 @@ func (sts *ChartsState) handleMetricTotals(c *gin.Context) {
 	p.Add(plotter.NewGrid())
 
 	writePlotToResponse(c, p)
+}
+
+func (sts *ChartsState) handleMetricMinutePeaks(c *gin.Context) {
+	metric := c.Param("metric")
+	userIdPtr, err := auth.GetUserId(c)
+	if err != nil {
+		c.AbortWithError(403, err)
+		return
+	}
+	stdt := parseDateParam(c, "startdate", time.Now().Add((time.Hour*24*6)*-1))
+	eddt := parseDateParam(c, "enddate", time.Now())
+
+	eddt = eddt.Add(time.Hour * 23)
+	eddt = eddt.Add(time.Minute * 59)
+	eddt = eddt.Add(time.Second * 59)
+
+	lgs, err := sts.FoodLogs.GetLogsBetweenDateTimes(c, *userIdPtr, stdt, eddt)
+
+	minutes := []float64{}
+	labels := []string{}
+
+	minutes_in_day := 1440
+
+	for m := range minutes_in_day {
+		minutes = append(minutes, 0)
+		if m > 0 && m%180 == 0 {
+			labels = append(labels, fmt.Sprintf("%02d:00", m/60))
+		} else {
+			labels = append(labels, "")
+		}
+	}
+
+	for _, lg := range lgs {
+		num_minutes := int(lg.TimeEnd.Sub(lg.TimeStart).Minutes())
+		per_minute := lg.Metrics[metric] / float64(num_minutes)
+		minute := dayMinutes(lg.TimeStart)
+		for range num_minutes {
+			if minute >= minutes_in_day {
+				minute -= minutes_in_day
+			}
+			minutes[minute] += per_minute
+		}
+	}
+
+	p := plot.New()
+
+	values := plotter.Values{}
+
+	for _, v := range minutes {
+		values = append(values, v)
+	}
+
+	bars, _ := plotter.NewBarChart(values, vg.Points(15))
+
+	p.Add(bars)
+	p.NominalX(labels...)
+	p.Add(plotter.NewGrid())
+
+	writePlotToResponse(c, p)
+}
+
+func dayMinutes(t time.Time) int {
+	year, month, day := t.Date()
+	t2 := time.Date(year, month, day, 0, 0, 0, 0, t.Location())
+	return int(t.Sub(t2).Minutes())
 }

@@ -1,11 +1,9 @@
 {{ define "pages/reports" }}
 {{ template "layouts/base/header" . }}
 
+<div id="reports-page" style="display:flex; justify-content:center; padding:20px; box-sizing:border-box;">
 
-
-<div id="logs-page">
-
-  <div id="logs-container">
+  <div id="reports-container" style="max-width:1200px; width:100%; display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:24px; text-align:center;">
     {{ range $key, $metric := .Metrics }}
       <div>
         <h3>{{ $metric.Label }} Totals (last 7 days)</h3>
@@ -14,6 +12,14 @@
       <div>
         <h3>{{ $metric.Label }} Totals (last 30 days)</h3>
         <object data="/charts/{{$key}}/total.svg?startdate={{$.ThirtyDaysAgo}}" type="image/svg+xml"></object>
+      </div>
+      <div>
+        <h3>{{ $metric.Label }} Minute Peaks (last 7 days)</h3>
+        <object data="/charts/{{$key}}/minutes.svg" type="image/svg+xml"></object>
+      </div>
+      <div>
+        <h3>{{ $metric.Label }} Minute Peaks (last 30 days)</h3>
+        <object data="/charts/{{$key}}/minutes.svg?startdate={{$.ThirtyDaysAgo}}" type="image/svg+xml"></object>
       </div>
     {{ end }}
   </div>
