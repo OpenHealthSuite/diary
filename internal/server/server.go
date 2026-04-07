@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/openhealthsuite/diary/internal/api"
 	"github.com/openhealthsuite/diary/internal/auth"
+	"github.com/openhealthsuite/diary/internal/charts"
 	"github.com/openhealthsuite/diary/internal/config"
 	"github.com/openhealthsuite/diary/internal/foodlogs"
 	"github.com/openhealthsuite/diary/internal/metrics"
@@ -56,6 +57,11 @@ func (sts *ServerState) setupHttpServer() error {
 
 	err := pages.Setup(sts.Config, sts.storage, sts.metrics, sts.foodlogs, r)
 
+	if err != nil {
+		return err
+	}
+
+	err = charts.Setup(sts.Config, sts.storage, sts.metrics, sts.foodlogs, r)
 	if err != nil {
 		return err
 	}
