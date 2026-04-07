@@ -47,6 +47,7 @@ func ToStorage(ufl UserFoodLog) (*storage.UserFoodlogentry, error) {
 type FoodLogService interface {
 	// Gets logs for a single day
 	GetLogsForDate(c context.Context, userId string, date time.Time) ([]UserFoodLog, error)
+	GetLogsBetweenDateTimes(c context.Context, userId string, sd, ed time.Time) ([]UserFoodLog, error)
 }
 
 type internalFoodLogService struct {
@@ -67,6 +68,31 @@ func (sts *internalFoodLogService) GetLogsForDate(c context.Context, userId stri
 		UserID:    userId,
 		TimeStart: startDate,
 		TimeEnd:   endDate,
+	})
+	if err != nil {
+		return []UserFoodLog{}, nil
+	}
+
+	var result []UserFoodLog
+	for _, entry := range entries {
+		result = append(result, FromStorage(entry))
+	}
+
+	// Sort by time
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].TimeStart.Before(result[j].TimeStart)
+	})
+
+	return result, nil
+}
+
+// GetLogsBetweenDates implements [FoodLogService].
+func (sts *internalFoodLogService) GetLogsBetweenDateTimes(c context.Context, userId string, sd time.Time, ed time.Time) ([]UserFoodLog, error) {
+
+	entries, err := sts.storage.QueryFoodLogEntries(c, storage.QueryFoodLogEntriesParams{
+		UserID:    userId,
+		TimeStart: sd,
+		TimeEnd:   ed,
 	})
 	if err != nil {
 		return []UserFoodLog{}, nil

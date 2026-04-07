@@ -2,6 +2,7 @@ package pages
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/openhealthsuite/diary/internal/auth"
@@ -21,9 +22,10 @@ func (sts *PagesState) handleReports(c *gin.Context) {
 	topMetric := sts.Metrics.GetTopMetric(*metrics)
 
 	data := gin.H{
-		"CurrentPath": "/reports",
-		"Metrics":     *metrics,
-		"TopMetric":   topMetric,
+		"CurrentPath":   "/reports",
+		"Metrics":       *metrics,
+		"TopMetric":     topMetric,
+		"ThirtyDaysAgo": time.Now().Add((time.Hour * 24 * 29) * -1).Format("2006-01-02"),
 	}
 
 	c.HTML(http.StatusOK, "pages/reports", data)
