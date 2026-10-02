@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: openfooddiary
+  name: openfooddiary
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: openfooddiary
+  template:
+    metadata:
+      labels:
+        app: openfooddiary
+      name: openfooddiary
+    spec:
+      containers:
+        - name: openfooddiary
+          image: ghcr.io/openhealthsuite/diary:v0.7.0
+          env:
+            - name: PORT
+              value: "3024"
+            - name: OPENFOODDIARY_POSTGRES_CONNECTION_STRING
+              value: postgres://postgres:postgres@postgres:5432/postgres
+            - name: OPENFOODDIARY_OAUTH2_ISSUER
+              value: https://dex.example.com
+            - name: OPENFOODDIARY_OAUTH2_CLIENT_ID
+              value: openfooddiary
+            - name: OPENFOODDIARY_OAUTH2_CLIENT_SECRET
+              value: ""
+            - name: OPENFOODDIARY_OAUTH2_REDIRECT_URL
+              value: ""
+            - name: OPENFOODDIARY_SESSION_REDIS_URL
+              value: redis://redis:6379/0
+            - name: OPENFOODDIARY_SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: openfooddiary-session
+                  key: session-secret
+          ports:
+            - name: web
+              containerPort: 3024

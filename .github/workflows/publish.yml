@@ -27,3 +27,28 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           prerelease: false
+
+  update-manifests:
+    needs:
+      - publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: update-manifests
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          token: ${{ github.token }}
+
+      - name: Set new version
+        run: yq e -i '.spec.template.spec.containers[0].image = "ghcr.io/openhealthsuite/diary:${{ github.ref_name }}"' kustomize/base/deployment.yml
+
+      - name: Commit and Push version
+        run: |
+          git config --global user.name 'OpenHealthSuite[Automated]'
+          git config --global user.email 'openhealthsuite@users.noreply.github.com'
+          git commit -am "New OpenFoodDiary Version"
+          git push

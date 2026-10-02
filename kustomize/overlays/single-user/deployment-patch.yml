@@ -1,0 +1,19 @@
+# Swaps the base's oauth2/redis configuration for a single fixed userid, which
+# bypasses authentication entirely. No session secret is required in this mode.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openfooddiary
+spec:
+  template:
+    spec:
+      containers:
+        - name: openfooddiary
+          env:
+            - $patch: replace
+            - name: PORT
+              value: "3024"
+            - name: OPENFOODDIARY_POSTGRES_CONNECTION_STRING
+              value: postgres://postgres:postgres@postgres:5432/postgres
+            - name: OPENFOODDIARY_USERID
+              value: my-ofd-userid

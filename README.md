@@ -33,9 +33,22 @@ This will start OpenFoodDiary running, on port 3012. You can then access it usin
 
 It's entirely possible to run OpenFoodDiary in more complicated configurations - various environment variables for configuration are listed below.
 
-#### Helm?
+#### Kubernetes?
 
-I keep a trim helm chart in this repository, which with a small amount of manual futzing allows me to deploy updates - can be seen as a starting point to deploying OFD to your own cluster if you have one.
+I keep plain kustomize manifests in `kustomize/` in this repository, which allow me to deploy updates with a small amount of manual futzing - can be seen as a starting point to deploying OFD to your own cluster if you have one.
+
+The base is configured for the Oauth2 login flow, and expects a `openfooddiary-session` secret in the target namespace containing a `session-secret` key:
+
+```bash
+kubectl create secret generic openfooddiary-session --from-literal=session-secret="$(openssl rand -base64 32)" -n diary
+kubectl apply -k kustomize/base
+```
+
+If you'd rather run in single-user mode (no authentication, no redis, no session secret), there's an overlay for it - set `OPENFOODDIARY_USERID` in `kustomize/overlays/single-user/deployment-patch.yml` and then:
+
+```bash
+kubectl apply -k kustomize/overlays/single-user
+```
 
 ## Running this Repo Locally
 
