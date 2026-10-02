@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/openhealthsuite/diary/internal/config"
 	"github.com/openhealthsuite/diary/internal/server"
 	"github.com/playwright-community/playwright-go"
@@ -15,19 +14,14 @@ import (
 func Test_CRUD_Logs(t *testing.T) {
 
 	target := "http://localhost:8936"
-	useridheader := "x-openfooddiary-userid"
 
 	if os.Getenv("OFD_E2E_TARGET") != "" {
 		target = os.Getenv("OFD_E2E_TARGET")
 	} else {
-
 		config := config.ServerConfiguration{
-			Port:                     8936,
-			PostgresConnectionString: "",
-			SqliteFile:               ":memory:",
-			SignoutEndpoint:          "/logout",
-			UserIdHeader:             useridheader,
-
+			Port:              8936,
+			SqliteFile:        ":memory:",
+			UserId:            "e2e-ui-user",
 			TemplateDirectory: "../../../web/template",
 			StaticDirectory:   "../../../web/static",
 		}
@@ -47,11 +41,7 @@ func Test_CRUD_Logs(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("Test create log", func(tt *testing.T) {
-		page, err := browser.NewPage(playwright.BrowserNewPageOptions{
-			ExtraHttpHeaders: map[string]string{
-				useridheader: uuid.NewString(),
-			},
-		})
+		page, err := browser.NewPage()
 		require.NoError(tt, err)
 		if _, err = page.Goto(target); err != nil {
 			tt.Fatalf("could not goto: %v", err)
@@ -60,7 +50,7 @@ func Test_CRUD_Logs(t *testing.T) {
 		err = alb.Click()
 		require.NoError(tt, err)
 		ln := page.Locator("[name='name']").First()
-		err = ln.Fill("My Log Name")
+		err = ln.Fill("First Log")
 		require.NoError(tt, err)
 		mc := page.Locator("[name='metric_calories']").First()
 		err = mc.Fill("123")
@@ -74,11 +64,7 @@ func Test_CRUD_Logs(t *testing.T) {
 		assert.Equal(tt, "123 Calories Total", tms)
 	})
 	t.Run("Test edit log", func(tt *testing.T) {
-		page, err := browser.NewPage(playwright.BrowserNewPageOptions{
-			ExtraHttpHeaders: map[string]string{
-				useridheader: uuid.NewString(),
-			},
-		})
+		page, err := browser.NewPage()
 		require.NoError(tt, err)
 		if _, err = page.Goto(target); err != nil {
 			tt.Fatalf("could not goto: %v", err)
@@ -87,7 +73,7 @@ func Test_CRUD_Logs(t *testing.T) {
 		err = alb.Click()
 		require.NoError(tt, err)
 		ln := page.Locator("[name='name']").First()
-		err = ln.Fill("My Log Name")
+		err = ln.Fill("Second Log")
 		require.NoError(tt, err)
 		mc := page.Locator("[name='metric_calories']").First()
 		err = mc.Fill("543")
@@ -95,15 +81,19 @@ func Test_CRUD_Logs(t *testing.T) {
 		sub := page.Locator("button[type='submit']").First()
 		err = sub.Click()
 		require.NoError(tt, err)
+		_, err = page.Reload()
+		require.NoError(tt, err)
 		tm := page.Locator(".topmetric").First()
 		tms, err := tm.TextContent()
 		require.NoError(tt, err)
-		assert.Equal(tt, "543 Calories Total", tms)
+		assert.Equal(tt, "666 Calories Total", tms)
 
-		elb := page.GetByRole("button", playwright.PageGetByRoleOptions{
-			Name: "Edit",
+		secondLog := page.Locator(".food-log", playwright.PageLocatorOptions{
+			HasText: "Second Log",
 		}).First()
-		err = elb.Click()
+		err = secondLog.GetByRole("button", playwright.LocatorGetByRoleOptions{
+			Name: "Edit",
+		}).Click()
 		require.NoError(tt, err)
 		emc := page.Locator("[name='metric_calories']").First()
 		err = emc.Clear()
@@ -121,6 +111,6 @@ func Test_CRUD_Logs(t *testing.T) {
 		etm := page.Locator(".topmetric").First()
 		etms, err := etm.TextContent()
 		require.NoError(tt, err)
-		assert.Equal(tt, "678 Calories Total", etms)
+		assert.Equal(tt, "801 Calories Total", etms)
 	})
 }

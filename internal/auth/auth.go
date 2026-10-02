@@ -2,48 +2,42 @@ package auth
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/openhealthsuite/diary/internal/api/generated"
 	"github.com/openhealthsuite/diary/internal/config"
 )
 
-func UserAuthenticationMiddleware(cfg *config.ServerConfiguration) func(ctx *gin.Context) {
-	return func(ctx *gin.Context) {
-		if ctx.Request.URL.Path == "/api/ping" {
-			ctx.Next()
-			return
-		}
-		// Skip auth for static files
-		if strings.HasPrefix(ctx.Request.URL.Path, "/static/") {
-			ctx.Next()
-			return
-		}
-		if cfg.UserId != "" {
-			ctx.Set("userId", cfg.UserId)
-			ctx.Next()
-			return
-		}
+const UserIdContextKey = "userId"
 
-		if ctx.Request.Header.Get(cfg.UserIdHeader) != "" {
-			ctx.Set("userId", ctx.Request.Header.Get(cfg.UserIdHeader))
-			ctx.Next()
-			return
-		}
-		ctx.AbortWithStatusJSON(403, generated.Error{Code: 403, Message: ErrNoUserIdentification.Error()})
+type Authenticator interface {
+	SessionMiddleware() gin.HandlerFunc
+	Middleware() gin.HandlerFunc
+	RegisterRoutes(r *gin.Engine)
+	LogoutEndpoint() string
+}
+
+func NewAuthenticator(cfg *config.ServerConfiguration) (Authenticator, error) {
+	if cfg.UserId != "" {
+		return NewSingleUserAuthenticator(cfg.UserId), nil
 	}
+	return NewOidcAuthenticator(cfg)
 }
 
 var (
 	ErrNoUserIdentification = errors.New("missing user identification")
+	ErrNoAuthConfigured     = errors.New("no authentication configured: set either OPENFOODDIARY_USERID or the OPENFOODDIARY_OAUTH2_* variables")
 )
 
 func GetUserId(c *gin.Context) (*string, error) {
-	userId, ok := c.Get("userId")
+	userId, ok := c.Get(UserIdContextKey)
 	strid, ok2 := userId.(string)
 	if !ok || !ok2 {
 		return nil, ErrNoUserIdentification
 	}
 	return &strid, nil
+}
+
+func reject(ctx *gin.Context, status int32, err error) {
+	ctx.AbortWithStatusJSON(int(status), generated.Error{Code: status, Message: err.Error()})
 }

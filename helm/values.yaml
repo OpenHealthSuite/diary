@@ -1,6 +1,17 @@
 image: ghcr.io/openhealthsuite/diary
 tag: v0.3.10
 replicas: 3
-signoutUrl: /oauth2/sign_out
 postgres:
   url: postgres//postgres:postgres@localhost:5432/postgres
+
+# Set userId to run in single-user mode, which bypasses authentication entirely.
+# Leave it empty to run the Oauth2 login flow instead.
+userId: ""
+oauth2:
+  issuer: ""
+  clientId: ""
+  clientSecret: ""
+  redirectUrl: ""
+redis:
+  url: ""
+sessionSecretName: openfooddiary-session

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -17,46 +18,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func startServer(t *testing.T, port int, userId string, sqliteFile string) {
+	t.Helper()
+	cfg := config.ServerConfiguration{
+		Port:              port,
+		SqliteFile:        sqliteFile,
+		UserId:            userId,
+		TemplateDirectory: "../../../web/template",
+		StaticDirectory:   "../../../web/static",
+	}
+	srv, err := server.NewServer(&cfg)
+	require.NoError(t, err)
+	quit, err := srv.RunServer()
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		(*quit) <- os.Interrupt
+	})
+}
+
 func Test_CRUD_Logs(xt *testing.T) {
 	target_host := "http://localhost:8937"
-	useridheader := "x-openfooddiary-userid"
+	other_user_host := "http://localhost:8938"
 
 	if os.Getenv("OFD_E2E_TARGET") != "" {
 		target_host = os.Getenv("OFD_E2E_TARGET")
 	} else {
+		sharedDb := filepath.Join(xt.TempDir(), "ofd-e2e.sqlite")
 
-		config := config.ServerConfiguration{
-			Port:                     8937,
-			PostgresConnectionString: "",
-			SqliteFile:               ":memory:",
-
-			SignoutEndpoint: "/logout",
-			UserIdHeader:    useridheader,
-
-			TemplateDirectory: "../../../web/template",
-			StaticDirectory:   "../../../web/static",
-		}
-
-		srv, err := server.NewServer(&config)
-		require.NoError(xt, err)
-		quit, err := srv.RunServer()
-		defer func() {
-			(*quit) <- os.Interrupt
-		}()
+		startServer(xt, 8937, "e2e-primary-user", sharedDb)
+		startServer(xt, 8938, "e2e-other-user", sharedDb)
 	}
 
 	xt.Run("Auth :: User one can't get User 2", func(t *testing.T) {
-		test_user_id := uuid.NewString()
-
-		test_user_id_2 := uuid.NewString()
-
-		hdrs := map[string]string{
-			useridheader: test_user_id,
-		}
-
-		hdrs2 := map[string]string{
-			useridheader: test_user_id_2,
-		}
+		hdrs := map[string]string{}
 
 		hc := http.Client{}
 
@@ -87,7 +81,7 @@ func Test_CRUD_Logs(xt *testing.T) {
 
 		assert.Equal(t, 200, resp.StatusCode)
 
-		resp = doReq(&hc, t, "GET", target_host+"/api/logs/"+testItemId, nil, hdrs2)
+		resp = doReq(&hc, t, "GET", other_user_host+"/api/logs/"+testItemId, nil, hdrs)
 		defer resp.Body.Close()
 
 		assert.Equal(t, 404, resp.StatusCode)
@@ -95,13 +89,9 @@ func Test_CRUD_Logs(xt *testing.T) {
 
 	xt.Run("Happy Path :: Bad Retreives, Creates, Retreives, Edits, Reretrieves, Deletes, Fails Retreive, Redelete succeeds false", func(t *testing.T) {
 
-		test_user_id := uuid.NewString()
-
 		random_id := uuid.NewString()
 
-		hdrs := map[string]string{
-			useridheader: test_user_id,
-		}
+		hdrs := map[string]string{}
 
 		hc := http.Client{}
 
@@ -182,11 +172,7 @@ func Test_CRUD_Logs(xt *testing.T) {
 
 	xt.Run("Queries :: can add some logs, and get expected query results", func(t *testing.T) {
 
-		test_user_id := uuid.NewString()
-
-		hdrs := map[string]string{
-			useridheader: test_user_id,
-		}
+		hdrs := map[string]string{}
 
 		hc := http.Client{}
 

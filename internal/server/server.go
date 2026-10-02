@@ -42,6 +42,10 @@ func NewServer(cfg *config.ServerConfiguration) (DiaryServer, error) {
 		metrics:  mtr,
 		foodlogs: lgs,
 	}
+	err = sts.setupAuth()
+	if err != nil {
+		return nil, err
+	}
 	err = sts.setupHttpServer()
 	if err != nil {
 		return nil, err
@@ -49,11 +53,26 @@ func NewServer(cfg *config.ServerConfiguration) (DiaryServer, error) {
 	return sts, nil
 }
 
+func (sts *ServerState) setupAuth() error {
+	authr, err := auth.NewAuthenticator(sts.Config)
+	if err != nil {
+		return err
+	}
+	sts.auth = authr
+	if sts.Config.SignoutEndpoint == "" {
+		sts.Config.SignoutEndpoint = authr.LogoutEndpoint()
+	}
+	return nil
+}
+
 func (sts *ServerState) setupHttpServer() error {
 	r := gin.Default()
 
-	// User identification middleware
-	r.Use(auth.UserAuthenticationMiddleware(sts.Config))
+	if sessionMiddleware := sts.auth.SessionMiddleware(); sessionMiddleware != nil {
+		r.Use(sessionMiddleware)
+	}
+	r.Use(sts.auth.Middleware())
+	sts.auth.RegisterRoutes(r)
 
 	err := pages.Setup(sts.Config, sts.storage, sts.metrics, sts.foodlogs, r)
 
@@ -86,6 +105,7 @@ type ServerState struct {
 	metrics  metrics.MetricsProvider
 	foodlogs foodlogs.FoodLogService
 
+	auth       auth.Authenticator
 	httpServer *http.Server
 }
 

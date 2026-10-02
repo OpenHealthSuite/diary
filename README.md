@@ -53,12 +53,42 @@ There is a docker-compose.yaml file provided for rigging up a quick compose stac
 
 - `PORT`: defaults to 8080
   - sets the port OFD will run on
-- `OPENFOODDIARY_USERIDHEADER`: defaults to "x-openfooddiary-userid"
-  - Denotes the header that will be populated with a user id
 - `OPENFOODDIARY_USERID`: no default
   - Denotes userid that will _always_ be populated - intended for dev and single-user modes
+  - If set, authentication is bypassed entirely and the Oauth2 variables below are ignored
 - `OPENFOODDIARY_LOGOUT_ENDPOINT`: no default
-  - Used in the UI for the logout button, for different auth provider support
+  - Overrides where the UI's logout button points. Defaults to the app's own logout handler (`/auth/logout`) when the Oauth2 flow is in use
+
+### Authentication
+
+If `OPENFOODDIARY_USERID` is not set, the app expects to be configured against an OIDC provider.
+
+- `OPENFOODDIARY_OAUTH2_ISSUER`: no default, required
+  - The provider's issuer url, e.g. `https://dex.example.com`
+- `OPENFOODDIARY_OAUTH2_CLIENT_ID`: no default, required
+  - The client id registered with the provider
+- `OPENFOODDIARY_OAUTH2_CLIENT_SECRET`: no default
+  - The client secret
+- `OPENFOODDIARY_OAUTH2_REDIRECT_URL`: no default
+  - The callback url to send to the provider. If unset, it is derived from the incoming request, honouring `X-Forwarded-Proto` and `X-Forwarded-Host`
+  - The default resolves to `https://<your-host>/auth/callback` - register that with your provider
+- `OPENFOODDIARY_OAUTH2_SKIP_ISSUER_VERIFICATION`: defaults to false
+  - Disables the id_token issuer/audience checks. Only useful against a dev provider
+
+The app only requests the `openid` scope, and keys your data off the `sub` claim from the returned id_token - whatever stable identifier your provider puts there, typically a UUID with dex.
+
+### Sessions
+
+Sessions are stored in redis, which the app requires when running the Oauth2 flow.
+
+- `OPENFOODDIARY_SESSION_REDIS_URL`: no default, required for the Oauth2 flow
+  - e.g. `redis://user:password@redis:6379/0`
+- `OPENFOODDIARY_SESSION_SECRET`: no default, required for the Oauth2 flow
+  - Authenticates and encrypts the session cookie.
+- `OPENFOODDIARY_SESSION_COOKIE_NAME`: defaults to "openfooddiary-session"
+- `OPENFOODDIARY_SESSION_MAX_AGE`: defaults to 86400
+  - Session lifetime in seconds
+- `OPENFOODDIARY_SESSION_SECURE`: defaults to true
 
 ### Storage
 
@@ -67,3 +97,11 @@ There is a docker-compose.yaml file provided for rigging up a quick compose stac
 - `OPENFOODDIARY_SQLITE_PATH`: defaults to ".sqlite"
   - Sets the filename/path the sqlite3 database will be stored to
   - note: this location equates to `/app/.sqlite` in the container
+
+## Running the tests
+
+```bash
+make test
+```
+
+The storage tests and the OIDC login flow tests both spin up throwaway postgres and redis containers via testcontainers, so docker needs to be running.
