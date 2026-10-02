@@ -53,7 +53,7 @@ jobs:
       
       - name: Test Image
         run: |
-          docker run --name=ofgtest -d -e PORT=3011 -p 3011:3011 ghcr.io/openhealthsuite/diary:${{github.run_id}}
+          docker run --name=ofgtest -d -e PORT=3011 -e OPENFOODDIARY_USERID=ci-test-user -p 3011:3011 ghcr.io/openhealthsuite/diary:${{github.run_id}}
           MAX_WAIT=10
           INTERVAL=1
           i=0
