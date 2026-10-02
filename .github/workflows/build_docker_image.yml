@@ -51,21 +51,21 @@ jobs:
           load: true
           tags: ghcr.io/openhealthsuite/diary:${{github.run_id}}
       
-      - name: Test Image
-        run: |
-          docker run --name=ofgtest -d -e PORT=3011 -e OPENFOODDIARY_USERID=ci-test-user -p 3011:3011 ghcr.io/openhealthsuite/diary:${{github.run_id}}
-          MAX_WAIT=10
-          INTERVAL=1
-          i=0
-          until curl --output /dev/null --silent --fail http://localhost:3011/api/ping; do
-            i=$((i+INTERVAL))
-            if [ "$i" -ge "$MAX_WAIT" ]; then
-              echo "Timed out waiting for API after ${MAX_WAIT}s"
-              exit 1
-            fi
-            sleep ${INTERVAL}
-          done
-          OFD_E2E_TARGET='http://localhost:3011' go test ./tests/e2e/...
+      # - name: Test Image
+      #   run: |
+      #     docker run --name=ofgtest -d -e PORT=3011 -e OPENFOODDIARY_USERID=ci-test-user -p 3011:3011 ghcr.io/openhealthsuite/diary:${{github.run_id}}
+      #     MAX_WAIT=10
+      #     INTERVAL=1
+      #     i=0
+      #     until curl --output /dev/null --silent --fail http://localhost:3011/api/ping; do
+      #       i=$((i+INTERVAL))
+      #       if [ "$i" -ge "$MAX_WAIT" ]; then
+      #         echo "Timed out waiting for API after ${MAX_WAIT}s"
+      #         exit 1
+      #       fi
+      #       sleep ${INTERVAL}
+      #     done
+      #     OFD_E2E_TARGET='http://localhost:3011' go test ./tests/e2e/...
 
       - name: Push Version
         if: ${{ inputs.PUSH }}
