@@ -28,7 +28,7 @@ jobs:
           cache: true
           cache-dependency-path: 'go.sum'
       - name: Install playwright
-        run: go run github.com/playwright-community/playwright-go/cmd/playwright@v0.5700.1 install --with-deps
+        run: go run github.com/mxschmitt/playwright-go/cmd/playwright@v0.6201.1 install --with-deps
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4

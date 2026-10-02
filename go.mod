@@ -10,9 +10,9 @@ require (
 	github.com/gin-contrib/sessions v1.1.2
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/google/uuid v1.6.0
+	github.com/mxschmitt/playwright-go v0.6201.1
 	github.com/oapi-codegen/oapi-codegen/v2 v2.6.0
 	github.com/oapi-codegen/runtime v1.1.2
-	github.com/playwright-community/playwright-go v0.5700.1
 	github.com/rs/zerolog v1.34.0
 	golang.org/x/oauth2 v0.37.0
 	gonum.org/v1/plot v0.16.0
@@ -53,7 +53,6 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/gin-contrib/sse v1.1.1 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
