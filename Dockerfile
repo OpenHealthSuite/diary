@@ -13,6 +13,11 @@ RUN GOOS=linux GOARCH=$(echo $TARGETPLATFORM | sed 's/linux\///') \
 
 FROM docker.io/debian:stable-slim AS runner
 
+# Required for the outbound OIDC discovery call to the identity provider
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY api api
 COPY --from=server-builder /usr/src/app/dist/server /app
